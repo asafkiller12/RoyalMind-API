@@ -8,27 +8,21 @@ import base64
 import io
 from PIL import Image
 
-# ==========================================
-# ⚙️ إعدادات النظام والأمان
-# ==========================================
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") 
-
-if not GOOGLE_API_KEY:
-    print("⚠️ Warning: GOOGLE_API_KEY not found in environment variables!")
-else:
+# 1. إعدادات المفتاح
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
 
 model = genai.GenerativeModel('models/gemini-2.5-flash')
-
 app = FastAPI(title="RoyalMind Total Luxury API")
 
-# السماح بالاتصال من المتصفح (CORS)
+# 2. إعدادات CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"], 
-    allow_headers=["*"], 
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 class Query(BaseModel):
@@ -36,10 +30,7 @@ class Query(BaseModel):
     image: str = None
     user_id: str = "guest"
 
-# ==========================================
-# 🧠 نظام الذاكرة الديناميكية (Google Sheets)
-# ==========================================
-# 🚩 تأكد من وضع رابط الـ CSV الصحيح هنا
+# 3. الذاكرة الديناميكية
 SHEET_CSV_URL = "ضع_رابط_GOOGLE_SHEET_CSV_هنا"
 
 def get_dynamic_context(query: str):
@@ -47,60 +38,40 @@ def get_dynamic_context(query: str):
         df = pd.read_csv(SHEET_CSV_URL)
         relevant_products = []
         for index, row in df.iterrows():
-            # البحث عن الكلمات المفتاحية في كافة الأعمدة
             search_text = f"{row.get('Product', '')} {row.get('Category', '')} {row.get('Mood', '')} {row.get('Zodiac', '')}"
-            if any(word in query for word in search_text.split()):
-                product_info = f"المنتج: {row.get('Product')} | السعر: {row.get('Price')} | الوصف: {row.get('Description')} | مناسب لـ: {row.get('Mood')} و {row.get('Zodiac')}"
+            if any(word in query for word in search_// text.split()): # تصحيح: search_text.split()
+                product_info = f"المنتج: {row.get('Product')} | السعر: {row.get('Price')} | الوصف: {row.get('Description')}"
                 relevant_products.append(product_info)
-        
-        if relevant_products:
-            return "\n".join(relevant_products)
-        return "لا يوجد منتج مطابق تماماً حالياً، يرجى اقتراح بدائل فاخرة من مجموعتنا."
-    except Exception as e:
-        print(f"Error reading sheet: {e}")
-        return "عذراً، هناك مشكلة في الوصول لقاعدة بيانات المنتجات."
+        return "\n".join(relevant_products) if relevant_products else "لا يوجد منتج مطابق حالياً."
+    except:
+        return "عذراً، هناك مشكلة في الوصول لقاعدة البيانات."
 
-# ==========================================
-# 🚀 نقاط الاتصال (API Endpoints)
-# ==========================================
-
+# 4. نقاط الاتصال
 @app.get("/")
 def read_root():
-    return {"status": "Online", "message": "RoyalMind Total Luxury Expert is Active!"}
+    return {"status": "Online", "message": "RoyalMind is Active!"}
 
 @app.post("/chat")
 async def chat_with_royalmind(query: Query):
     try:
         if not GOOGLE_API_KEY:
-            raise HTTPException(status_code=500, detail="API Key missing in server settings")
-            
-        # جلب السياق من جدول جوجل
-        context = get_dynamic_context(query.text)
+            raise HTTPException(status_code=500, detail="API Key missing")
         
+        context = get_dynamic_context(query.text)
         system_prompt = (
-            "أنت 'RoyalMind'، المستشار الشامل للفخامة في Royal Elchim بالأقصر. "
-            "أنت خبير يربط بين (الجمال، العطر، والحالة النفسية، والأبراج). "
-            "قواعدك: \n"
-            "1. إذا وجدت منتجات في السياق تناسب طلب العميل، رشحها له بدقة مع ذكر السعر والوصف.\n"
-            "2. إذا أرسل العميل صورة: حلل ملامحه وبشرته واقترح (ميكب + عطر) يكمل الإطلالة.\n"
-            "3. حافظ على أسلوب ملكي، لبق، ومقنع جداً.\n"
+            "أنت 'RoyalMind'، خبير التجميل والعطور لعلامة Royal Elchim بالأقصر. "
+            "اربط بين الجمال، العطر، الحالة النفسية، والأبراج. "
+            "كن راقياً، ملهماً، ومقنعاً. "
             f"بيانات المنتجات الحالية: {context}"
         )
-
-        content = [system_prompt, query.text]
         
+        content = [system_prompt, query.text]
         if query.image:
-            # معالجة الصورة بشكل صحيح
             image_data = base64.b64decode(query.image.split(",")[1])
-            img = Image.open(io.BytesIO(image_// data)) # تصحيح أخير
-            # التصحيح النهائي للسطر أعلاه:
-            # img = Image.open(io.BytesIO(image_data))
+            img = Image.open(io.BytesIO(image_data))
             content.append(img)
 
-        # تصحيح نهائي: استبدل السطر السابق بـ img = Image.open(io.BytesIO(image_data))
-        
         response = model.generate_content(content)
         return {"status": "success", "answer": response.text}
     except Exception as e:
-        print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
