@@ -3,24 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import google.generativeai as genai
 import os
+import base64
+import io
+from PIL import Image
 
 # ==========================================
 # ⚙️ إعدادات النظام والأمان
 # ==========================================
-# جلب المفتاح من "خزنة" Railway لضمان الأمان وعدم تسريبه في GitHub
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") 
-
-if not GOOGLE_API_KEY:
-    print("⚠️ تحذير: مفتاح API غير موجود في إعدادات السيرفر (Variables)!")
-else:
-    genai.configure(api_key=GOOGLE_API_KEY)
-
-# استخدام الموديل المتطور والسرع Gemini 2.5 Flash
+genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel('models/gemini-2.5-flash')
 
-app = FastAPI(title="RoyalMind Business API")
+app = FastAPI(title="RoyalMind Total Luxury API")
 
-# ✅ السماح للمتصفحات بالاتصال بالسيرفر (حل مشكلة CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -29,81 +24,78 @@ app.add_middleware(
     allow_headers=["*"], 
 )
 
-# نموذج استقبال البيانات من العميل
 class Query(BaseModel):
     text: str
+    image: str = None
     user_id: str = "guest"
 
 # ==========================================
-# 🧠 الذاكرة الممتدة لـ Royal Elchim (قاعدة المعرفة)
+# 🧠 الذاكرة الشاملة (الجمال + العطور + الهوية)
 # ==========================================
-def get_showroom_context(query: str):
-    """
-    تحويل استفسارات العميل إلى معلومات دقيقة مستمدة من هوية Royal Elchim
-    """
+def get_total_context(query: str):
     knowledge_base = {
-        # معلومات عن العطر الرئيسي (من الصورة)
-        "ريحة": "عطر Royal Hash Rooted يتميز بفتحة عطرية من الدخان العشبي الحاد (sharp herbal smoke)، ثم يستقر على قاعدة من الراتنج الترابي والمسك (earthy resin and musk). إنه عطر جريء يجسد الأناقة المظلمة والحضور الطاغي.",
-        "مكونات": "يتكون Royal Hash Rooted من مزيج من الدخان العشبي، الراتنج الترابي، والمسك، مما يمنحه طابعاً من الفخامة والغموض والعمق.",
-        "استخدام": "لأفضل نتيجة وثبات، يُنصح برش العطر على نقاط النبض في الجسم: الرقبة، المعصمين، وخلف الأذنين.",
-        "حجم": "الزجاجة تأتي بحجم 50 مل (1.7 fl. oz)، وهي مصممة لتكون رفيقك في كل المناسبات الفاخرة.",
+        # --- قسم العطور والنيش ---
+        "برج": "نحن نصمم عطوراً تتناغم مع طاقة الأبراج؛ فكل برج له نوتات تعزز جاذبيته الشخصية.",
+        "حالة نفسية": "العطر علاج للنفس؛ نوفر نوتات للاسترخاء، أو الطاقة، أو الرومانسية بناءً على الحالة المزاجية.",
+        "صباحي": "عطور صباحية منعشة (حمضيات، زهور خفيفة) تمنح الحيوية.",
+        "مسائي": "عطور مسائية عميقة (أخشاب، مسك، عنبر) تليق بالسهرات والغموض.",
+        "نيش": "مجموعة 'النيش' هي قطع فنية حصرية ونادرة لمن يبحث عن التميز المطلق.",
+        "زيوت": "نقدم تركيبات مخصصة من الزيوت الخام مع التحكم في نسبة المثبت للوصول لثبات (كاجوال أو مركز).",
+        "عطر": "عطر Royal Hash Rooted: فتحة دخانية عشبية، قاعدة من الراتنج والمسك، يجسد الأناقة المظلمة.",
         
-        # معلومات الهوية والموقع (من حساب الشركة)
-        "موقع": "نحن فخورون بأن علامتنا التجارية Royal Elchim تنطلق من مدينة السحر والتاريخ 'الأقصر' (Luxor)، لننقل عبق الحضارة بلمسة عصرية فاخرة.",
-        "تواصل": "يمكنكم التواصل معنا مباشرة عبر واتساب على الرقم: +20 10 12935706 أو زيارة موقعنا الرسمي www.royalelchim.app",
-        "صنع": "منتجاتنا صُنعت في مصر (Made in Egypt) وبأعلى معايير الجودة العالمية لتناسب أصحاب الذوق الرفيع.",
-        "تحذير": "للاستخدام الخارجي فقط. يُحفظ بعيداً عن متناول الأطفال، وبعيداً عن الحرارة وأشعة الشمس المباشرة."
+        # --- قسم التجميل والعناية ---
+        "بشرة": "نقدم استشارات دقيقة لنوع البشرة (دهنية، جافة، مختلطة) لترشيح أفضل منتجات العناية.",
+        "ميكب": "نساعد في اختيار ألوان المكياج التي تتناسب مع لون البشرة وتكمل الإطلالة العطرية.",
+        "تجميل": "نعتمد على أحدث صيحات التجميل العالمية لضمان إطلالة ملكية تبرز ملامح الوجه.",
+        
+        # --- قسم الهوية والمكان ---
+        "موقع": "علامتنا Royal Elchim تنطلق من قلب 'الأقصر' العريقة، حيث يلتقي سحر التاريخ بالفخامة العصرية.",
+        "تواصل": "واتساب: +20 10 12935706 | الموقع: www.royalelchim.app | صنع في مصر بجودة عالمية.",
+        "حجم": "زجاجاتنا تأتي بحجم 50 مل (1.7 fl. oz) بتصميم فاخر."
     }
     
     context = ""
-    # البحث عن الكلمات المفتاحية في سؤال العميل لتقديم الإجابة الأدق
     for key in knowledge_base:
         if key in query:
             context += f"\nمعلومة من Royal Elchim: {knowledge_base[key]}"
-            
     return context
 
 # ==========================================
-# 🚀 نقاط الاتصال (API Endpoints)
+# 🚀 نقطة الاتصال الذكية (The Master Logic)
 # ==========================================
-
-@app.get("/")
-def read_root():
-    return {
-        "status": "Online", 
-        "message": "Welcome to RoyalMind Intelligent Server - Luxury Fragrance Expert", 
-        "location": "Luxor, Egypt"
-    }
 
 @app.post("/chat")
 async def chat_with_royalmind(query: Query):
     try:
-        if not GOOGLE_API_KEY:
-            raise HTTPException(status_code=500, detail="API Key missing in server settings")
-            
-        # 1. جلب المعلومات ذات الصلة من قاعدة المعرفة
-        context = get_showroom_context(query.text)
+        context = get_total_context(query.text)
         
-        # 2. صياغة شخصية المساعد (The Persona)
+        # 🌟 بناء الشخصية الشمولية (The Total Look Consultant)
         system_prompt = (
-            "أنت الآن 'RoyalMind'، السفير الرقمي والخبير التجميلي لعلامة 'Royal Elchim' الفاخرة للعطور والمستحضرات. "
-            "علامتكم التجارية تنطلق من مدينة الأقصر العريقة، مما يمنحكم مزيجاً من التاريخ والفخامة. "
-            "أسلوبك في الحديث يجب أن يكون: راقياً، لبقاً جداً، واثقاً، ويوحي بالفخامة (Luxury Tone). "
-            "أنت لا تبيع مجرد منتج، بل تبيع 'تجربة من الأناقة والتميز'. "
-            "اجعل إجاباتك قصيرة، مركزة، ومحفزة للعميل على تجربة المنتجات. "
-            f"استخدم هذه المعلومات التقنية بدقة إذا كانت ذات صلة: {context}"
+            "أنت 'RoyalMind'، المستشار الشامل للفخامة في Royal Elchim بالأقصر. "
+            "أنت لست مجرد بائع، بل خبير يربط بين (الجمال، العطر، والحالة النفسية). \n\n"
+            "مهمتك هي تقديم 'إطلالة متكاملة' (Total Look):\n"
+            "1. إذا سأل العميل عن عطر: اربطه بحالته النفسية، برجه، وتوقيت اليوم.\n"
+            "2. إذا أرسل العميل صورة: حلل ملامحه وبشرته، ثم اقترح (مكياج مناسب + عطر يكمل هذه الإطلالة).\n"
+            "3. الربط الذكي: إذا كانت الحالة 'صباحية مبهجة'، اقترح (مكياج ناعم + عطر حمضيات منعش).\n"
+            "4. إذا كانت الحالة 'مسائية غامضة'، اقترح (مكياج جريء + عطر نيش ثقيل).\n"
+            "5. التخصيص: تحدث عن نسب الزيوت والمثبتات لضمان الثبات حسب رغبة العميل.\n\n"
+            "أسلوبك: راقٍ جداً، ملهم، يوحي بالفخامة والملكية، ويجعل العميل يشعر أنه يحصل على استشارة خاصة جداً. "
+            f"استخدم هذه المعلومات كمرجع أساسي: {context}"
         )
+
+        content = [system_// prompt, query.text]
         
-        full_prompt = f"{system_prompt}\n\nالعميل: {query.text}"
-        
-        # 3. توليد الإجابة باستخدام Gemini 2.5 Flash
-        response = model.generate_content(full_prompt)
-        
-        return {
-            "status": "success",
-            "answer": response.text,
-            "model": "gemini-2.5-flash"
-        }
+        if query.image:
+            image_data = base64.b64decode(query.image.split(",")[1])
+            img = Image.open(io.BytesIO(image_data))
+            content.append(img)
+
+        response = model.generate_content(content)
+        return {"status": "success", "answer": response.text, "model": "gemini-2.5-flash"}
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/")
+def read_root():
+    return {"status": "Online", "message": "RoyalMind Total Luxury Expert is Active!"}
