@@ -11,7 +11,12 @@ from PIL import Image
 # ⚙️ إعدادات النظام والأمان
 # ==========================================
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") 
-genai.configure(api_key=GOOGLE_API_KEY)
+
+if not GOOGLE_API_KEY:
+    print("⚠️ تحذير: مفتاح API غير موجود في إعدادات السيرفر!")
+else:
+    genai.configure(api_key=GOOGLE_API_KEY)
+
 model = genai.GenerativeModel('models/gemini-2.5-flash')
 
 app = FastAPI(title="RoyalMind Total Luxury API")
@@ -34,21 +39,16 @@ class Query(BaseModel):
 # ==========================================
 def get_total_context(query: str):
     knowledge_base = {
-        # --- قسم العطور والنيش ---
         "برج": "نحن نصمم عطوراً تتناغم مع طاقة الأبراج؛ فكل برج له نوتات تعزز جاذبيته الشخصية.",
         "حالة نفسية": "العطر علاج للنفس؛ نوفر نوتات للاسترخاء، أو الطاقة، أو الرومانسية بناءً على الحالة المزاجية.",
         "صباحي": "عطور صباحية منعشة (حمضيات، زهور خفيفة) تمنح الحيوية.",
         "مسائي": "عطور مسائية عميقة (أخشاب، مسك، عنبر) تليق بالسهرات والغموض.",
         "نيش": "مجموعة 'النيش' هي قطع فنية حصرية ونادرة لمن يبحث عن التميز المطلق.",
-        "زيوت": "نقدم تركيبات مخصصة من الزيوت الخام مع التحكم في نسبة المثبت للوصول لثبات (كاجوال أو مركز).",
+        "زيوت": "نوفر خدمة تركيب الزيوت العطرية الخام مع التحكم في نسبة المثبت لثبات (كاجوال أو مركز).",
         "عطر": "عطر Royal Hash Rooted: فتحة دخانية عشبية، قاعدة من الراتنج والمسك، يجسد الأناقة المظلمة.",
-        
-        # --- قسم التجميل والعناية ---
         "بشرة": "نقدم استشارات دقيقة لنوع البشرة (دهنية، جافة، مختلطة) لترشيح أفضل منتجات العناية.",
         "ميكب": "نساعد في اختيار ألوان المكياج التي تتناسب مع لون البشرة وتكمل الإطلالة العطرية.",
         "تجميل": "نعتمد على أحدث صيحات التجميل العالمية لضمان إطلالة ملكية تبرز ملامح الوجه.",
-        
-        # --- قسم الهوية والمكان ---
         "موقع": "علامتنا Royal Elchim تنطلق من قلب 'الأقصر' العريقة، حيث يلتقي سحر التاريخ بالفخامة العصرية.",
         "تواصل": "واتساب: +20 10 12935706 | الموقع: www.royalelchim.app | صنع في مصر بجودة عالمية.",
         "حجم": "زجاجاتنا تأتي بحجم 50 مل (1.7 fl. oz) بتصميم فاخر."
@@ -61,17 +61,23 @@ def get_total_context(query: str):
     return context
 
 # ==========================================
-# 🚀 نقطة الاتصال الذكية (The Master Logic)
+# 🚀 نقطة الاتصال الذكية
 # ==========================================
+
+@app.get("/")
+def read_root():
+    return {"status": "Online", "message": "RoyalMind Total Luxury Expert is Active!"}
 
 @app.post("/chat")
 async def chat_with_royalmind(query: Query):
     try:
+        if not GOOGLE_API_KEY:
+            raise HTTPException(status_code=500, detail="API Key missing in server settings")
+            
         context = get_total_context(query.text)
         
-        # 🌟 بناء الشخصية الشمولية (The Total Look Consultant)
         system_prompt = (
-            "أنت 'RoyalMind'، المستشار الشامل للفخامة في Royal Elchim بالأقصر. "
+            "أنت الآن 'RoyalMind'، المستشار الشامل للفخامة في Royal Elchim بالأقصر. "
             "أنت لست مجرد بائع، بل خبير يربط بين (الجمال، العطر، والحالة النفسية). \n\n"
             "مهمتك هي تقديم 'إطلالة متكاملة' (Total Look):\n"
             "1. إذا سأل العميل عن عطر: اربطه بحالته النفسية، برجه، وتوقيت اليوم.\n"
@@ -79,11 +85,12 @@ async def chat_with_royalmind(query: Query):
             "3. الربط الذكي: إذا كانت الحالة 'صباحية مبهجة'، اقترح (مكياج ناعم + عطر حمضيات منعش).\n"
             "4. إذا كانت الحالة 'مسائية غامضة'، اقترح (مكياج جريء + عطر نيش ثقيل).\n"
             "5. التخصيص: تحدث عن نسب الزيوت والمثبتات لضمان الثبات حسب رغبة العميل.\n\n"
-            "أسلوبك: راقٍ جداً، ملهم، يوحي بالفخامة والملكية، ويجعل العميل يشعر أنه يحصل على استشارة خاصة جداً. "
+            "أسلوبك: راقٍ، ملهم، يوحي بالفخامة والملكية، ويجعل العميل يشعر أنه يحصل على استشارة خاصة جداً. "
             f"استخدم هذه المعلومات كمرجع أساسي: {context}"
         )
 
-        content = [system_// prompt, query.text]
+        # بناء محتوى الطلب لـ Gemini
+        content = [system_prompt, query.text]
         
         if query.image:
             image_data = base64.b64decode(query.image.split(",")[1])
@@ -95,7 +102,3 @@ async def chat_with_royalmind(query: Query):
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/")
-def read_root():
-    return {"status": "Online", "message": "RoyalMind Total Luxury Expert is Active!"}
