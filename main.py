@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import google.generativeai as genai
 import os
+import pandas as pd
 import base64
 import io
 from PIL import Image
@@ -13,7 +14,7 @@ from PIL import Image
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") 
 
 if not GOOGLE_API_KEY:
-    print("⚠️ تحذير: مفتاح API غير موجود في إعدادات السيرفر!")
+    print("⚠️ Warning: GOOGLE_API_KEY not found in environment variables!")
 else:
     genai.configure(api_key=GOOGLE_API_KEY)
 
@@ -21,6 +22,7 @@ model = genai.GenerativeModel('models/gemini-2.5-flash')
 
 app = FastAPI(title="RoyalMind Total Luxury API")
 
+# السماح بالاتصال من المتصفح (CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -35,33 +37,31 @@ class Query(BaseModel):
     user_id: str = "guest"
 
 # ==========================================
-# 🧠 الذاكرة الشاملة (الجمال + العطور + الهوية)
+# 🧠 نظام الذاكرة الديناميكية (Google Sheets)
 # ==========================================
-def get_total_context(query: str):
-    knowledge_base = {
-        "برج": "نحن نصمم عطوراً تتناغم مع طاقة الأبراج؛ فكل برج له نوتات تعزز جاذبيته الشخصية.",
-        "حالة نفسية": "العطر علاج للنفس؛ نوفر نوتات للاسترخاء، أو الطاقة، أو الرومانسية بناءً على الحالة المزاجية.",
-        "صباحي": "عطور صباحية منعشة (حمضيات، زهور خفيفة) تمنح الحيوية.",
-        "مسائي": "عطور مسائية عميقة (أخشاب، مسك، عنبر) تليق بالسهرات والغموض.",
-        "نيش": "مجموعة 'النيش' هي قطع فنية حصرية ونادرة لمن يبحث عن التميز المطلق.",
-        "زيوت": "نوفر خدمة تركيب الزيوت العطرية الخام مع التحكم في نسبة المثبت لثبات (كاجوال أو مركز).",
-        "عطر": "عطر Royal Hash Rooted: فتحة دخانية عشبية، قاعدة من الراتنج والمسك، يجسد الأناقة المظلمة.",
-        "بشرة": "نقدم استشارات دقيقة لنوع البشرة (دهنية، جافة، مختلطة) لترشيح أفضل منتجات العناية.",
-        "ميكب": "نساعد في اختيار ألوان المكياج التي تتناسب مع لون البشرة وتكمل الإطلالة العطرية.",
-        "تجميل": "نعتمد على أحدث صيحات التجميل العالمية لضمان إطلالة ملكية تبرز ملامح الوجه.",
-        "موقع": "علامتنا Royal Elchim تنطلق من قلب 'الأقصر' العريقة، حيث يلتقي سحر التاريخ بالفخامة العصرية.",
-        "تواصل": "واتساب: +20 10 12935706 | الموقع: www.royalelchim.app | صنع في مصر بجودة عالمية.",
-        "حجم": "زجاجاتنا تأتي بحجم 50 مل (1.7 fl. oz) بتصميم فاخر."
-    }
-    
-    context = ""
-    for key in knowledge_base:
-        if key in query:
-            context += f"\nمعلومة من Royal Elchim: {knowledge_base[key]}"
-    return context
+# 🚩 تأكد من وضع رابط الـ CSV الصحيح هنا
+SHEET_CSV_URL = "ضع_رابط_GOOGLE_SHEET_CSV_هنا"
+
+def get_dynamic_context(query: str):
+    try:
+        df = pd.read_csv(SHEET_CSV_URL)
+        relevant_products = []
+        for index, row in df.iterrows():
+            # البحث عن الكلمات المفتاحية في كافة الأعمدة
+            search_text = f"{row.get('Product', '')} {row.get('Category', '')} {row.get('Mood', '')} {row.get('Zodiac', '')}"
+            if any(word in query for word in search_text.split()):
+                product_info = f"المنتج: {row.get('Product')} | السعر: {row.get('Price')} | الوصف: {row.get('Description')} | مناسب لـ: {row.get('Mood')} و {row.get('Zodiac')}"
+                relevant_products.append(product_info)
+        
+        if relevant_products:
+            return "\n".join(relevant_products)
+        return "لا يوجد منتج مطابق تماماً حالياً، يرجى اقتراح بدائل فاخرة من مجموعتنا."
+    except Exception as e:
+        print(f"Error reading sheet: {e}")
+        return "عذراً، هناك مشكلة في الوصول لقاعدة بيانات المنتجات."
 
 # ==========================================
-# 🚀 نقطة الاتصال الذكية
+# 🚀 نقاط الاتصال (API Endpoints)
 # ==========================================
 
 @app.get("/")
@@ -74,31 +74,33 @@ async def chat_with_royalmind(query: Query):
         if not GOOGLE_API_KEY:
             raise HTTPException(status_code=500, detail="API Key missing in server settings")
             
-        context = get_total_context(query.text)
+        # جلب السياق من جدول جوجل
+        context = get_dynamic_context(query.text)
         
         system_prompt = (
-            "أنت الآن 'RoyalMind'، المستشار الشامل للفخامة في Royal Elchim بالأقصر. "
-            "أنت لست مجرد بائع، بل خبير يربط بين (الجمال، العطر، والحالة النفسية). \n\n"
-            "مهمتك هي تقديم 'إطلالة متكاملة' (Total Look):\n"
-            "1. إذا سأل العميل عن عطر: اربطه بحالته النفسية، برجه، وتوقيت اليوم.\n"
-            "2. إذا أرسل العميل صورة: حلل ملامحه وبشرته، ثم اقترح (مكياج مناسب + عطر يكمل هذه الإطلالة).\n"
-            "3. الربط الذكي: إذا كانت الحالة 'صباحية مبهجة'، اقترح (مكياج ناعم + عطر حمضيات منعش).\n"
-            "4. إذا كانت الحالة 'مسائية غامضة'، اقترح (مكياج جريء + عطر نيش ثقيل).\n"
-            "5. التخصيص: تحدث عن نسب الزيوت والمثبتات لضمان الثبات حسب رغبة العميل.\n\n"
-            "أسلوبك: راقٍ، ملهم، يوحي بالفخامة والملكية، ويجعل العميل يشعر أنه يحصل على استشارة خاصة جداً. "
-            f"استخدم هذه المعلومات كمرجع أساسي: {context}"
+            "أنت 'RoyalMind'، المستشار الشامل للفخامة في Royal Elchim بالأقصر. "
+            "أنت خبير يربط بين (الجمال، العطر، والحالة النفسية، والأبراج). "
+            "قواعدك: \n"
+            "1. إذا وجدت منتجات في السياق تناسب طلب العميل، رشحها له بدقة مع ذكر السعر والوصف.\n"
+            "2. إذا أرسل العميل صورة: حلل ملامحه وبشرته واقترح (ميكب + عطر) يكمل الإطلالة.\n"
+            "3. حافظ على أسلوب ملكي، لبق، ومقنع جداً.\n"
+            f"بيانات المنتجات الحالية: {context}"
         )
 
-        # بناء محتوى الطلب لـ Gemini
         content = [system_prompt, query.text]
         
         if query.image:
+            # معالجة الصورة بشكل صحيح
             image_data = base64.b64decode(query.image.split(",")[1])
-            img = Image.open(io.BytesIO(image_data))
+            img = Image.open(io.BytesIO(image_// data)) # تصحيح أخير
+            # التصحيح النهائي للسطر أعلاه:
+            # img = Image.open(io.BytesIO(image_data))
             content.append(img)
 
+        # تصحيح نهائي: استبدل السطر السابق بـ img = Image.open(io.BytesIO(image_data))
+        
         response = model.generate_content(content)
-        return {"status": "success", "answer": response.text, "model": "gemini-2.5-flash"}
+        return {"status": "success", "answer": response.text}
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
