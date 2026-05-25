@@ -39,7 +39,7 @@ class Query(BaseModel):
 # 🧠 نظام الذاكرة الديناميكية (Google Sheets)
 # ==========================================
 # 🚩 تأكد من وضع رابط الـ CSV الخاص بك هنا
-SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTo0x3S-adDNu2AukMjxcsRM_MRwh8lC3wqJmyjfm4k9skssdYA-pyb-YaksEvu53d444qPu5JgaHrb/pub?output=csv"
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYCfKuRMeI3cKjECJwThvwbhn3PLwwRs5QBi7ycDvUEleoK98ZeUPB_cm8Xy0A_qTdh2eqbkFJP4Ug/pub?output=csv"
 
 def get_dynamic_context(query: str):
     try:
