@@ -1,0 +1,801 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+/>
+
+<title>RoyalMind Luxury AI</title>
+
+<style>
+
+:root{
+--gold:#d4af37;
+--dark:#111;
+--light:#fff;
+--bg:#fff8fb;
+}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+
+font-family:
+"Tajawal",
+sans-serif;
+
+background:
+linear-gradient(
+135deg,
+#fff8fb,
+#fffdf7
+);
+
+height:100vh;
+}
+
+/* ===================================
+AI GIRL BUTTON
+=================================== */
+
+#chat-circle{
+
+position:fixed;
+
+bottom:20px;
+right:20px;
+
+width:90px;
+height:90px;
+
+border-radius:50%;
+
+overflow:hidden;
+
+cursor:pointer;
+
+z-index:99999;
+
+border:3px solid var(--gold);
+
+box-shadow:
+0 0 25px rgba(212,175,55,.7);
+
+transition:.3s;
+}
+
+#chat-circle:hover{
+
+transform:scale(1.08);
+}
+
+#chat-circle img{
+
+width:100%;
+height:100%;
+
+object-fit:cover;
+}
+
+/* ===================================
+CHAT BOX
+=================================== */
+
+#chat-box{
+
+position:fixed;
+
+bottom:120px;
+right:20px;
+
+width:400px;
+max-width:95vw;
+
+height:700px;
+max-height:90vh;
+
+background:white;
+
+border-radius:25px;
+
+overflow:hidden;
+
+display:none;
+
+flex-direction:column;
+
+box-shadow:
+0 10px 40px rgba(0,0,0,.2);
+
+z-index:9999;
+}
+
+/* ===================================
+HEADER
+=================================== */
+
+.chat-header{
+
+background:
+linear-gradient(
+135deg,
+#d4af37,
+#b68c1c
+);
+
+padding:20px;
+
+color:white;
+
+text-align:center;
+}
+
+.chat-header h2{
+
+font-size:20px;
+margin-bottom:6px;
+}
+
+.chat-header p{
+
+font-size:13px;
+opacity:.95;
+}
+
+/* ===================================
+MESSAGES
+=================================== */
+
+#chat-messages{
+
+flex:1;
+
+overflow-y:auto;
+
+padding:15px;
+
+display:flex;
+flex-direction:column;
+
+gap:14px;
+
+background:
+linear-gradient(
+to bottom,
+#fff,
+#fff7fa
+);
+}
+
+.message{
+
+max-width:90%;
+
+padding:14px 18px;
+
+border-radius:18px;
+
+font-size:14px;
+
+line-height:1.9;
+
+white-space:pre-wrap;
+
+word-break:break-word;
+
+animation:fade .3s ease;
+}
+
+.user-msg{
+
+align-self:flex-start;
+
+background:#ececec;
+
+color:#222;
+
+border-bottom-left-radius:5px;
+}
+
+.bot-msg{
+
+align-self:flex-end;
+
+background:
+linear-gradient(
+135deg,
+#d4af37,
+#b68c1c
+);
+
+color:white;
+
+border-bottom-right-radius:5px;
+}
+
+@keyframes fade{
+
+from{
+opacity:0;
+transform:translateY(10px);
+}
+
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+/* ===================================
+INPUT AREA
+=================================== */
+
+.chat-input{
+
+display:flex;
+
+gap:10px;
+
+padding:15px;
+
+border-top:1px solid #eee;
+
+background:white;
+}
+
+#user-input{
+
+flex:1;
+
+padding:13px 15px;
+
+border-radius:25px;
+
+border:1px solid #ddd;
+
+outline:none;
+
+font-size:14px;
+}
+
+#send-btn,
+#mic-btn,
+#cam-btn{
+
+width:45px;
+height:45px;
+
+border:none;
+
+border-radius:50%;
+
+background:var(--gold);
+
+color:white;
+
+cursor:pointer;
+
+font-size:18px;
+
+transition:.25s;
+}
+
+#send-btn:hover,
+#mic-btn:hover,
+#cam-btn:hover{
+
+transform:scale(1.08);
+}
+
+/* ===================================
+CAMERA
+=================================== */
+
+#camera-overlay{
+
+position:fixed;
+
+inset:0;
+
+background:rgba(0,0,0,.92);
+
+display:none;
+
+flex-direction:column;
+
+justify-content:center;
+
+align-items:center;
+
+z-index:999999;
+}
+
+video{
+
+width:90%;
+max-width:420px;
+
+border-radius:20px;
+
+border:3px solid var(--gold);
+}
+
+.cam-buttons{
+
+display:flex;
+
+gap:15px;
+
+margin-top:25px;
+}
+
+.cam-buttons button{
+
+padding:13px 24px;
+
+border:none;
+
+border-radius:25px;
+
+cursor:pointer;
+
+font-weight:bold;
+
+background:var(--gold);
+
+color:white;
+}
+
+/* ===================================
+MOBILE
+=================================== */
+
+@media(max-width:600px){
+
+#chat-box{
+
+width:100vw;
+height:100vh;
+
+max-height:100vh;
+
+right:0;
+bottom:0;
+
+border-radius:0;
+}
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- AI GIRL -->
+
+<div id="chat-circle">
+
+<img
+src="https://i.imgur.com/ZF6s192.png"
+alt="RoyalMind AI"
+/>
+
+</div>
+
+<!-- CHAT -->
+
+<div id="chat-box">
+
+<div class="chat-header">
+
+<h2>
+✨ RoyalMind
+</h2>
+
+<p>
+أنا حبيبتكم Royal Elchim 💛
+التي تستجيب لرغباتكم الجمالية
+</p>
+
+</div>
+
+<div id="chat-messages">
+
+<div class="message bot-msg">
+
+مرحباً بكِ ✨
+
+أنا RoyalMind...
+
+خبيرتكِ في:
+
+• العطور الفاخرة  
+• الجمال  
+• تحليل الوجه  
+• الطاقة الأنثوية  
+• الفخامة الراقية  
+
+يمكنكِ الكتابة...
+أو استخدام الكاميرا للتحليل 💛
+
+</div>
+
+</div>
+
+<div class="chat-input">
+
+<button id="cam-btn">
+📷
+</button>
+
+<button id="mic-btn">
+🎤
+</button>
+
+<input
+type="text"
+id="user-input"
+placeholder="اسألي RoyalMind..."
+/>
+
+<button id="send-btn">
+➤
+</button>
+
+</div>
+
+</div>
+
+<!-- CAMERA -->
+
+<div id="camera-overlay">
+
+<video
+id="video"
+autoplay
+playsinline
+></video>
+
+<div class="cam-buttons">
+
+<button id="capture-btn">
+التقاط وتحليل
+</button>
+
+<button id="close-cam">
+إغلاق
+</button>
+
+</div>
+
+<canvas
+id="canvas"
+style="display:none;"
+></canvas>
+
+</div>
+
+<script>
+
+const API_URL =
+"https://royalmind-api-production-2448.up.railway.app/chat";
+
+const chatCircle =
+document.getElementById("chat-circle");
+
+const chatBox =
+document.getElementById("chat-box");
+
+const sendBtn =
+document.getElementById("send-btn");
+
+const userInput =
+document.getElementById("user-input");
+
+const chatMessages =
+document.getElementById("chat-messages");
+
+const micBtn =
+document.getElementById("mic-btn");
+
+const camBtn =
+document.getElementById("cam-btn");
+
+const cameraOverlay =
+document.getElementById("camera-overlay");
+
+const video =
+document.getElementById("video");
+
+const canvas =
+document.getElementById("canvas");
+
+/* ===================================
+OPEN CHAT
+=================================== */
+
+chatCircle.onclick=()=>{
+
+chatBox.style.display=
+chatBox.style.display==="flex"
+?"none"
+:"flex";
+};
+
+/* ===================================
+MESSAGES
+=================================== */
+
+function appendMessage(
+text,
+className
+){
+
+const msg=
+document.createElement("div");
+
+msg.className=
+`message ${className}`;
+
+msg.innerHTML=text
+.replace(/\n/g,"<br>")
+.replace(
+/\*\*(.*?)\*\*/g,
+"<b>$1</b>"
+);
+
+chatMessages.appendChild(msg);
+
+setTimeout(()=>{
+
+chatMessages.scrollTop=
+chatMessages.scrollHeight;
+
+},100);
+}
+
+/* ===================================
+SEND MESSAGE
+=================================== */
+
+async function sendMessage(
+text=null,
+image=null
+){
+
+const messageText=
+text||
+userInput.value.trim();
+
+if(!messageText && !image)
+return;
+
+if(messageText && !image){
+
+appendMessage(
+messageText,
+"user-msg"
+);
+
+userInput.value="";
+}
+
+try{
+
+const response=
+await fetch(
+API_URL,
+{
+method:"POST",
+
+headers:{
+"Content-Type":
+"application/json"
+},
+
+body:JSON.stringify({
+
+text:
+messageText||
+"تحليل صورة",
+
+image:image,
+
+user_id:"web_user"
+})
+}
+);
+
+const data=
+await response.json();
+
+if(data.answer){
+
+appendMessage(
+data.answer,
+"bot-msg"
+);
+
+}else{
+
+appendMessage(
+"حدث خطأ بالسيرفر",
+"bot-msg"
+);
+}
+
+}catch(err){
+
+appendMessage(
+"تعذر الاتصال بالسيرفر",
+"bot-msg"
+);
+}
+}
+
+/* ===================================
+SEND EVENTS
+=================================== */
+
+sendBtn.onclick=()=>{
+
+sendMessage();
+};
+
+userInput.addEventListener(
+"keypress",
+(e)=>{
+
+if(e.key==="Enter"){
+
+sendMessage();
+}
+}
+);
+
+/* ===================================
+CAMERA
+=================================== */
+
+camBtn.onclick=async()=>{
+
+cameraOverlay.style.display=
+"flex";
+
+try{
+
+const stream=
+await navigator
+.mediaDevices
+.getUserMedia({
+video:true
+});
+
+video.srcObject=stream;
+
+}catch(e){
+
+alert(
+"اسمحي بالكاميرا"
+);
+}
+};
+
+document
+.getElementById("close-cam")
+.onclick=()=>{
+
+cameraOverlay.style.display=
+"none";
+
+const stream=
+video.srcObject;
+
+if(stream){
+
+stream
+.getTracks()
+.forEach(
+t=>t.stop()
+);
+}
+};
+
+document
+.getElementById("capture-btn")
+.onclick=async()=>{
+
+canvas.width=
+video.videoWidth;
+
+canvas.height=
+video.videoHeight;
+
+canvas
+.getContext("2d")
+.drawImage(
+video,
+0,
+0
+);
+
+const imageData=
+canvas.toDataURL(
+"image/jpeg",
+0.9
+);
+
+cameraOverlay.style.display=
+"none";
+
+const stream=
+video.srcObject;
+
+if(stream){
+
+stream
+.getTracks()
+.forEach(
+t=>t.stop()
+);
+}
+
+appendMessage(
+"✨ جاري التحليل...",
+"user-msg"
+);
+
+await sendMessage(
+null,
+imageData
+);
+};
+
+/* ===================================
+VOICE
+=================================== */
+
+const SpeechRecognition=
+window.SpeechRecognition||
+window.webkitSpeechRecognition;
+
+if(SpeechRecognition){
+
+const recognition=
+new SpeechRecognition();
+
+recognition.lang="ar-SA";
+
+micBtn.onclick=()=>{
+
+recognition.start();
+};
+
+recognition.onresult=
+(event)=>{
+
+userInput.value=
+event.results[0][0]
+.transcript;
+
+sendMessage();
+};
+}
+
+</script>
+
+</body>
+
+</html>
+```
