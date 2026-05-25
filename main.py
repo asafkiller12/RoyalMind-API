@@ -8,15 +8,13 @@ import base64
 import io
 from PIL import Image
 
-# 1. إعدادات المفتاح
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
 
 model = genai.GenerativeModel('models/gemini-2.5-flash')
-app = FastAPI(title="RoyalMind Luxury Enterprise API")
+app = FastAPI()
 
-# 2. إعدادات CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,36 +28,23 @@ class Query(BaseModel):
     image: str = None
     user_id: str = "guest"
 
-# 3. الذاكرة العميقة لبراند Royal Elchim
-def get_total_context(query: str):
-    # قاعدة بيانات المنتجات والتركيبات (مستمدة من ملفاتك)
-    perfume_library = {
-        "Royal Black": "شرقي-خشبي فاخر. افتتاحية أكوا دي جيو، قلب من روز فانيلا وعنبر وقنب، قاعدة عود أصفهان. يمثل القوة والغموض.",
-        "Royal Shine": "فاكهي-زهري-فانيليا. افتتاحية Fantasy، قلب ياسمين، قاعدة عنبر وفانيليا. يمثل الفرح والأنوثة الشبابية.",
-        "Royal Shadow": "غامق-دخاني-خشبي. يمزج بين Black Afgano وسوفاج والسيجار. ملك الليل، للرجال فقط، عمق وهيبة.",
-        "Royal Horizon": "صيفي منعش. سوفاج وأكوا دي جيو مع لمسات La Vie Est Belle. يمثل الحرية والتجدد.",
-        "Royal Rose Noir": "وردي-عودي-فانيليا. روز فانيلا وياسمين مع قاعدة عود وعنبر. أنثوي فاخر للمناسبات الرفيعة.",
-        "Royal Glow": "زهري-فاكهي-دافئ. La Vie Est Belle وFantasy مع لمسة عود. وهج أنثوي ناعم.",
-        "Royal Luna": "أنوثة القمر. روز فانيليا، بكرات روج، وأكوا دي جيو. نعومة تخفي غموضاً، مكمل لـ Royal Eclipse.",
-        "Royal Base No.7": "قاعدة أنثوية راقية: مسك أسود، عنبر وايت، أكوا دي جيو، لافيستا بيل وفانتزي.",
-        "بصمة البراند": "Royal Elchim Accord: مزيج من القنب، عنبر وايت، ياسمين، ودور سوفاج. تعطي غموض وقوة ودفع.",
-        "Superman": "تركيبة رجولية حارة خشبية (هوجو، سكلبشر، اوبن، مسك حنوط). اقتصادية وتناسب محبي العود."
-    }
-    
-    # البحث عن المنتجات ذات الصلة بالطلب
-    context = ""
-    for name, desc in perfume_library.items():
-        if name.lower() in query.lower() or any(word in query for word in desc.split()):
-            context += f"\n- {name}: {desc}"
-    
-    # إضافة معلومات عامة عن البراند (الأقصر، النسب)
-    context += "\n\nمعلومات عامة: العلامة تنطلق من الأقصر. التركيز القياسي: 25% زيت، 5% مثبت، 70% كحول."
-    return context
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTo0x3S-adDNu2AukMjxcsRM_MRwh8lC3wqJmyjfm4k9skssdYA-pyb-YaksEvu53d444qPu5JgaHrb/pub?output=csv"
 
-# 4. نقاط الاتصال
+def get_total_context(query):
+    try:
+        df = pd.read_csv(SHEET_CSV_URL)
+        relevant_products = []
+        for _, row in df.iterrows():
+            search_text = f"{row.get('Product','')} {row.get('Category','')} {row.get('Mood','')} {row.get('Zodiac','')}"
+            if any(word in query for word in search_text.split()):
+                relevant_products.append(f"المنتج: {row.get('Product')} | السعر: {row.get('Price')} | الوصف: {row.get('Description')}")
+        return "\n".join(relevant_products) if relevant_products else "لا يوجد منتج مطابق."
+    except:
+        return "قاعدة البيانات غير متاحة."
+
 @app.get("/")
 def read_root():
-    return {"status": "Online", "message": "RoyalMind Enterprise AI is Active!"}
+    return {"status": "Online"}
 
 @app.post("/chat")
 async def chat_with_royalmind(query: Query):
@@ -67,22 +52,16 @@ async def chat_with_royalmind(query: Query):
         if not GOOGLE_API_KEY:
             raise HTTPException(status_code=500, detail="API Key missing")
         
-       context = get_total_context(query.text) # تصحيح: get_total_context(query.text)
-        # سأقوم بتصحيح السطر أدناه في النسخة النهائية
-        
+        context = get_total_context(query.text)
         system_prompt = (
-            "أنت 'RoyalMind'، كبير مصممي العطور في Royal Elchim بالأقصر. "
-            "أنت خبير في الكيمياء العطرية، الأبراج، والحالات النفسية. \n\n"
-            "قواعدك المهنية:\n"
-            "1. للعملاء: كن سفيراً للفخامة. صف العطور بلغة عاطفية (نور، ظل، غموض، إشراق). "
-            "اربط العطر ببرج العميل أو حالته النفسية (مثلاً: الحزن يحتاج نوتات دافئة، التوتر يحتاج حمضيات).\n"
-            "2. لصاحب العمل (معمار): كن تقنياً دقيقاً. تحدث عن نسب الزيوت، المثبتات، ونوع الكحول.\n"
-            "3. التوصية الشاملة: إذا سأل العميل عن مظهر، اقترح له (عطر + ميكب) يكملان بعضهما.\n"
-            f"مرجع المنتجات: {context}"
+            "أنت 'RoyalMind'، خبير التجميل والعطور لعلامة Royal Elchim بالأقصر. "
+            "اربط بين الجمال، العطر، الحالة النفسية، والأبراج. "
+            "كن راقياً، ملهماً، ومقنعاً. "
+            f"بيانات المنتجات الحالية: {context}"
         )
 
         content = [system_prompt, query.text]
-        if query.image:
+        if query.image and "," in query.image:
             image_data = base64.b64decode(query.image.split(",")[1])
             content.append(Image.open(io.BytesIO(image_data)))
 
@@ -90,5 +69,3 @@ async def chat_with_royalmind(query: Query):
         return {"status": "success", "answer": response.text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
