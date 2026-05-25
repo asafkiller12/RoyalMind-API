@@ -1,10 +1,9 @@
-```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
 <head>
 
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 
 <meta
 name="viewport"
@@ -26,7 +25,6 @@ rel="stylesheet"
 --gold2:#b68c1c;
 --dark:#111;
 --light:#fff;
---bg:#fff8fb;
 }
 
 *{
@@ -54,9 +52,9 @@ height:100vh;
 overflow:hidden;
 }
 
-/* =========================
+/* ===================================
 AI GIRL BUTTON
-========================= */
+=================================== */
 
 #chat-circle{
 
@@ -74,7 +72,7 @@ overflow:hidden;
 
 cursor:pointer;
 
-z-index:999999;
+z-index:99999;
 
 border:3px solid var(--gold);
 
@@ -87,8 +85,7 @@ transition:.35s;
 #chat-circle:hover{
 
 transform:
-scale(1.08)
-rotate(2deg);
+scale(1.08);
 }
 
 #chat-circle img{
@@ -99,9 +96,9 @@ height:100%;
 object-fit:cover;
 }
 
-/* =========================
+/* ===================================
 CHAT BOX
-========================= */
+=================================== */
 
 #chat-box{
 
@@ -129,12 +126,12 @@ flex-direction:column;
 box-shadow:
 0 15px 50px rgba(0,0,0,.22);
 
-z-index:99999;
+z-index:9999;
 }
 
-/* =========================
+/* ===================================
 HEADER
-========================= */
+=================================== */
 
 .chat-header{
 
@@ -151,53 +148,25 @@ linear-gradient(
 #b68c1c,
 #e4c35a
 );
-
-position:relative;
-}
-
-.chat-header::after{
-
-content:"";
-
-position:absolute;
-
-inset:0;
-
-background:
-linear-gradient(
-to bottom,
-rgba(255,255,255,.12),
-transparent
-);
 }
 
 .chat-header h2{
 
-font-size:23px;
+font-size:24px;
 
 margin-bottom:8px;
-
-position:relative;
-
-z-index:2;
 }
 
 .chat-header p{
 
 font-size:13px;
 
-line-height:1.8;
-
-opacity:.97;
-
-position:relative;
-
-z-index:2;
+line-height:1.9;
 }
 
-/* =========================
+/* ===================================
 MESSAGES
-========================= */
+=================================== */
 
 #chat-messages{
 
@@ -267,9 +236,6 @@ linear-gradient(
 color:white;
 
 border-bottom-right-radius:8px;
-
-box-shadow:
-0 6px 20px rgba(212,175,55,.25);
 }
 
 @keyframes fade{
@@ -291,9 +257,9 @@ translateY(0);
 }
 }
 
-/* =========================
+/* ===================================
 INPUT AREA
-========================= */
+=================================== */
 
 .chat-input{
 
@@ -355,9 +321,6 @@ cursor:pointer;
 font-size:18px;
 
 transition:.25s;
-
-box-shadow:
-0 5px 15px rgba(212,175,55,.3);
 }
 
 #send-btn:hover,
@@ -367,9 +330,9 @@ box-shadow:
 transform:scale(1.08);
 }
 
-/* =========================
+/* ===================================
 CAMERA
-========================= */
+=================================== */
 
 #camera-overlay{
 
@@ -387,7 +350,7 @@ justify-content:center;
 
 align-items:center;
 
-z-index:9999999;
+z-index:999999;
 }
 
 video{
@@ -398,9 +361,6 @@ max-width:430px;
 border-radius:25px;
 
 border:3px solid var(--gold);
-
-box-shadow:
-0 0 35px rgba(212,175,55,.35);
 }
 
 .cam-buttons{
@@ -436,9 +396,9 @@ color:white;
 font-family:"Tajawal";
 }
 
-/* =========================
-SCROLLBAR
-========================= */
+/* ===================================
+SCROLL
+=================================== */
 
 #chat-messages::-webkit-scrollbar{
 
@@ -452,9 +412,9 @@ background:#d4af37;
 border-radius:10px;
 }
 
-/* =========================
+/* ===================================
 MOBILE
-========================= */
+=================================== */
 
 @media(max-width:600px){
 
@@ -470,12 +430,6 @@ bottom:0;
 
 border-radius:0;
 }
-
-#chat-circle{
-
-width:85px;
-height:85px;
-}
 }
 
 </style>
@@ -484,9 +438,9 @@ height:85px;
 
 <body>
 
-<!-- =========================
-AI GIRL BUTTON
-========================= -->
+<!-- ===================================
+AI GIRL
+=================================== -->
 
 <div id="chat-circle">
 
@@ -497,9 +451,9 @@ alt="RoyalMind AI"
 
 </div>
 
-<!-- =========================
-CHAT BOX
-========================= -->
+<!-- ===================================
+CHAT
+=================================== -->
 
 <div id="chat-box">
 
@@ -564,9 +518,9 @@ placeholder="اسألي RoyalMind..."
 
 </div>
 
-<!-- =========================
+<!-- ===================================
 CAMERA
-========================= -->
+=================================== -->
 
 <div id="camera-overlay">
 
@@ -630,9 +584,9 @@ document.getElementById("video");
 const canvas =
 document.getElementById("canvas");
 
-/* =========================
+/* ===================================
 OPEN CHAT
-========================= */
+=================================== */
 
 chatCircle.onclick=()=>{
 
@@ -642,9 +596,9 @@ chatBox.style.display==="flex"
 :"flex";
 };
 
-/* =========================
-APPEND MESSAGE
-========================= */
+/* ===================================
+ADD MESSAGE
+=================================== */
 
 function appendMessage(
 text,
@@ -674,9 +628,9 @@ chatMessages.scrollHeight;
 },100);
 }
 
-/* =========================
+/* ===================================
 SEND MESSAGE
-========================= */
+=================================== */
 
 async function sendMessage(
 text=null,
@@ -754,9 +708,9 @@ appendMessage(
 }
 }
 
-/* =========================
+/* ===================================
 SEND EVENTS
-========================= */
+=================================== */
 
 sendBtn.onclick=()=>{
 
@@ -774,9 +728,9 @@ sendMessage();
 }
 );
 
-/* =========================
+/* ===================================
 CAMERA
-========================= */
+=================================== */
 
 camBtn.onclick=async()=>{
 
@@ -862,7 +816,7 @@ t=>t.stop()
 }
 
 appendMessage(
-"✨ جاري تحليل الطاقة الجمالية...",
+"✨ جاري تحليل الإطلالة...",
 "user-msg"
 );
 
@@ -872,9 +826,9 @@ imageData
 );
 };
 
-/* =========================
-VOICE RECOGNITION
-========================= */
+/* ===================================
+VOICE
+=================================== */
 
 const SpeechRecognition=
 window.SpeechRecognition||
@@ -908,4 +862,4 @@ sendMessage();
 </body>
 
 </html>
-```
+
