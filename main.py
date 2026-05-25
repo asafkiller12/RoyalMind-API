@@ -1,13 +1,17 @@
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+
 import google.generativeai as genai
 import pandas as pd
+
 import os
 import io
 import base64
 import logging
+
 from functools import lru_cache
 from PIL import Image
 
@@ -29,7 +33,9 @@ logger = logging.getLogger("RoyalMind")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 if not GOOGLE_API_KEY:
-    raise RuntimeError("GOOGLE_API_KEY environment variable is missing")
+    raise RuntimeError(
+        "GOOGLE_API_KEY environment variable is missing"
+    )
 
 genai.configure(api_key=GOOGLE_API_KEY)
 
@@ -38,24 +44,24 @@ MODEL_NAME = "gemini-1.5-flash"
 model = genai.GenerativeModel(MODEL_NAME)
 
 # =========================================================
-# FASTAPI
+# FASTAPI APP
 # =========================================================
 
 app = FastAPI(
     title="RoyalMind Enterprise API",
-    version="2.0.0"
+    version="3.0.0"
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # غيّرها في الإنتاج
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # =========================================================
-# DATA MODELS
+# REQUEST MODEL
 # =========================================================
 
 class Query(BaseModel):
@@ -110,13 +116,13 @@ BRAND_SIGNATURES = {
 
 BRAND_LOGIC = {
     "صباحي":
-        "حمضيات وزهور خفيفة تمنح النشاط.",
+        "عطور حمضية وزهور خفيفة تمنح النشاط.",
 
     "مسائي":
-        "عنبر وأخشاب ومسك لهيبة أعمق.",
+        "عطور عنبر وأخشاب ومسك لهيبة أعمق.",
 
     "برج":
-        "العطر يُربط بطاقة الأبراج والجاذبية.",
+        "العطر مرتبط بطاقة الأبراج والجاذبية.",
 
     "حالة نفسية":
         "العطر يعكس المزاج والطاقة.",
@@ -129,7 +135,7 @@ BRAND_LOGIC = {
 }
 
 # =========================================================
-# CACHE SHEETS
+# CACHE GOOGLE SHEETS
 # =========================================================
 
 @lru_cache(maxsize=10)
@@ -145,12 +151,12 @@ def load_sheet(url: str):
 
     except Exception as e:
 
-        logger.error(f"Failed loading sheet: {e}")
+        logger.error(f"Sheet loading failed: {e}")
 
         return pd.DataFrame()
 
 # =========================================================
-# CONTEXT ENGINE
+# BRAND SEARCH
 # =========================================================
 
 def search_brand_knowledge(query: str):
@@ -163,8 +169,10 @@ def search_brand_knowledge(query: str):
 
         if (
             name.lower() in query_lower
-            or any(word.lower() in query_lower
-                   for word in desc.split())
+            or any(
+                word.lower() in query_lower
+                for word in desc.split()
+            )
         ):
 
             results.append(f"{name}: {desc}")
@@ -178,12 +186,14 @@ def search_brand_knowledge(query: str):
     return results
 
 # =========================================================
+# GOOGLE SHEETS SEARCH
+# =========================================================
 
 def search_cloud_data(query: str):
 
-    query_words = query.lower().split()
-
     matches = []
+
+    query_words = query.lower().split()
 
     for source_name, url in DATA_SOURCES.items():
 
@@ -194,11 +204,16 @@ def search_cloud_data(query: str):
 
         for _, row in df.iterrows():
 
-            row_text = " ".join(map(str, row.values))
+            row_text = " ".join(
+                map(str, row.values)
+            )
 
             row_lower = row_text.lower()
 
-            if any(word in row_lower for word in query_words):
+            if any(
+                word in row_lower
+                for word in query_words
+            ):
 
                 matches.append(
                     f"[{source_name}] {row_text}"
@@ -208,6 +223,8 @@ def search_cloud_data(query: str):
 
     return matches
 
+# =========================================================
+# CONTEXT BUILDER
 # =========================================================
 
 def build_context(query: str):
@@ -228,14 +245,32 @@ def build_context(query: str):
 # IMAGE PROCESSOR
 # =========================================================
 
-def process_image(image_base64: str):
+def process_image(image_base64: Optional[str]):
 
     try:
+
+        if not image_base64:
+            return None
+
+        if image_base64 == "string":
+            return None
+
+        if len(image_base64) < 100:
+            return None
 
         if "," in image_base64:
             image_base64 = image_base64.split(",")[1]
 
-        image_data = base64.b64decode(image_base64)
+        image_data = base64.b64decode(
+            image_base64,
+            validate=True
+        )
+
+        image = Image.open(
+            io.BytesIO(image_data)
+        )
+
+        image.verify()
 
         image = Image.open(
             io.BytesIO(image_data)
@@ -245,12 +280,9 @@ def process_image(image_base64: str):
 
     except Exception as e:
 
-        logger.error(f"Image processing failed: {e}")
+        logger.error(f"Invalid image: {e}")
 
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid image format"
-        )
+        return None
 
 # =========================================================
 # PROMPT ENGINE
@@ -265,26 +297,26 @@ def build_system_prompt(context: str):
 - العطور النيش
 - الجمال
 - الطاقة النفسية
-- الربط بين العطر والشخصية
+- الفخامة الراقية
 
 قواعدك:
 
-1. اربط العطر بالمزاج والطاقة.
+1. اربط العطر بالحالة النفسية.
 2. اربط العطر بتوقيت اليوم.
-3. وضّح الثبات والفوحان.
-4. تحدث بأسلوب راقٍ وفخم.
+3. وضّح الفوحان والثبات.
+4. تحدث بأسلوب راقٍ ومقنع.
 5. إذا وُجدت صورة:
    - حلل الملامح والبشرة
-   - اقترح ميكب وعطر مناسب
+   - اقترح عطر وميكب مناسب
 6. لا تعطِ إجابات سطحية.
-7. كن مقنعاً واحترافياً.
+7. كن احترافياً ومفصلاً.
 
 المرجع المعرفي:
 {context}
 """
 
 # =========================================================
-# ROUTES
+# ROOT ROUTE
 # =========================================================
 
 @app.get("/")
@@ -297,6 +329,8 @@ def root():
     }
 
 # =========================================================
+# HEALTH CHECK
+# =========================================================
 
 @app.get("/health")
 def health():
@@ -306,6 +340,8 @@ def health():
     }
 
 # =========================================================
+# CHAT ENDPOINT
+# =========================================================
 
 @app.post("/chat")
 async def chat(query: Query):
@@ -313,27 +349,28 @@ async def chat(query: Query):
     try:
 
         logger.info(
-            f"New request from: {query.user_id}"
+            f"New request from user: {query.user_id}"
         )
 
         context = build_context(query.text)
 
-        system_prompt = build_system_prompt(context)
+        system_prompt = build_system_prompt(
+            context
+        )
 
         content = [
             system_prompt,
             query.text
         ]
 
-        # IMAGE SUPPORT
-        if query.image:
+        image = process_image(query.image)
 
-            image = process_image(query.image)
-
+        if image:
             content.append(image)
 
-        # GEMINI RESPONSE
-        response = model.generate_content(content)
+        response = model.generate_content(
+            content
+        )
 
         answer = response.text.strip()
 
@@ -348,7 +385,9 @@ async def chat(query: Query):
 
     except Exception as e:
 
-        logger.exception("Chat endpoint failed")
+        logger.exception(
+            "Chat endpoint failed"
+        )
 
         raise HTTPException(
             status_code=500,
@@ -356,8 +395,7 @@ async def chat(query: Query):
         )
 
 # =========================================================
-# START MESSAGE
+# STARTUP LOG
 # =========================================================
 
 logger.info("RoyalMind API Started")
- 
