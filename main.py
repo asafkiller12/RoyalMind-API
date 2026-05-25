@@ -1,10 +1,13 @@
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
+
+from PIL import Image
+
 import pandas as pd
 
 import os
@@ -12,8 +15,7 @@ import io
 import base64
 import logging
 
-from functools import lru_cache
-from PIL import Image
+from cachetools import TTLCache
 
 # =========================================================
 # LOGGING
@@ -21,35 +23,35 @@ from PIL import Image
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    format="%(asctime)s | %(levelname)s | %(message)s"
 )
 
 logger = logging.getLogger("RoyalMind")
 
 # =========================================================
-# GEMINI CONFIG
+# GEMINI CLIENT
 # =========================================================
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 if not GOOGLE_API_KEY:
     raise RuntimeError(
-        "GOOGLE_API_KEY environment variable is missing"
+        "GOOGLE_API_KEY is missing"
     )
 
-genai.configure(api_key=GOOGLE_API_KEY)
+client = genai.Client(
+    api_key=GOOGLE_API_KEY
+)
 
-MODEL_NAME = "gemini-1.5-flash"
-
-model = genai.GenerativeModel(MODEL_NAME)
+MODEL_NAME = "gemini-2.5-flash"
 
 # =========================================================
-# FASTAPI APP
+# FASTAPI
 # =========================================================
 
 app = FastAPI(
-    title="RoyalMind Enterprise API",
-    version="3.0.0"
+    title="RoyalMind Enterprise",
+    version="5.0"
 )
 
 app.add_middleware(
@@ -70,7 +72,7 @@ class Query(BaseModel):
     user_id: str = "guest"
 
 # =========================================================
-# CLOUD DATA SOURCES
+# DATA SOURCES
 # =========================================================
 
 DATA_SOURCES = {
@@ -82,68 +84,46 @@ DATA_SOURCES = {
 }
 
 # =========================================================
+# CACHE
+# =========================================================
+
+sheet_cache = TTLCache(
+    maxsize=10,
+    ttl=300
+)
+
+# =========================================================
 # BRAND KNOWLEDGE
 # =========================================================
 
 BRAND_SIGNATURES = {
     "Royal Black":
-        "شرقي خشبي فاخر. أكوا دي جيو، روز فانيلا، عنبر، قنب، عود أصفهان.",
-
-    "Royal Shine":
-        "فاكهي زهري فانيليا. أنوثة شبابية مبهجة.",
+        "شرقي خشبي فاخر بعنبر وعود وقنب.",
 
     "Royal Shadow":
-        "غامق دخاني خشبي. سوفاج + بلاك أفغانو + سيجار.",
-
-    "Royal Horizon":
-        "صيفي منعش. سوفاج وأكوا دي جيو.",
-
-    "Royal Rose Noir":
-        "وردي عودي فانيليا للمناسبات الراقية.",
-
-    "Royal Glow":
-        "زهري فاكهي دافئ بلمسة عود.",
+        "دخاني غامق وهيبة ليلية.",
 
     "Royal Luna":
-        "أنوثة ناعمة غامضة.",
+        "أنوثة ناعمة وغموض قمري.",
 
-    "Royal Base No.7":
-        "قاعدة أنثوية راقية بمسك وعنبر وفانتزي.",
-
-    "Royal Elchim Accord":
-        "القنب + العنبر الأبيض + الياسمين + سوفاج."
-}
-
-BRAND_LOGIC = {
-    "صباحي":
-        "عطور حمضية وزهور خفيفة تمنح النشاط.",
-
-    "مسائي":
-        "عطور عنبر وأخشاب ومسك لهيبة أعمق.",
-
-    "برج":
-        "العطر مرتبط بطاقة الأبراج والجاذبية.",
-
-    "حالة نفسية":
-        "العطر يعكس المزاج والطاقة.",
-
-    "نيش":
-        "قطع فنية نادرة وفاخرة.",
-
-    "زيوت":
-        "إمكانية التحكم في نسب التركيز والثبات."
+    "Royal Horizon":
+        "انتعاش صيفي فاخر."
 }
 
 # =========================================================
-# CACHE GOOGLE SHEETS
+# LOAD SHEET
 # =========================================================
 
-@lru_cache(maxsize=10)
 def load_sheet(url: str):
+
+    if url in sheet_cache:
+        return sheet_cache[url]
 
     try:
 
         df = pd.read_csv(url).fillna("")
+
+        sheet_cache[url] = df
 
         logger.info(f"Loaded sheet: {url}")
 
@@ -151,20 +131,21 @@ def load_sheet(url: str):
 
     except Exception as e:
 
-        logger.error(f"Sheet loading failed: {e}")
+        logger.error(f"Sheet Error: {e}")
 
         return pd.DataFrame()
 
 # =========================================================
-# BRAND SEARCH
+# CONTEXT ENGINE
 # =========================================================
 
-def search_brand_knowledge(query: str):
+def build_context(query: str):
 
     results = []
 
     query_lower = query.lower()
 
+    # brand knowledge
     for name, desc in BRAND_SIGNATURES.items():
 
         if (
@@ -175,26 +156,11 @@ def search_brand_knowledge(query: str):
             )
         ):
 
-            results.append(f"{name}: {desc}")
+            results.append(
+                f"{name}: {desc}"
+            )
 
-    for key, value in BRAND_LOGIC.items():
-
-        if key.lower() in query_lower:
-
-            results.append(f"{key}: {value}")
-
-    return results
-
-# =========================================================
-# GOOGLE SHEETS SEARCH
-# =========================================================
-
-def search_cloud_data(query: str):
-
-    matches = []
-
-    query_words = query.lower().split()
-
+    # sheets
     for source_name, url in DATA_SOURCES.items():
 
         df = load_sheet(url)
@@ -208,38 +174,16 @@ def search_cloud_data(query: str):
                 map(str, row.values)
             )
 
-            row_lower = row_text.lower()
-
             if any(
-                word in row_lower
-                for word in query_words
+                word.lower() in row_text.lower()
+                for word in query.split()
             ):
 
-                matches.append(
+                results.append(
                     f"[{source_name}] {row_text}"
                 )
 
-        matches = matches[:5]
-
-    return matches
-
-# =========================================================
-# CONTEXT BUILDER
-# =========================================================
-
-def build_context(query: str):
-
-    context_parts = []
-
-    context_parts.extend(
-        search_brand_knowledge(query)
-    )
-
-    context_parts.extend(
-        search_cloud_data(query)
-    )
-
-    return "\n".join(context_parts)
+    return "\n".join(results[:10])
 
 # =========================================================
 # IMAGE PROCESSOR
@@ -261,86 +205,75 @@ def process_image(image_base64: Optional[str]):
         if "," in image_base64:
             image_base64 = image_base64.split(",")[1]
 
-        image_data = base64.b64decode(
-            image_base64,
-            validate=True
+        image_bytes = base64.b64decode(
+            image_base64
         )
 
         image = Image.open(
-            io.BytesIO(image_data)
-        )
-
-        image.verify()
-
-        image = Image.open(
-            io.BytesIO(image_data)
+            io.BytesIO(image_bytes)
         )
 
         return image
 
     except Exception as e:
 
-        logger.error(f"Invalid image: {e}")
+        logger.error(f"Image Error: {e}")
 
         return None
 
 # =========================================================
-# PROMPT ENGINE
+# SYSTEM PROMPT
 # =========================================================
 
-def build_system_prompt(context: str):
+def build_prompt(context: str):
 
     return f"""
 أنت RoyalMind.
 
 مستشار فاخر متخصص في:
 - العطور النيش
-- الجمال
-- الطاقة النفسية
+- تحليل الشخصية
+- الجمال والطاقة
 - الفخامة الراقية
 
 قواعدك:
 
-1. اربط العطر بالحالة النفسية.
-2. اربط العطر بتوقيت اليوم.
-3. وضّح الفوحان والثبات.
-4. تحدث بأسلوب راقٍ ومقنع.
-5. إذا وُجدت صورة:
-   - حلل الملامح والبشرة
-   - اقترح عطر وميكب مناسب
-6. لا تعطِ إجابات سطحية.
-7. كن احترافياً ومفصلاً.
+- اربط العطر بالحالة النفسية
+- اربط العطر بتوقيت اليوم
+- اشرح الثبات والفوحان
+- تحدث بأسلوب فاخر ومقنع
+- لا تكن سطحياً
 
-المرجع المعرفي:
+المرجع:
 {context}
 """
 
 # =========================================================
-# ROOT ROUTE
+# ROOT
 # =========================================================
 
 @app.get("/")
-def root():
+async def root():
 
     return {
         "status": "online",
-        "api": "RoyalMind Enterprise",
-        "model": MODEL_NAME
+        "model": MODEL_NAME,
+        "api": "RoyalMind Enterprise"
     }
 
 # =========================================================
-# HEALTH CHECK
+# HEALTH
 # =========================================================
 
 @app.get("/health")
-def health():
+async def health():
 
     return {
         "status": "healthy"
     }
 
 # =========================================================
-# CHAT ENDPOINT
+# CHAT
 # =========================================================
 
 @app.post("/chat")
@@ -349,45 +282,49 @@ async def chat(query: Query):
     try:
 
         logger.info(
-            f"New request from user: {query.user_id}"
+            f"Request From: {query.user_id}"
         )
 
-        context = build_context(query.text)
+        context = build_context(
+            query.text
+        )
 
-        system_prompt = build_system_prompt(
+        system_prompt = build_prompt(
             context
         )
 
-        content = [
+        parts = [
             system_prompt,
             query.text
         ]
 
-        image = process_image(query.image)
-
-        if image:
-            content.append(image)
-
-        response = model.generate_content(
-            content
+        image = process_image(
+            query.image
         )
 
-        answer = response.text.strip()
+        if image:
+
+            parts.append(image)
+
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=parts,
+            config=types.GenerateContentConfig(
+                temperature=0.9,
+                top_p=0.95,
+                max_output_tokens=2048
+            )
+        )
 
         return {
             "status": "success",
-            "answer": answer,
+            "answer": response.text,
             "model": MODEL_NAME
         }
 
-    except HTTPException:
-        raise
-
     except Exception as e:
 
-        logger.exception(
-            "Chat endpoint failed"
-        )
+        logger.exception("Chat Failed")
 
         raise HTTPException(
             status_code=500,
@@ -395,7 +332,9 @@ async def chat(query: Query):
         )
 
 # =========================================================
-# STARTUP LOG
+# STARTUP
 # =========================================================
 
-logger.info("RoyalMind API Started")
+logger.info(
+    f"RoyalMind Started | Model: {MODEL_NAME}"
+)
