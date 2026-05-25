@@ -13,16 +13,24 @@ content="width=device-width, initial-scale=1.0"
 
 <title>RoyalMind Luxury AI</title>
 
+<link
+href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap"
+rel="stylesheet"
+/>
+
 <style>
 
 :root{
+
 --gold:#d4af37;
+--gold2:#b68c1c;
 --dark:#111;
 --light:#fff;
 --bg:#fff8fb;
 }
 
 *{
+
 margin:0;
 padding:0;
 box-sizing:border-box;
@@ -37,16 +45,18 @@ sans-serif;
 background:
 linear-gradient(
 135deg,
-#fff8fb,
+#fff7fb,
 #fffdf7
 );
 
 height:100vh;
+
+overflow:hidden;
 }
 
-/* ===================================
+/* =========================
 AI GIRL BUTTON
-=================================== */
+========================= */
 
 #chat-circle{
 
@@ -55,8 +65,8 @@ position:fixed;
 bottom:20px;
 right:20px;
 
-width:90px;
-height:90px;
+width:95px;
+height:95px;
 
 border-radius:50%;
 
@@ -64,19 +74,21 @@ overflow:hidden;
 
 cursor:pointer;
 
-z-index:99999;
+z-index:999999;
 
 border:3px solid var(--gold);
 
 box-shadow:
-0 0 25px rgba(212,175,55,.7);
+0 0 35px rgba(212,175,55,.7);
 
-transition:.3s;
+transition:.35s;
 }
 
 #chat-circle:hover{
 
-transform:scale(1.08);
+transform:
+scale(1.08)
+rotate(2deg);
 }
 
 #chat-circle img{
@@ -87,26 +99,26 @@ height:100%;
 object-fit:cover;
 }
 
-/* ===================================
+/* =========================
 CHAT BOX
-=================================== */
+========================= */
 
 #chat-box{
 
 position:fixed;
 
-bottom:120px;
+bottom:125px;
 right:20px;
 
-width:400px;
+width:420px;
 max-width:95vw;
 
-height:700px;
-max-height:90vh;
+height:720px;
+max-height:92vh;
 
 background:white;
 
-border-radius:25px;
+border-radius:30px;
 
 overflow:hidden;
 
@@ -115,46 +127,77 @@ display:none;
 flex-direction:column;
 
 box-shadow:
-0 10px 40px rgba(0,0,0,.2);
+0 15px 50px rgba(0,0,0,.22);
 
-z-index:9999;
+z-index:99999;
 }
 
-/* ===================================
+/* =========================
 HEADER
-=================================== */
+========================= */
 
 .chat-header{
+
+padding:22px;
+
+color:white;
+
+text-align:center;
 
 background:
 linear-gradient(
 135deg,
 #d4af37,
-#b68c1c
+#b68c1c,
+#e4c35a
 );
 
-padding:20px;
+position:relative;
+}
 
-color:white;
+.chat-header::after{
 
-text-align:center;
+content:"";
+
+position:absolute;
+
+inset:0;
+
+background:
+linear-gradient(
+to bottom,
+rgba(255,255,255,.12),
+transparent
+);
 }
 
 .chat-header h2{
 
-font-size:20px;
-margin-bottom:6px;
+font-size:23px;
+
+margin-bottom:8px;
+
+position:relative;
+
+z-index:2;
 }
 
 .chat-header p{
 
 font-size:13px;
-opacity:.95;
+
+line-height:1.8;
+
+opacity:.97;
+
+position:relative;
+
+z-index:2;
 }
 
-/* ===================================
+/* =========================
 MESSAGES
-=================================== */
+========================= */
 
 #chat-messages{
 
@@ -162,17 +205,18 @@ flex:1;
 
 overflow-y:auto;
 
-padding:15px;
+padding:18px;
 
 display:flex;
+
 flex-direction:column;
 
-gap:14px;
+gap:15px;
 
 background:
 linear-gradient(
 to bottom,
-#fff,
+#ffffff,
 #fff7fa
 );
 }
@@ -181,17 +225,19 @@ to bottom,
 
 max-width:90%;
 
-padding:14px 18px;
+padding:15px 18px;
 
-border-radius:18px;
+border-radius:22px;
 
 font-size:14px;
 
-line-height:1.9;
+line-height:2;
 
 white-space:pre-wrap;
 
 word-break:break-word;
+
+overflow-wrap:break-word;
 
 animation:fade .3s ease;
 }
@@ -204,7 +250,7 @@ background:#ececec;
 
 color:#222;
 
-border-bottom-left-radius:5px;
+border-bottom-left-radius:8px;
 }
 
 .bot-msg{
@@ -220,25 +266,34 @@ linear-gradient(
 
 color:white;
 
-border-bottom-right-radius:5px;
+border-bottom-right-radius:8px;
+
+box-shadow:
+0 6px 20px rgba(212,175,55,.25);
 }
 
 @keyframes fade{
 
 from{
+
 opacity:0;
-transform:translateY(10px);
+
+transform:
+translateY(10px);
 }
 
 to{
+
 opacity:1;
-transform:translateY(0);
+
+transform:
+translateY(0);
 }
 }
 
-/* ===================================
+/* =========================
 INPUT AREA
-=================================== */
+========================= */
 
 .chat-input{
 
@@ -248,38 +303,50 @@ gap:10px;
 
 padding:15px;
 
-border-top:1px solid #eee;
-
 background:white;
+
+border-top:1px solid #eee;
 }
 
 #user-input{
 
 flex:1;
 
-padding:13px 15px;
+padding:14px 18px;
 
-border-radius:25px;
+border-radius:30px;
 
 border:1px solid #ddd;
 
 outline:none;
 
 font-size:14px;
+
+font-family:"Tajawal";
+}
+
+#user-input:focus{
+
+border-color:var(--gold);
 }
 
 #send-btn,
 #mic-btn,
 #cam-btn{
 
-width:45px;
-height:45px;
+width:48px;
+height:48px;
 
 border:none;
 
 border-radius:50%;
 
-background:var(--gold);
+background:
+linear-gradient(
+135deg,
+#d4af37,
+#b68c1c
+);
 
 color:white;
 
@@ -288,6 +355,9 @@ cursor:pointer;
 font-size:18px;
 
 transition:.25s;
+
+box-shadow:
+0 5px 15px rgba(212,175,55,.3);
 }
 
 #send-btn:hover,
@@ -297,9 +367,9 @@ transition:.25s;
 transform:scale(1.08);
 }
 
-/* ===================================
+/* =========================
 CAMERA
-=================================== */
+========================= */
 
 #camera-overlay{
 
@@ -307,7 +377,7 @@ position:fixed;
 
 inset:0;
 
-background:rgba(0,0,0,.92);
+background:rgba(0,0,0,.94);
 
 display:none;
 
@@ -317,17 +387,20 @@ justify-content:center;
 
 align-items:center;
 
-z-index:999999;
+z-index:9999999;
 }
 
 video{
 
-width:90%;
-max-width:420px;
+width:92%;
+max-width:430px;
 
-border-radius:20px;
+border-radius:25px;
 
 border:3px solid var(--gold);
+
+box-shadow:
+0 0 35px rgba(212,175,55,.35);
 }
 
 .cam-buttons{
@@ -341,24 +414,47 @@ margin-top:25px;
 
 .cam-buttons button{
 
-padding:13px 24px;
+padding:14px 26px;
 
 border:none;
 
-border-radius:25px;
+border-radius:30px;
 
 cursor:pointer;
 
 font-weight:bold;
 
-background:var(--gold);
+background:
+linear-gradient(
+135deg,
+#d4af37,
+#b68c1c
+);
 
 color:white;
+
+font-family:"Tajawal";
 }
 
-/* ===================================
+/* =========================
+SCROLLBAR
+========================= */
+
+#chat-messages::-webkit-scrollbar{
+
+width:6px;
+}
+
+#chat-messages::-webkit-scrollbar-thumb{
+
+background:#d4af37;
+
+border-radius:10px;
+}
+
+/* =========================
 MOBILE
-=================================== */
+========================= */
 
 @media(max-width:600px){
 
@@ -374,6 +470,12 @@ bottom:0;
 
 border-radius:0;
 }
+
+#chat-circle{
+
+width:85px;
+height:85px;
+}
 }
 
 </style>
@@ -382,18 +484,22 @@ border-radius:0;
 
 <body>
 
-<!-- AI GIRL -->
+<!-- =========================
+AI GIRL BUTTON
+========================= -->
 
 <div id="chat-circle">
 
 <img
-src="https://i.imgur.com/ZF6s192.png"
+src="https://i.imgur.com/fd8Lw5G.jpeg"
 alt="RoyalMind AI"
 />
 
 </div>
 
-<!-- CHAT -->
+<!-- =========================
+CHAT BOX
+========================= -->
 
 <div id="chat-box">
 
@@ -406,6 +512,7 @@ alt="RoyalMind AI"
 <p>
 أنا حبيبتكم Royal Elchim 💛
 التي تستجيب لرغباتكم الجمالية
+وتحلل طاقتكم العطرية والنفسية
 </p>
 
 </div>
@@ -421,13 +528,13 @@ alt="RoyalMind AI"
 خبيرتكِ في:
 
 • العطور الفاخرة  
-• الجمال  
-• تحليل الوجه  
-• الطاقة الأنثوية  
+• تحليل الشخصية  
+• الجمال والطاقة  
+• الهالة الأنثوية  
 • الفخامة الراقية  
 
 يمكنكِ الكتابة...
-أو استخدام الكاميرا للتحليل 💛
+أو استخدام الكاميرا لتحليل الإطلالة 💛
 
 </div>
 
@@ -457,7 +564,9 @@ placeholder="اسألي RoyalMind..."
 
 </div>
 
-<!-- CAMERA -->
+<!-- =========================
+CAMERA
+========================= -->
 
 <div id="camera-overlay">
 
@@ -521,9 +630,9 @@ document.getElementById("video");
 const canvas =
 document.getElementById("canvas");
 
-/* ===================================
+/* =========================
 OPEN CHAT
-=================================== */
+========================= */
 
 chatCircle.onclick=()=>{
 
@@ -533,9 +642,9 @@ chatBox.style.display==="flex"
 :"flex";
 };
 
-/* ===================================
-MESSAGES
-=================================== */
+/* =========================
+APPEND MESSAGE
+========================= */
 
 function appendMessage(
 text,
@@ -565,9 +674,9 @@ chatMessages.scrollHeight;
 },100);
 }
 
-/* ===================================
+/* =========================
 SEND MESSAGE
-=================================== */
+========================= */
 
 async function sendMessage(
 text=null,
@@ -597,6 +706,7 @@ const response=
 await fetch(
 API_URL,
 {
+
 method:"POST",
 
 headers:{
@@ -644,9 +754,9 @@ appendMessage(
 }
 }
 
-/* ===================================
+/* =========================
 SEND EVENTS
-=================================== */
+========================= */
 
 sendBtn.onclick=()=>{
 
@@ -664,9 +774,9 @@ sendMessage();
 }
 );
 
-/* ===================================
+/* =========================
 CAMERA
-=================================== */
+========================= */
 
 camBtn.onclick=async()=>{
 
@@ -687,7 +797,7 @@ video.srcObject=stream;
 }catch(e){
 
 alert(
-"اسمحي بالكاميرا"
+"يرجى السماح بالكاميرا"
 );
 }
 };
@@ -752,7 +862,7 @@ t=>t.stop()
 }
 
 appendMessage(
-"✨ جاري التحليل...",
+"✨ جاري تحليل الطاقة الجمالية...",
 "user-msg"
 );
 
@@ -762,9 +872,9 @@ imageData
 );
 };
 
-/* ===================================
-VOICE
-=================================== */
+/* =========================
+VOICE RECOGNITION
+========================= */
 
 const SpeechRecognition=
 window.SpeechRecognition||
