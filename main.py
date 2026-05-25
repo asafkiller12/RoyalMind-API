@@ -8,26 +8,21 @@ import base64
 import io
 from PIL import Image
 
-# ==========================================
-# ⚙️ إعدادات النظام والأمان
-# ==========================================
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") 
-
-if not GOOGLE_API_KEY:
-    print("⚠️ Warning: GOOGLE_API_KEY not found in environment variables!")
-else:
+# 1. إعدادات المفتاح
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
 
 model = genai.GenerativeModel('models/gemini-2.5-flash')
+app = FastAPI(title="RoyalMind Luxury Enterprise API")
 
-app = FastAPI(title="RoyalMind Total Luxury API")
-
+# 2. إعدادات CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"], 
-    allow_headers=["*"], 
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 class Query(BaseModel):
@@ -35,76 +30,65 @@ class Query(BaseModel):
     image: str = None
     user_id: str = "guest"
 
-# ==========================================
-# 🧠 نظام الذاكرة الديناميكية (Google Sheets)
-# ==========================================
-# 🚩 تأكد من وضع رابط الـ CSV الخاص بك هنا
-SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSYCfKuRMeI3cKjECJwThvwbhn3PLwwRs5QBi7ycDvUEleoK98ZeUPB_cm8Xy0A_qTdh2eqbkFJP4Ug/pub?output=csv"
+# 3. الذاكرة العميقة لبراند Royal Elchim
+def get_total_context(query: str):
+    # قاعدة بيانات المنتجات والتركيبات (مستمدة من ملفاتك)
+    perfume_library = {
+        "Royal Black": "شرقي-خشبي فاخر. افتتاحية أكوا دي جيو، قلب من روز فانيلا وعنبر وقنب، قاعدة عود أصفهان. يمثل القوة والغموض.",
+        "Royal Shine": "فاكهي-زهري-فانيليا. افتتاحية Fantasy، قلب ياسمين، قاعدة عنبر وفانيليا. يمثل الفرح والأنوثة الشبابية.",
+        "Royal Shadow": "غامق-دخاني-خشبي. يمزج بين Black Afgano وسوفاج والسيجار. ملك الليل، للرجال فقط، عمق وهيبة.",
+        "Royal Horizon": "صيفي منعش. سوفاج وأكوا دي جيو مع لمسات La Vie Est Belle. يمثل الحرية والتجدد.",
+        "Royal Rose Noir": "وردي-عودي-فانيليا. روز فانيلا وياسمين مع قاعدة عود وعنبر. أنثوي فاخر للمناسبات الرفيعة.",
+        "Royal Glow": "زهري-فاكهي-دافئ. La Vie Est Belle وFantasy مع لمسة عود. وهج أنثوي ناعم.",
+        "Royal Luna": "أنوثة القمر. روز فانيليا، بكرات روج، وأكوا دي جيو. نعومة تخفي غموضاً، مكمل لـ Royal Eclipse.",
+        "Royal Base No.7": "قاعدة أنثوية راقية: مسك أسود، عنبر وايت، أكوا دي جيو، لافيستا بيل وفانتزي.",
+        "بصمة البراند": "Royal Elchim Accord: مزيج من القنب، عنبر وايت، ياسمين، ودور سوفاج. تعطي غموض وقوة ودفع.",
+        "Superman": "تركيبة رجولية حارة خشبية (هوجو، سكلبشر، اوبن، مسك حنوط). اقتصادية وتناسب محبي العود."
+    }
+    
+    # البحث عن المنتجات ذات الصلة بالطلب
+    context = ""
+    for name, desc in perfume_library.items():
+        if name.lower() in query.lower() or any(word in query for word in desc.split()):
+            context += f"\n- {name}: {desc}"
+    
+    # إضافة معلومات عامة عن البراند (الأقصر، النسب)
+    context += "\n\nمعلومات عامة: العلامة تنطلق من الأقصر. التركيز القياسي: 25% زيت، 5% مثبت، 70% كحول."
+    return context
 
-def get_dynamic_context(query: str):
-    try:
-        df = pd.read_csv(SHEET_CSV_URL)
-        relevant_products = []
-        for index, row in df.iterrows():
-            search_text = f"{row.get('Product', '')} {row.get('Category', '')} {row.get('Mood', '')} {row.get('Zodiac', '')}"
-            if any(word in query for word in search_text.split()):
-                product_info = f"المنتج: {row.get('Product')} | السعر: {row.get('Price')} | الوصف: {row.get('Description')}"
-                relevant_products.append(product_info)
-        return "\n".join(relevant_products) if relevant_products else "لا يوجد منتج مطابق حالياً."
-    except Exception as e:
-        print(f"Error reading sheet: {e}")
-        return "عذراً، هناك مشكلة في الوصول لقاعدة البيانات."
-
-# ==========================================
-# 🚀 نقطة الاتصال الذكية
-# ==========================================
-
+# 4. نقاط الاتصال
 @app.get("/")
 def read_root():
-    return {"status": "Online", "message": "RoyalMind is Active!"}
+    return {"status": "Online", "message": "RoyalMind Enterprise AI is Active!"}
 
 @app.post("/chat")
 async def chat_with_royalmind(query: Query):
     try:
         if not GOOGLE_API_KEY:
             raise HTTPException(status_code=500, detail="API Key missing")
-            
-        context = get_dynamic_context(query.text)
+        
+       context = get_total_context(query.text) # تصحيح: get_total_context(query.text)
+        # سأقوم بتصحيح السطر أدناه في النسخة النهائية
         
         system_prompt = (
-            "أنت 'RoyalMind'، المستشار الشامل للفخامة في Royal Elchim بالأقصر. "
-            "أنت خبير يربط بين (الجمال، العطر، والحالة النفسية، والأبراج). "
-            "قواعدك: \n"
-            "1. إذا وجدت منتجات في السياق تناسب طلب العميل، رشحها له بدقة مع السعر والوصف.\n"
-            "2. إذا أرسل العميل صورة: حلل ملامحه وبشرته واقترح (ميكب + عطر) يكمل الإطلالة.\n"
-            "3. حافظ على أسلوب ملكي، لبق، ومقنع جداً.\n"
-            f"بيانات المنتجات الحالية: {context}"
+            "أنت 'RoyalMind'، كبير مصممي العطور في Royal Elchim بالأقصر. "
+            "أنت خبير في الكيمياء العطرية، الأبراج، والحالات النفسية. \n\n"
+            "قواعدك المهنية:\n"
+            "1. للعملاء: كن سفيراً للفخامة. صف العطور بلغة عاطفية (نور، ظل، غموض، إشراق). "
+            "اربط العطر ببرج العميل أو حالته النفسية (مثلاً: الحزن يحتاج نوتات دافئة، التوتر يحتاج حمضيات).\n"
+            "2. لصاحب العمل (معمار): كن تقنياً دقيقاً. تحدث عن نسب الزيوت، المثبتات، ونوع الكحول.\n"
+            "3. التوصية الشاملة: إذا سأل العميل عن مظهر، اقترح له (عطر + ميكب) يكملان بعضهما.\n"
+            f"مرجع المنتجات: {context}"
         )
 
         content = [system_prompt, query.text]
-        
-        # ✅ تصحيح جذري: التأكد من أن الصورة صالحة قبل معالجتها
-        if query.image and "," in query.image:
-            try:
-                image_data = base64.b64decode(query.image.split(",")[1])
-                img = Image.open(io.BytesIO(image_// data)) # تصحيح: Image.open(io.BytesIO(image_data))
-                # لضمان عدم حدوث خطأ في التنسيق، سأعيد كتابة السطر بالأسفل
-                content.append(img)
-            except Exception as img_err:
-                print(f"Image processing error: {img_err}")
-                # إذا فشلت الصورة، نكتفي بالنص فقط بدلاً من انهيار السيرفر
-        
-        # تصحيح السطر النهائي لضمان عدم وجود أي خطأ مطبعي:
-        # content = [system_prompt, query.text]
-        # if query.image and "," in query.image:
-        #     try:
-        #         image_data = base64.b64decode(query.image.split(",")[1])
-        #         content.append(Image.open(io.BytesIO(image_data)))
-        #     except: pass
+        if query.image:
+            image_data = base64.b64decode(query.image.split(",")[1])
+            content.append(Image.open(io.BytesIO(image_data)))
 
         response = model.generate_content(content)
         return {"status": "success", "answer": response.text}
     except Exception as e:
-        print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
