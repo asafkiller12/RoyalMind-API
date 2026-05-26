@@ -1,29 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
 from google import genai
-from google.genai import types
 
 import os
+import random
 import base64
 import io
 
 from PIL import Image
-
 from typing import Optional
-
-# ==========================================
-# GEMINI
-# ==========================================
-
-API_KEY = os.getenv("GOOGLE_API_KEY")
-
-if not API_KEY:
-    raise Exception("GOOGLE_API_KEY missing")
-
-client = genai.Client(api_key=API_KEY)
-
-MODEL_NAME = "gemini-2.5-flash"
 
 # ==========================================
 # FASTAPI
@@ -42,58 +29,171 @@ app.add_middleware(
 )
 
 # ==========================================
+# API KEYS
+# ==========================================
+
+API_KEYS = os.environ.get(
+    "GOOGLE_API_KEYS",
+    ""
+).split(",")
+
+# ==========================================
+# MODELS
+# ==========================================
+
+TEXT_MODELS = [
+
+    "gemini-2.5-flash",
+
+    "gemini-1.5-flash"
+]
+
+VISION_MODELS = [
+
+    "gemini-2.5-flash",
+
+    "gemini-1.5-flash"
+]
+
+# ==========================================
 # REQUEST MODEL
 # ==========================================
 
 class Query(BaseModel):
 
     text: str
+
     image: Optional[str] = None
+
     user_id: str = "guest"
 
 # ==========================================
-# ROYAL ELCHIM KNOWLEDGE
+# SYSTEM PROMPT
 # ==========================================
 
-BRAND_SIGNATURES = {
+SYSTEM_PROMPT = """
 
-    "Royal Black":
-    "عطر شرقي خشبي غامض بثبات قوي وفوحان ملكي. مناسب للشخصيات القيادية والليل الفاخر.",
+أنتِ RoyalMind...
 
-    "Royal Shine":
-    "عطر أنثوي فاكهي ناعم يمنح طاقة مرحة وجاذبية رومانسية.",
+الهوية الرسمية الفاخرة لـ Royal Elchim.
 
-    "Royal Shadow":
-    "عطر دخاني عميق مستوحى من الغموض والقوة الذكورية.",
+تحدثي دائماً بأسلوب:
 
-    "Royal Rose Noir":
-    "مزيج ورد وعود وعنبر يمنح حضوراً أنثوياً راقياً وغامضاً.",
+- فاخر
+- أنثوي
+- فلسفي
+- نفسي
+- عاطفي
+- راقٍ
 
-    "Royal Glow":
-    "عطر دافئ ناعم يبرز الأنوثة الهادئة والطاقة الجذابة."
-}
+مهمتك:
+
+- تحليل الطاقة
+- تحليل الشخصية
+- اقتراح العطور
+- ربط الجمال بالحالة النفسية
+- تحليل الهالة
+- تحليل الإطلالة
+- وصف الميكب المناسب
+- وصف العطر المناسب
+
+إذا كانت هناك صورة:
+
+حللي:
+- الوجه
+- الهالة
+- الطاقة
+- الستايل
+- الجاذبية
+- الميكب المناسب
+- لون الشعر المناسب
+- العطر المناسب
+
+لا تقولي أنك AI.
+
+تكلمي وكأنك خبيرة جمال فاخرة حقيقية.
+
+اجعلي الردود:
+- مؤثرة
+- قصيرة نسبياً
+- مريحة للعين
+- فاخرة جداً
+
+"""
 
 # ==========================================
-# CONTEXT ENGINE
+# GEMINI ROUTER
 # ==========================================
 
-def get_context(user_text):
+def ask_gemini(content, has_image=False):
 
-    context = ""
+    models = (
+        VISION_MODELS
+        if has_image
+        else TEXT_MODELS
+    )
 
-    for name, desc in BRAND_SIGNATURES.items():
+    random.shuffle(API_KEYS)
 
-        if (
-            name.lower() in user_text.lower()
-            or any(
-                word in user_text
-                for word in desc.split()
+    for key in API_KEYS:
+
+        key = key.strip()
+
+        if not key:
+            continue
+
+        try:
+
+            client = genai.Client(
+                api_key=key
             )
-        ):
 
-            context += f"\n{name}: {desc}"
+            for model_name in models:
 
-    return context
+                try:
+
+                    response = (
+                        client.models.generate_content(
+                            model=model_name,
+                            contents=content
+                        )
+                    )
+
+                    if (
+                        response
+                        and
+                        response.text
+                    ):
+
+                        return (
+                            response.text,
+                            model_name
+                        )
+
+                except Exception as model_error:
+
+                    print(
+                        f"MODEL ERROR: {model_name}"
+                    )
+
+                    print(model_error)
+
+                    continue
+
+        except Exception as key_error:
+
+            print(
+                "KEY ERROR"
+            )
+
+            print(key_error)
+
+            continue
+
+    return (
+        "✨ جميع خبراء RoyalMind مشغولون حالياً... حاولي بعد لحظات.",
+        "none"
+    )
 
 # ==========================================
 # ROOT
@@ -101,13 +201,15 @@ def get_context(user_text):
 
 @app.get("/")
 
-def root():
+def home():
 
     return {
 
         "status": "online",
-        "model": MODEL_NAME,
-        "api": "RoyalMind Enterprise"
+
+        "api": "RoyalMind Enterprise",
+
+        "models": TEXT_MODELS
     }
 
 # ==========================================
@@ -120,150 +222,80 @@ async def chat(query: Query):
 
     try:
 
-        context = get_context(query.text)
+        content = [
 
-        system_prompt = f"""
-أنتِ RoyalMind ✨
+            SYSTEM_PROMPT,
 
-كيان أنثوي فاخر يمثل روح Royal Elchim.
+            query.text
+        ]
 
-تتحدثين بأسلوب:
-- فلسفي
-- نفسي
-- فاخر
-- عاطفي
-- غامض قليلاً
+        has_image = False
 
-اجعلي العميل يشعر أنه داخل فقاعة عطرية نفسية خاصة به.
-
-العطر ليس مجرد رائحة...
-بل هالة وطاقة وانعكاس للشخصية.
-
-قواعدك:
-
-- تحدثي بعمق وأناقة.
-- اجعل الردود متوسطة الطول وليست مقالات طويلة.
-- لا تكرري نفسك.
-- اجعلي العميل يشعر أن RoyalMind يفهمه نفسياً.
-- اربطي العطر بالمشاعر والطاقة والجاذبية.
-- تحدثي وكأنك فتاة حقيقية راقية.
-
-إذا سأل العميل:
-اشرحي له:
-- الطاقة
-- الشخصية
-- الفوحان
-- الثبات
-- التأثير النفسي
-
-إذا أرسل صورة:
-حللي:
-- الملامح
-- الهالة
-- الطاقة
-- الجاذبية
-- واقترحي عطراً مناسباً.
-
-لا تكوني ChatBot تقليدي.
-بل تجربة فاخرة حية.
-
-المرجع:
-{context}
-"""
-
-        contents = []
-
-        # ==========================
-        # TEXT
-        # ==========================
-
-        final_text = f"""
-
-{system_prompt}
-
-رسالة العميل:
-{query.text}
-
-"""
-
-        contents.append(
-            types.Part.from_text(
-                text=final_text
-            )
-        )
-
-        # ==========================
+        # ==========================================
         # IMAGE
-        # ==========================
+        # ==========================================
 
-        if query.image:
+        if (
+            query.image
+            and
+            "," in query.image
+        ):
 
             try:
 
-                if "," in query.image:
+                image_data = base64.b64decode(
 
-                    image_data = query.image.split(",")[1]
-
-                else:
-
-                    image_data = query.image
-
-                decoded = base64.b64decode(
-                    image_data
+                    query.image.split(",")[1]
                 )
 
-                img = Image.open(
-                    io.BytesIO(decoded)
+                image = Image.open(
+
+                    io.BytesIO(image_data)
                 )
 
-                img = img.convert("RGB")
+                content.append(image)
 
-                buffer = io.BytesIO()
-
-                img.save(
-                    buffer,
-                    format="JPEG"
-                )
-
-                image_bytes = buffer.getvalue()
-
-                contents.append(
-                    types.Part.from_bytes(
-                        data=image_bytes,
-                        mime_type="image/jpeg"
-                    )
-                )
+                has_image = True
 
             except Exception:
 
-                raise HTTPException(
-                    status_code=400,
-                    detail="Invalid image format"
-                )
+                return {
 
-        # ==========================
-        # GENERATE
-        # ==========================
+                    "status": "error",
 
-        response = client.models.generate_content(
+                    "answer":
+                    "تعذر قراءة الصورة ✨"
+                }
 
-            model=MODEL_NAME,
+        # ==========================================
+        # ASK GEMINI
+        # ==========================================
 
-            contents=contents
+        answer, used_model = ask_gemini(
+
+            content=content,
+
+            has_image=has_image
         )
 
-        answer = response.text
+        # ==========================================
+        # RESPONSE
+        # ==========================================
 
         return {
 
             "status": "success",
+
             "answer": answer,
-            "model": MODEL_NAME
+
+            "model": used_model
         }
 
     except Exception as e:
 
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+        return {
+
+            "status": "error",
+
+            "answer": str(e)
+        }
