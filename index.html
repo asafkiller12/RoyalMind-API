@@ -1,865 +1,178 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
-<meta charset="UTF-8" />
-
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
-/>
-
-<title>RoyalMind Luxury AI</title>
-
-<link
-href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap"
-rel="stylesheet"
-/>
-
-<style>
-
-:root{
-
---gold:#d4af37;
---gold2:#b68c1c;
---dark:#111;
---light:#fff;
-}
-
-*{
-
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
-
-body{
-
-font-family:
-"Tajawal",
-sans-serif;
-
-background:
-linear-gradient(
-135deg,
-#fff7fb,
-#fffdf7
-);
-
-height:100vh;
-
-overflow:hidden;
-}
-
-/* ===================================
-AI GIRL BUTTON
-=================================== */
-
-#chat-circle{
-
-position:fixed;
-
-bottom:20px;
-right:20px;
-
-width:95px;
-height:95px;
-
-border-radius:50%;
-
-overflow:hidden;
-
-cursor:pointer;
-
-z-index:99999;
-
-border:3px solid var(--gold);
-
-box-shadow:
-0 0 35px rgba(212,175,55,.7);
-
-transition:.35s;
-}
-
-#chat-circle:hover{
-
-transform:
-scale(1.08);
-}
-
-#chat-circle img{
-
-width:100%;
-height:100%;
-
-object-fit:cover;
-}
-
-/* ===================================
-CHAT BOX
-=================================== */
-
-#chat-box{
-
-position:fixed;
-
-bottom:125px;
-right:20px;
-
-width:420px;
-max-width:95vw;
-
-height:720px;
-max-height:92vh;
-
-background:white;
-
-border-radius:30px;
-
-overflow:hidden;
-
-display:none;
-
-flex-direction:column;
-
-box-shadow:
-0 15px 50px rgba(0,0,0,.22);
-
-z-index:9999;
-}
-
-/* ===================================
-HEADER
-=================================== */
-
-.chat-header{
-
-padding:22px;
-
-color:white;
-
-text-align:center;
-
-background:
-linear-gradient(
-135deg,
-#d4af37,
-#b68c1c,
-#e4c35a
-);
-}
-
-.chat-header h2{
-
-font-size:24px;
-
-margin-bottom:8px;
-}
-
-.chat-header p{
-
-font-size:13px;
-
-line-height:1.9;
-}
-
-/* ===================================
-MESSAGES
-=================================== */
-
-#chat-messages{
-
-flex:1;
-
-overflow-y:auto;
-
-padding:18px;
-
-display:flex;
-
-flex-direction:column;
-
-gap:15px;
-
-background:
-linear-gradient(
-to bottom,
-#ffffff,
-#fff7fa
-);
-}
-
-.message{
-
-max-width:90%;
-
-padding:15px 18px;
-
-border-radius:22px;
-
-font-size:14px;
-
-line-height:2;
-
-white-space:pre-wrap;
-
-word-break:break-word;
-
-overflow-wrap:break-word;
-
-animation:fade .3s ease;
-}
-
-.user-msg{
-
-align-self:flex-start;
-
-background:#ececec;
-
-color:#222;
-
-border-bottom-left-radius:8px;
-}
-
-.bot-msg{
-
-align-self:flex-end;
-
-background:
-linear-gradient(
-135deg,
-#d4af37,
-#b68c1c
-);
-
-color:white;
-
-border-bottom-right-radius:8px;
-}
-
-@keyframes fade{
-
-from{
-
-opacity:0;
-
-transform:
-translateY(10px);
-}
-
-to{
-
-opacity:1;
-
-transform:
-translateY(0);
-}
-}
-
-/* ===================================
-INPUT AREA
-=================================== */
-
-.chat-input{
-
-display:flex;
-
-gap:10px;
-
-padding:15px;
-
-background:white;
-
-border-top:1px solid #eee;
-}
-
-#user-input{
-
-flex:1;
-
-padding:14px 18px;
-
-border-radius:30px;
-
-border:1px solid #ddd;
-
-outline:none;
-
-font-size:14px;
-
-font-family:"Tajawal";
-}
-
-#user-input:focus{
-
-border-color:var(--gold);
-}
-
-#send-btn,
-#mic-btn,
-#cam-btn{
-
-width:48px;
-height:48px;
-
-border:none;
-
-border-radius:50%;
-
-background:
-linear-gradient(
-135deg,
-#d4af37,
-#b68c1c
-);
-
-color:white;
-
-cursor:pointer;
-
-font-size:18px;
-
-transition:.25s;
-}
-
-#send-btn:hover,
-#mic-btn:hover,
-#cam-btn:hover{
-
-transform:scale(1.08);
-}
-
-/* ===================================
-CAMERA
-=================================== */
-
-#camera-overlay{
-
-position:fixed;
-
-inset:0;
-
-background:rgba(0,0,0,.94);
-
-display:none;
-
-flex-direction:column;
-
-justify-content:center;
-
-align-items:center;
-
-z-index:999999;
-}
-
-video{
-
-width:92%;
-max-width:430px;
-
-border-radius:25px;
-
-border:3px solid var(--gold);
-}
-
-.cam-buttons{
-
-display:flex;
-
-gap:15px;
-
-margin-top:25px;
-}
-
-.cam-buttons button{
-
-padding:14px 26px;
-
-border:none;
-
-border-radius:30px;
-
-cursor:pointer;
-
-font-weight:bold;
-
-background:
-linear-gradient(
-135deg,
-#d4af37,
-#b68c1c
-);
-
-color:white;
-
-font-family:"Tajawal";
-}
-
-/* ===================================
-SCROLL
-=================================== */
-
-#chat-messages::-webkit-scrollbar{
-
-width:6px;
-}
-
-#chat-messages::-webkit-scrollbar-thumb{
-
-background:#d4af37;
-
-border-radius:10px;
-}
-
-/* ===================================
-MOBILE
-=================================== */
-
-@media(max-width:600px){
-
-#chat-box{
-
-width:100vw;
-height:100vh;
-
-max-height:100vh;
-
-right:0;
-bottom:0;
-
-border-radius:0;
-}
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Elchim - تجربة السحر الملكي الممزوجة</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0d0d0d; color: #e6e6e6; font-family: 'Times New Roman', Times, serif; }
+        .gold-border { border: 1px solid #c5a059; padding: 20px; border-radius: 8px; background-color: #1a1a1a; }
+        .gold-text { color: #c5a059; }
+        .btn-gold { background-color: #c5a059; color: #0d0d0d; font-weight: bold; border: none; }
+        .btn-gold:hover { background-color: #e0bc75; }
+        .preview-img { max-width: 150px; border-radius: 8px; border: 1px solid #c5a059; margin: 5px; }
+        .lock-overlay { display: none; background: rgba(13, 13, 13, 0.95); position: fixed; top:0; left:0; width:100%; height:100%; z-index: 9999; justify-content: center; align-items: center; text-align: center; }
+    </style>
 </head>
-
 <body>
 
-<!-- ===================================
-AI GIRL
-=================================== -->
-
-<div id="chat-circle">
-
-<img
-src="https://i.imgur.com/fd8Lw5G.jpeg"
-alt="RoyalMind AI"
-/>
-
-</div>
-
-<!-- ===================================
-CHAT
-=================================== -->
-
-<div id="chat-box">
-
-<div class="chat-header">
-
-<h2>
-✨ RoyalMind
-</h2>
-
-<p>
-أنا حبيبتكم Royal Elchim 💛
-التي تستجيب لرغباتكم الجمالية
-وتحلل طاقتكم العطرية والنفسية
-</p>
-
-</div>
-
-<div id="chat-messages">
-
-<div class="message bot-msg">
-
-مرحباً بكِ ✨
-
-أنا RoyalMind...
-
-خبيرتكِ في:
-
-• العطور الفاخرة  
-• تحليل الشخصية  
-• الجمال والطاقة  
-• الهالة الأنثوية  
-• الفخامة الراقية  
-
-يمكنكِ الكتابة...
-أو استخدام الكاميرا لتحليل الإطلالة 💛
-
-</div>
-
-</div>
-
-<div class="chat-input">
-
-<button id="cam-btn">
-📷
-</button>
-
-<button id="mic-btn">
-🎤
-</button>
-
-<input
-type="text"
-id="user-input"
-placeholder="اسألي RoyalMind..."
-/>
-
-<button id="send-btn">
-➤
-</button>
-
-</div>
-
-</div>
-
-<!-- ===================================
-CAMERA
-=================================== -->
-
-<div id="camera-overlay">
-
-<video
-id="video"
-autoplay
-playsinline
-></video>
-
-<div class="cam-buttons">
-
-<button id="capture-btn">
-التقاط وتحليل
-</button>
-
-<button id="close-cam">
-إغلاق
-</button>
-
-</div>
-
-<canvas
-id="canvas"
-style="display:none;"
-></canvas>
-
-</div>
-
-<script>
-
-const API_URL =
-"https://royalmind-api-production-2448.up.railway.app/chat";
-
-const chatCircle =
-document.getElementById("chat-circle");
-
-const chatBox =
-document.getElementById("chat-box");
-
-const sendBtn =
-document.getElementById("send-btn");
-
-const userInput =
-document.getElementById("user-input");
-
-const chatMessages =
-document.getElementById("chat-messages");
-
-const micBtn =
-document.getElementById("mic-btn");
-
-const camBtn =
-document.getElementById("cam-btn");
-
-const cameraOverlay =
-document.getElementById("camera-overlay");
-
-const video =
-document.getElementById("video");
-
-const canvas =
-document.getElementById("canvas");
-
-/* ===================================
-OPEN CHAT
-=================================== */
-
-chatCircle.onclick=()=>{
-
-chatBox.style.display=
-chatBox.style.display==="flex"
-?"none"
-:"flex";
-};
-
-/* ===================================
-ADD MESSAGE
-=================================== */
-
-function appendMessage(
-text,
-className
-){
-
-const msg=
-document.createElement("div");
-
-msg.className=
-`message ${className}`;
-
-msg.innerHTML=text
-.replace(/\n/g,"<br>")
-.replace(
-/\*\*(.*?)\*\*/g,
-"<b>$1</b>"
-);
-
-chatMessages.appendChild(msg);
-
-setTimeout(()=>{
-
-chatMessages.scrollTop=
-chatMessages.scrollHeight;
-
-},100);
-}
-
-/* ===================================
-SEND MESSAGE
-=================================== */
-
-async function sendMessage(
-text=null,
-image=null
-){
-
-const messageText=
-text||
-userInput.value.trim();
-
-if(!messageText && !image)
-return;
-
-if(messageText && !image){
-
-appendMessage(
-messageText,
-"user-msg"
-);
-
-userInput.value="";
-}
-
-try{
-
-const response=
-await fetch(
-API_URL,
-{
-
-method:"POST",
-
-headers:{
-"Content-Type":
-"application/json"
-},
-
-body:JSON.stringify({
-
-text:
-messageText||
-"تحليل صورة",
-
-image:image,
-
-user_id:"web_user"
-})
-}
-);
-
-const data=
-await response.json();
-
-if(data.answer){
-
-appendMessage(
-data.answer,
-"bot-msg"
-);
-
-}else{
-
-appendMessage(
-"حدث خطأ بالسيرفر",
-"bot-msg"
-);
-}
-
-}catch(err){
-
-appendMessage(
-"تعذر الاتصال بالسيرفر",
-"bot-msg"
-);
-}
-}
-
-/* ===================================
-SEND EVENTS
-=================================== */
-
-sendBtn.onclick=()=>{
-
-sendMessage();
-};
-
-userInput.addEventListener(
-"keypress",
-(e)=>{
-
-if(e.key==="Enter"){
-
-sendMessage();
-}
-}
-);
-
-/* ===================================
-CAMERA
-=================================== */
-
-camBtn.onclick=async()=>{
-
-cameraOverlay.style.display=
-"flex";
-
-try{
-
-const stream=
-await navigator
-.mediaDevices
-.getUserMedia({
-video:true
-});
-
-video.srcObject=stream;
-
-}catch(e){
-
-alert(
-"يرجى السماح بالكاميرا"
-);
-}
-};
-
-document
-.getElementById("close-cam")
-.onclick=()=>{
-
-cameraOverlay.style.display=
-"none";
-
-const stream=
-video.srcObject;
-
-if(stream){
-
-stream
-.getTracks()
-.forEach(
-t=>t.stop()
-);
-}
-};
-
-document
-.getElementById("capture-btn")
-.onclick=async()=>{
-
-canvas.width=
-video.videoWidth;
-
-canvas.height=
-video.videoHeight;
-
-canvas
-.getContext("2d")
-.drawImage(
-video,
-0,
-0
-);
-
-const imageData=
-canvas.toDataURL(
-"image/jpeg",
-0.9
-);
-
-cameraOverlay.style.display=
-"none";
-
-const stream=
-video.srcObject;
-
-if(stream){
-
-stream
-.getTracks()
-.forEach(
-t=>t.stop()
-);
-}
-
-appendMessage(
-"✨ جاري تحليل الإطلالة...",
-"user-msg"
-);
-
-await sendMessage(
-null,
-imageData
-);
-};
-
-/* ===================================
-VOICE
-=================================== */
-
-const SpeechRecognition=
-window.SpeechRecognition||
-window.webkitSpeechRecognition;
-
-if(SpeechRecognition){
-
-const recognition=
-new SpeechRecognition();
-
-recognition.lang="ar-SA";
-
-micBtn.onclick=()=>{
-
-recognition.start();
-};
-
-recognition.onresult=
-(event)=>{
-
-userInput.value=
-event.results[0][0]
-.transcript;
-
-sendMessage();
-};
-}
-
-</script>
-
+    <div id="lockOverlay" class="lock-overlay">
+        <div class="p-5 gold-border" style="max-width: 500px;">
+            <h2 class="gold-text mb-3">🗝️ اكتملت المحاكاة البصرية المجانية</h2>
+            <p>لقد استمتعتِ بالتحليل البصري ومحاكاة الملامح لـ 5 صور سيلفي. لاستكمال رحلة التجميل الممزوجة، يرجى إدخال مفتاح الذكاء الاصطناعي (API Key) الخاص بكِ لتشغيل "رويال مايند" عبر استهلاكك الشخصي المباشر:</p>
+            <input type="text" id="clientApiKeyInput" class="form-control text-center bg-dark text-light border-secondary my-3" placeholder="AIzaSy...">
+            <button class="btn btn-gold w-100" onclick="saveClientKey()">تفعيل واستمرار السحر الملكي</button>
+        </div>
+    </div>
+
+    <div class="container py-5">
+        <header class="text-center mb-5">
+            <h1 class="gold-text display-4 fw-bold">ROYAL ELCHIM</h1>
+            <p class="text-muted lead">تجربة المحاكاة التجميلية الممزوجة (Selfie & Product)</p>
+            <span class="badge bg-dark border border-warning text-warning p-2" id="imageQuotaDisplay">رصيد الصور المجانية: 5 / 5</span>
+        </header>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-8">
+                <div class="gold-border">
+                    <h3 class="gold-text mb-4 text-center">💖 قسم المحاكاة الملكية الفاخرة</h3>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3 text-center">
+                            <label class="form-label gold-text">1. صورتكِ الشخصية (سيلفي):</label>
+                            <input type="file" id="userSelfieInput" class="form-control bg-dark text-light border-secondary" accept="image/*" onchange="previewUserSelfie(event)">
+                            <div id="userSelfiePreviewContainer" class="mt-2"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3 text-center">
+                            <label class="form-label gold-text">2. صورة المنتج المختار:</label>
+                            <input type="file" id="productImageInput" class="form-control bg-dark text-light border-secondary" accept="image/*" onchange="previewProductImage(event)">
+                            <div id="productImagePreviewContainer" class="mt-2"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">اسم المنتج المختار:</label>
+                        <input type="text" id="productNameInput" class="form-control bg-dark text-light border-secondary" placeholder="مثلاً: الروج الملكي النوار">
+                    </div>
+
+                    <button class="btn btn-gold btn-lg w-100" onclick="runMultimodalSimulation()">ابدأ تجربة السحر الملكي الآن 🌟</button>
+                    
+                    <div id="simulationContent" class="mt-4 p-4 rounded text-light lead" style="background: #111; border-right: 4px solid #c5a059; display: none; white-space: pre-line;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = "http://127.0.0.1:8000"; // استبدل برابط سيرفرك
+        let encodedUserSelfie = null;
+        let encodedProductImage = null;
+
+        const MAX_FREE_IMAGES = 5;
+
+        window.onload = function() {
+            checkImageQuota();
+        };
+
+        // فحص رصيد الصور المجانية وتفعيل القفل إذا لزم الأمر
+        function checkImageQuota() {
+            let imagesUsed = parseInt(localStorage.getItem('royal_mind_image_count') || '0');
+            let savedKey = localStorage.getItem('royal_mind_client_api_key');
+            
+            let remaining = MAX_FREE_IMAGES - imagesUsed;
+            if(remaining < 0) remaining = 0;
+            
+            document.getElementById('imageQuotaDisplay').innerText = `رصيد الصور المجانية: ${remaining} / ${MAX_FREE_IMAGES}`;
+
+            // القفل يظهر فقط إذا انتهت الـ 5 صور ولم يتم إدخال مفتاح
+            if (imagesUsed >= MAX_FREE_IMAGES && !savedKey) {
+                document.getElementById('lockOverlay').style.display = 'flex';
+            } else {
+                document.getElementById('lockOverlay').style.display = 'none';
+            }
+        }
+
+        // تسجيل مفتاح العميل
+        function saveClientKey() {
+            const key = document.getElementById('clientApiKeyInput').value.trim();
+            if(key) {
+                localStorage.setItem('royal_mind_client_api_key', key);
+                checkImageQuota();
+                alert("تم التوثيق بنجاح! البرنامج يعمل الآن عبر حسابك الشخصي.");
+            }
+        }
+
+        // استهلاك رصيد الصور
+        function consumeImage() {
+            let imagesUsed = parseInt(localStorage.getItem('royal_mind_image_count') || '0');
+            imagesUsed++;
+            localStorage.setItem('royal_mind_image_count', imagesUsed.toString());
+            checkImageQuota();
+        }
+
+        function previewUserSelfie(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                encodedUserSelfie = reader.result;
+                document.getElementById('userSelfiePreviewContainer').innerHTML = `<img src="${reader.result}" class="preview-img">`;
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function previewProductImage(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                encodedProductImage = reader.result;
+                document.getElementById('productImagePreviewContainer').innerHTML = `<img src="${reader.result}" class="preview-img">`;
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        async function runMultimodalSimulation() {
+            if (!encodedUserSelfie || !encodedProductImage) {
+                return alert("الرجاء رفع صورتك الشخصية وصورة المنتج للمحاكاة.");
+            }
+
+            // يتم خصم صورة من الرصيد في كل محاولة دمج ناجحة الانطلاق
+            let currentUsages = parseInt(localStorage.getItem('royal_mind_image_count') || '0');
+            let hasKey = localStorage.getItem('royal_mind_client_api_key');
+            if(currentUsages >= MAX_FREE_IMAGES && !hasKey) {
+                return checkImageQuota(); // سيظهر القفل فوراً
+            }
+
+            consumeImage(); // احتساب استهلاك صورة
+
+            const productName = document.getElementById('productNameInput').value || "منتج تجميلي فاخر";
+            const contentBox = document.getElementById('simulationContent');
+            
+            contentBox.style.display = 'block';
+            contentBox.innerHTML = "<span class='text-warning'>جاري امتزاج هالتكِ بسحر المنتج وتخيل الملامح...</span>";
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/simulate_makeup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_selfie: encodedUserSelfie,
+                        product_image: encodedProductImage,
+                        product_name_desc: productName,
+                        client_api_key: hasKey
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === "success") {
+                    contentBox.innerHTML = data.simulation_result.replace(/\n/g, '<br>');
+                } else {
+                    contentBox.innerHTML = "<span class='text-danger'>تعذر إجراء المحاكاة الجمالية.</span>";
+                }
+            } catch (err) {
+                contentBox.innerHTML = `<span class='text-danger'>خطأ: ${err.message}</span>`;
+            }
+        }
+    </script>
 </body>
-
 </html>
-
