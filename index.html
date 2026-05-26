@@ -7,87 +7,24 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ==========================================
-           1. الألوان الخيالية (Holographic Aurora + Gold)
-           ========================================== */
-        @keyframes aurora {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        body {
-            /* خلفية قوس قزحية داكنة خيالية تتحرك ببطء */
-            background: linear-gradient(135deg, #0b0914, #2a113b, #0f2027, #3a1c2a, #0b0914);
-            background-size: 400% 400%;
-            animation: aurora 15s ease infinite;
-            color: #e6e6e6;
-            font-family: 'Times New Roman', Times, serif;
-            margin: 0;
-            padding-bottom: 80px; /* مساحة لشريط التنقل السفلي */
-            min-height: 100vh;
-        }
-
-        /* لمسات الذهب */
+        @keyframes aurora { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        body { background: linear-gradient(135deg, #0b0914, #2a113b, #0f2027, #3a1c2a, #0b0914); background-size: 400% 400%; animation: aurora 15s ease infinite; color: #e6e6e6; font-family: 'Times New Roman', Times, serif; margin: 0; padding-bottom: 80px; min-height: 100vh; }
         .gold-text { color: #d4af37; text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
         .gold-border { border: 1px solid #d4af37; }
-        .gold-btn {
-            background: linear-gradient(45deg, #d4af37, #f3e5ab, #d4af37);
-            color: #0b0914; font-weight: bold; border: none; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
-            transition: all 0.3s ease;
-        }
+        .gold-btn { background: linear-gradient(45deg, #d4af37, #f3e5ab, #d4af37); color: #0b0914; font-weight: bold; border: none; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); transition: all 0.3s ease; }
         .gold-btn:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(212, 175, 55, 0.6); color: #000;}
-
-        /* ==========================================
-           2. تأثير الزجاج الفاخر (Glassmorphism)
-           ========================================== */
-        .glass-card {
-            background: rgba(15, 10, 25, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-        }
-
-        /* ==========================================
-           3. شريط التنقل السفلي (App Bottom Nav)
-           ========================================== */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: rgba(10, 5, 15, 0.9); backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(212, 175, 55, 0.4);
-            display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000;
-        }
-        .nav-item {
-            text-align: center; color: #888; cursor: pointer; transition: all 0.3s; flex: 1;
-        }
+        .glass-card { background: rgba(15, 10, 25, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(10, 5, 15, 0.9); backdrop-filter: blur(10px); border-top: 1px solid rgba(212, 175, 55, 0.4); display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000; }
+        .nav-item { text-align: center; color: #888; cursor: pointer; transition: all 0.3s; flex: 1; }
         .nav-item i { font-size: 1.5rem; display: block; margin-bottom: 4px; }
         .nav-item span { font-size: 0.75rem; }
         .nav-item.active { color: #d4af37; text-shadow: 0 0 10px rgba(212, 175, 55, 0.8); transform: translateY(-3px); }
-
-        /* شاشات التطبيق */
         .app-screen { display: none; animation: fadeIn 0.5s; }
         .app-screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* الردود الملكية (بديل الفقاعات) */
-        .royal-response {
-            background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, rgba(0,0,0,0) 100%);
-            border-top: 2px solid #d4af37; border-bottom: 2px solid #d4af37;
-            padding: 20px; font-size: 1.1rem; line-height: 1.8; margin-top: 20px;
-            white-space: pre-line;
-        }
-
-        .preview-img { max-width: 120px; border-radius: 8px; border: 1px solid #d4af37; margin-top: 10px; }
-        
-        /* القفل */
-        .lock-overlay {
-            display: none; background: rgba(0, 0, 0, 0.95); position: fixed; top:0; left:0; width:100%; height:100%;
-            z-index: 9999; justify-content: center; align-items: center; text-align: center;
-        }
+        .royal-response { background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, rgba(0,0,0,0) 100%); border-top: 2px solid #d4af37; border-bottom: 2px solid #d4af37; padding: 20px; font-size: 1.1rem; line-height: 1.8; margin-top: 20px; white-space: pre-line; }
+        .preview-img { max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 8px; border: 1px solid #d4af37; margin-top: 10px; }
+        .lock-overlay { display: none; background: rgba(0, 0, 0, 0.95); position: fixed; top:0; left:0; width:100%; height:100%; z-index: 9999; justify-content: center; align-items: center; text-align: center; }
     </style>
 </head>
 <body>
@@ -96,7 +33,7 @@
         <div class="glass-card gold-border m-3" style="max-width: 400px;">
             <i class="fa-solid fa-lock gold-text fa-3x mb-3"></i>
             <h2 class="gold-text mb-3">اكتملت الجلسات المجانية</h2>
-            <p class="text-light">لقد استمتعتِ بتجربة السحر الملكي ومحاكاة الصور. لاستكمال رحلتكِ وتخزين ذكرياتك الجمالية، يرجى تفعيل مفتاح الـ API الخاص بكِ:</p>
+            <p class="text-light">يرجى تفعيل مفتاح الـ API الخاص بكِ لاستكمال رحلتك الجمالية:</p>
             <input type="text" id="clientApiKeyInput" class="form-control bg-dark text-light border-secondary text-center mb-3" placeholder="AIzaSy...">
             <button class="btn gold-btn w-100" onclick="saveClientKey()">تفعيل الوعي الخاص بك</button>
         </div>
@@ -112,13 +49,11 @@
         <div id="screen-diagnosis" class="app-screen active">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-eye"></i> التشخيص والحالة</h3>
-                <p class="text-center text-light small mb-4">أخبرينا عن حالتك الآن، لنرشدكِ إلى المسار الصحيح (عطور أم مكياج أم دمج بينهما).</p>
                 <div class="mb-3">
                     <label class="gold-text">الحدث (طاقتكِ الحالية):</label>
                     <select id="qMood" class="form-select bg-dark text-light border-secondary">
                         <option value="استعد لحدث استثنائي وأريد حضوراً يخطف الأنفاس">استعد لحدث استثنائي وأريد حضوراً يخطف الأنفاس</option>
                         <option value="أريد أن أستكشف جانباً جديداً وغامضاً في شخصيتي">أريد أن أستكشف جانباً جديداً وغامضاً في شخصيتي</option>
-                        <option value="أبحث عن لمسة تبرز جمالي اليومي بنعومة وثقة">أبحث عن لمسة تبرز جمالي اليومي بنعومة وثقة</option>
                     </select>
                 </div>
                 <button class="btn gold-btn w-100 py-2" onclick="runDiagnosis()">تحليل الهالة الملكية <i class="fa-solid fa-wand-magic-sparkles"></i></button>
@@ -129,8 +64,7 @@
         <div id="screen-perfume" class="app-screen">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> فلسفة العطور</h3>
-                <p class="text-center text-light small mb-4">العطر هنا ليس مجرد رائحة، بل هو إحداث لفعل ينعكس على حضورك.</p>
-                <textarea id="perfumeInput" class="form-control bg-dark text-light border-secondary mb-3" rows="3" placeholder="ما هو التأثير أو المعنى الذي تبحثين عنه في عطرك اليوم؟..."></textarea>
+                <textarea id="perfumeInput" class="form-control bg-dark text-light border-secondary mb-3" rows="3" placeholder="ما هو المعنى الذي تبحثين عنه في عطرك اليوم؟..."></textarea>
                 <button class="btn gold-btn w-100 py-2" onclick="runChat('perfume', 'perfumeInput', 'perfumeResponse')">اكتشفي عطركِ <i class="fa-solid fa-leaf"></i></button>
                 <div id="perfumeResponse" class="royal-response" style="display:none;"></div>
             </div>
@@ -139,7 +73,6 @@
         <div id="screen-makeup" class="app-screen">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-paintbrush"></i> النحت الجمالي</h3>
-                <p class="text-center text-light small mb-4">استكشفي كيف ننحط ملامحك بمنتجاتنا للوصول إلى وعي جديد بجاذبيتك.</p>
                 <textarea id="makeupInput" class="form-control bg-dark text-light border-secondary mb-3" rows="3" placeholder="صفي لنا ملامحكِ أو الإطلالة التي تطمحين لها..."></textarea>
                 <button class="btn gold-btn w-100 py-2" onclick="runChat('makeup', 'makeupInput', 'makeupResponse')">استشارة المكياج <i class="fa-solid fa-star"></i></button>
                 <div id="makeupResponse" class="royal-response" style="display:none;"></div>
@@ -149,8 +82,6 @@
         <div id="screen-simulation" class="app-screen">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> المحاكاة الفاخرة</h3>
-                <p class="text-center text-light small mb-4">ادمج صورتك (الحدث) مع منتجنا (الفعل) لترَ النتيجة الفلسفية.</p>
-                
                 <div class="row text-center mb-3">
                     <div class="col-6">
                         <label class="btn btn-outline-warning w-100 p-2" style="border-color:#d4af37; color:#d4af37;">
@@ -167,9 +98,7 @@
                         <div id="simProductPreview"></div>
                     </div>
                 </div>
-                
-                <input type="text" id="simProductName" class="form-control bg-dark text-light border-secondary mb-3 text-center" placeholder="أدخلي اسم المنتج (مثال: روج ملكي)">
-                
+                <input type="text" id="simProductName" class="form-control bg-dark text-light border-secondary mb-3 text-center" placeholder="أدخلي اسم المنتج (مثال: روج عنابي ملكي)">
                 <button class="btn gold-btn w-100 py-2" onclick="runSimulation()">تطبيق السحر الممزوج <i class="fa-solid fa-droplet"></i></button>
                 <div id="simResponse" class="royal-response" style="display:none;"></div>
             </div>
@@ -178,43 +107,31 @@
         <div id="screen-vault" class="app-screen">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-book-journal-whills"></i> الوعي التاريخي</h3>
-                <p class="text-center text-light small mb-4">سجل حالاتك وتطور إدراكك الجمالي عبر الزمن.</p>
                 <button class="btn btn-outline-light btn-sm mb-3 w-100" onclick="exportVault()">تحميل تاريخك (JSON) <i class="fa-solid fa-download"></i></button>
-                <div id="vaultContainer" style="max-height: 400px; overflow-y: auto;">
-                    </div>
+                <div id="vaultContainer" style="max-height: 400px; overflow-y: auto;"></div>
             </div>
         </div>
 
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('diagnosis', this)">
-            <i class="fa-solid fa-compass"></i><span>التشخيص</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('perfume', this)">
-            <i class="fa-solid fa-spray-can"></i><span>العطور</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('makeup', this)">
-            <i class="fa-solid fa-lips"></i><span>المكياج</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('simulation', this)">
-            <i class="fa-solid fa-wand-magic-sparkles"></i><span>التجربة</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('vault', this)">
-            <i class="fa-solid fa-folder-open"></i><span>المخزن</span>
-        </div>
+        <div class="nav-item active" onclick="switchTab('diagnosis', this)"><i class="fa-solid fa-compass"></i><span>التشخيص</span></div>
+        <div class="nav-item" onclick="switchTab('perfume', this)"><i class="fa-solid fa-spray-can"></i><span>العطور</span></div>
+        <div class="nav-item" onclick="switchTab('makeup', this)"><i class="fa-solid fa-lips"></i><span>المكياج</span></div>
+        <div class="nav-item" onclick="switchTab('simulation', this)"><i class="fa-solid fa-wand-magic-sparkles"></i><span>المحاكاة</span></div>
+        <div class="nav-item" onclick="switchTab('vault', this)"><i class="fa-solid fa-folder-open"></i><span>المخزن</span></div>
     </div>
 
     <script>
-        const BACKEND_URL = "https://royalmind-api-production-2448.up.railway.app"; // تأكد من الرابط
+        // ==========================================
+        // 1. إعدادات الخادم الثابتة
+        // ==========================================
+        const BACKEND_URL = "https://royalmind-api-production-2448.up.railway.app";
         const MAX_IMAGES = 5;
-
-        // متغيرات تخزين الصور في الذاكرة
         let imagesData = { selfieBase64: null, productBase64: null };
 
         window.onload = () => { checkQuota(); renderVault(); };
 
-        // 1. التنقل بين الشاشات
         function switchTab(screenId, element) {
             document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -222,17 +139,23 @@
             element.classList.add('active');
         }
 
-        // 2. معاينة الصور
+        // ==========================================
+        // 2. معالجة الصور (الإصلاح الجذري هنا)
+        // ==========================================
         function previewImage(event, previewId, dataKey) {
+            const file = event.target.files[0];
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = function() {
-                imagesData[dataKey] = reader.result;
+                imagesData[dataKey] = reader.result; // يحتوي على "data:image/jpeg;base64,..." وهذا ما يتوقعه السيرفر
                 document.getElementById(previewId).innerHTML = `<img src="${reader.result}" class="preview-img">`;
             }
-            if(event.target.files[0]) reader.readAsDataURL(event.target.files[0]);
+            reader.readAsDataURL(file);
         }
 
-        // 3. إدارة الحصص والقفل
+        // ==========================================
+        // 3. إدارة التكلفة والقفل
+        // ==========================================
         function checkQuota() {
             let used = parseInt(localStorage.getItem('royal_img_count') || '0');
             let key = localStorage.getItem('royal_client_key');
@@ -244,39 +167,49 @@
 
         function saveClientKey() {
             let k = document.getElementById('clientApiKeyInput').value.trim();
-            if(k) { localStorage.setItem('royal_client_key', k); checkQuota(); }
+            if(k) { localStorage.setItem('royal_client_key', k); checkQuota(); alert("تم التفعيل بنجاح!"); }
         }
 
-        // 4. دالة التشخيص
+        function consumeQuota() {
+            let used = parseInt(localStorage.getItem('royal_img_count') || '0');
+            localStorage.setItem('royal_img_count', used + 1);
+            checkQuota();
+        }
+
+        // ==========================================
+        // 4. دوال الاتصال بالسيرفر (API Calls)
+        // ==========================================
         async function runDiagnosis() {
             let mood = document.getElementById('qMood').value;
             let out = document.getElementById('diagResponse');
-            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'>رويال مايند تقرأ الحدث...</span>";
+            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'>رويال مايند تقرأ الحدث... الرجاء الانتظار...</span>";
             try {
                 let res = await fetch(`${BACKEND_URL}/api/diagnose`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ mood_answers: {"الحالة": mood}, client_api_key: localStorage.getItem('royal_client_key') })
+                    body: JSON.stringify({ mood_answers: {"الحالة": mood}, image: null, client_api_key: localStorage.getItem('royal_client_key') })
                 });
                 let data = await res.json();
                 if(data.status === 'success') {
                     out.innerHTML = data.diagnosis;
                     saveToVault('تشخيص فلسفي', data.diagnosis);
-                } else out.innerHTML = "حدث خطأ في قراءة الوعي.";
-            } catch(e) { out.innerHTML = "الخادم غير متاح حالياً."; }
+                } else out.innerHTML = `<span class="text-danger">خطأ من السيرفر: ${JSON.stringify(data)}</span>`;
+            } catch(e) { out.innerHTML = `<span class="text-danger">خطأ في الاتصال بالخادم: ${e.message}</span>`; }
         }
 
-        // 5. دالة المحادثة (عطور / مكياج)
         async function runChat(category, inputId, outId) {
             let text = document.getElementById(inputId).value;
             let out = document.getElementById(outId);
             if(!text) return;
-            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'>يتم دمج الفعل وتنميطه...</span>";
+            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'>يتم دمج الفعل وتنميطه... الرجاء الانتظار...</span>";
             try {
+                let history = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
+                let recentHistory = history.slice(0, 3).map(h => h.text).join(" | "); // إرسال نبذة قصيرة لتفادي كبر حجم الطلب
+                
                 let res = await fetch(`${BACKEND_URL}/api/chat`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        text: text, category: category,
-                        history_context: localStorage.getItem('royal_vault_data'),
+                        text: text, category: category, image: null,
+                        history_context: recentHistory,
                         client_api_key: localStorage.getItem('royal_client_key')
                     })
                 });
@@ -284,17 +217,14 @@
                 if(data.status === 'success') {
                     out.innerHTML = data.answer;
                     saveToVault(`مسار ${category}`, data.answer);
-                } else out.innerHTML = "خطأ في الاستجابة الملكية.";
-            } catch(e) { out.innerHTML = "الخادم غير متاح."; }
+                } else out.innerHTML = `<span class="text-danger">خطأ من السيرفر: ${JSON.stringify(data)}</span>`;
+            } catch(e) { out.innerHTML = `<span class="text-danger">خطأ في الاتصال: ${e.message}</span>`; }
         }
 
-        // 6. المحاكاة (التجربة البصرية)
         async function runSimulation() {
-            if(!imagesData.selfieBase64 || !imagesData.productBase64) return alert("يجب رفع صورتك وصورة المنتج.");
+            if(!imagesData.selfieBase64 || !imagesData.productBase64) return alert("يجب رفع صورتك وصورة المنتج لتفعيل المحاكاة.");
             let used = parseInt(localStorage.getItem('royal_img_count') || '0');
             if(used >= MAX_IMAGES && !localStorage.getItem('royal_client_key')) return checkQuota();
-            
-            localStorage.setItem('royal_img_count', used + 1); checkQuota();
             
             let name = document.getElementById('simProductName').value || "منتج فاخر";
             let out = document.getElementById('simResponse');
@@ -312,13 +242,16 @@
                 });
                 let data = await res.json();
                 if(data.status === 'success') {
+                    consumeQuota(); // الخصم يتم فقط إذا نجحت العملية
                     out.innerHTML = data.simulation_result;
-                    saveToVault('تجربة محاكاة ممزوجة', data.simulation_result, imagesData.selfieBase64);
-                } else out.innerHTML = "خطأ في المحاكاة.";
-            } catch(e) { out.innerHTML = "الخادم غير متاح."; }
+                    saveToVault('محاكاة ممزوجة', data.simulation_result, imagesData.selfieBase64);
+                } else out.innerHTML = `<span class="text-danger">خطأ داخلي: ${JSON.stringify(data)}</span>`;
+            } catch(e) { out.innerHTML = `<span class="text-danger">فشل الاتصال: ${e.message}</span>`; }
         }
 
-        // 7. إدارة المخزن
+        // ==========================================
+        // 5. إدارة المخزن (Vault)
+        // ==========================================
         function saveToVault(type, text, img=null) {
             let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
             vault.unshift({ date: new Date().toLocaleString('ar-EG'), type, text, img });
@@ -334,7 +267,7 @@
                 <div class="p-3 mb-3" style="background:rgba(0,0,0,0.5); border-right:3px solid #d4af37; border-radius:5px;">
                     <div class="d-flex justify-content-between gold-text small mb-2"><span>${i.type}</span><span>${i.date}</span></div>
                     <div class="text-light small" style="white-space:pre-line;">${i.text.substring(0, 150)}...</div>
-                    ${i.img ? `<img src="${i.img}" class="preview-img mt-2" style="max-width:80px;">` : ''}
+                    ${i.img ? `<img src="${i.img}" class="preview-img mt-2">` : ''}
                 </div>
             `).join('');
         }
