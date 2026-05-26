@@ -24,7 +24,7 @@ keys_string = os.environ.get("GOOGLE_API_KEY", os.environ.get("GOOGLE_API_KEYS",
 SYSTEM_API_KEYS = [key.strip() for key in keys_string.split(",") if key.strip()]
 
 # النماذج المعتمدة من قائمتك
-HEAVY_VISION_MODEL = "gemini-2.5-pro" # الأقوى لدمج صورتين ومحاكاة المكياج
+HEAVY_VISION_MODEL = "gemini-2.5-flash" # الأقوى لدمج صورتين ومحاكاة المكياج
 FAST_TEXT_MODEL = "gemini-2.5-flash"   # للمحادثات النصية السريعة
 
 class SimulationPayload(BaseModel):
