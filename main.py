@@ -44,13 +44,17 @@ API_KEYS = [key.strip() for key in keys_string.split(",") if key.strip()]
 # ==========================================
 # تم تحديث أسماء النماذج لتكون النماذج الرسمية المدعومة فقط
 TEXT_MODELS = [
-    "gemini-1.5-flash",
-    "gemini-1.5-pro"
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-2.5-pro",
+    "gemini-2.0-pro-exp"
 ]
 
 VISION_MODELS = [
-    "gemini-1.5-flash",
-    "gemini-1.5-pro"
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-2.5-pro",
+    "gemini-2.0-pro-exp"
 ]
 
 # ==========================================
