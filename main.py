@@ -29,10 +29,7 @@ VISION_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
 # ==========================================
-# وظائف جلب البيانات (محمية ضد الأخطاء والنصوص الفارغة)
-# ==========================================
 def clean_numeric_column(df, col_name):
-    """تنظيف عمود وتحويله لأرقام آمنة"""
     if col_name in df.columns:
         df[col_name] = df[col_name].astype(str).str.replace(',', '.')
         df[col_name] = pd.to_numeric(df[col_name], errors='coerce').fillna(0)
@@ -45,8 +42,7 @@ def get_inventory():
             df = clean_numeric_column(df, 'كمية')
             return df.fillna("")
         return pd.DataFrame()
-    except Exception as e:
-        print(f"Error reading inventory: {e}")
+    except:
         return pd.DataFrame()
 
 def get_links_db():
@@ -59,9 +55,7 @@ def get_links_db():
 
 def robust_generate(client_api_key, contents, models_list):
     keys_to_use = [client_api_key.strip()] if client_api_key else SYSTEM_API_KEYS.copy()
-    if not keys_to_use:
-        raise HTTPException(status_code=500, detail="API Keys not configured.")
-    
+    if not keys_to_use: raise HTTPException(status_code=500, detail="API Keys not configured.")
     random.shuffle(keys_to_use)
     for model_name in models_list:
         for key in keys_to_use:
@@ -69,8 +63,7 @@ def robust_generate(client_api_key, contents, models_list):
                 client = genai.Client(api_key=key)
                 config = types.GenerateContentConfig(temperature=0.7)
                 response = client.models.generate_content(model=model_name, contents=contents, config=config)
-                if response and response.text:
-                    return response.text
+                if response and response.text: return response.text
             except Exception as e:
                 if "503" in str(e) or "429" in str(e):
                     time.sleep(1)
@@ -90,21 +83,36 @@ class ChatPayload(BaseModel):
     history_context: Optional[str] = None
     client_api_key: Optional[str] = None
 
-# ==========================================
-# المسارات البرمجية (API Endpoints)
-# ==========================================
+class SimulationPayload(BaseModel):
+    user_selfie: str
+    product_image: str
+    product_name_desc: str
+    client_api_key: Optional[str] = None
+
+def parse_image(base64_string):
+    if base64_string and "," in base64_string:
+        try:
+            img_data = base64.b64decode(base64_string.split(",")[1])
+            return Image.open(io.BytesIO(img_data))
+        except: return None
+    return None
+
 def safe_str(val):
-    """تحويل القيمة لنص والتأكد من عدم وجود nan"""
     s = str(val).strip()
     return "" if s.lower() == 'nan' else s
 
+BASE_PHILOSOPHY = """
+أنتِ 'رويال مايند'، الفيلسوفة الجمالية لـ Royal Elchim.
+تؤمنين بأن الجمال هو أثر دافئ يولد حباً وانجذاباً. تتحدثين دائماً بنبرة أنثوية فاخرة وراقية.
+"""
+
+# ==========================================
 @app.get("/api/search")
 async def search(query: str):
     inv = get_inventory()
     db = get_links_db()
     if inv.empty: return {"status": "error", "message": "قاعدة البيانات غير متاحة"}
 
-    # بحث مرن
     results = inv[
         inv['الصنف'].astype(str).str.contains(query, na=False, case=False) | 
         inv['الباركود'].astype(str).str.contains(query, na=False)
@@ -113,13 +121,12 @@ async def search(query: str):
     data = []
     for _, row in results.iterrows():
         qty = float(row.get('كمية', 0))
-        if math.isnan(qty): qty = 0 # فحص إضافي للتأكد
+        if math.isnan(qty): qty = 0
 
         if qty > 5: status, color = "متوفر حالياً", "success"
         elif 0 < qty <= 5: status, color = f"قطع أخيرة ({int(qty)})", "warning"
         else: status, color = "نفذت الكمية", "danger"
 
-        # مطابقة الرابط وتجنب الأخطاء
         link_match = db[db['Product_Name'].astype(str).str.contains(str(row['الصنف']), na=False, case=False)] if not db.empty else pd.DataFrame()
         link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
 
@@ -141,13 +148,12 @@ async def diagnose(payload: DiagnosisPayload):
     inv = get_inventory()
     sampled_items = ""
     if not inv.empty:
-        # التأكد من أن التصفية آمنة
         available = inv[pd.to_numeric(inv['كمية'], errors='coerce').fillna(0) > 0]
         if not available.empty:
             sampled = available.sample(n=min(3, len(available)))
             sampled_items = "\n".join([f"- {safe_str(r.get('الصنف', ''))} (السعر: {safe_str(r.get('سعر1 كارت', 'متاح'))})" for _, r in sampled.iterrows()])
     
-    prompt = f"أنتِ رويال مايند. حللي مزاج العميل: {payload.mood_answers}. المنتجات المتاحة: {sampled_items}. صيغي رداً ملكياً بمنتج واحد."
+    prompt = f"{BASE_PHILOSOPHY}\nحللي مزاج العميل: {payload.mood_answers}. المنتجات المتاحة: {sampled_items}. صيغي رداً ملكياً يرشح منتجاً متوفراً لترك أثر جمالي."
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "diagnosis": res}
 
@@ -156,12 +162,22 @@ async def chat(payload: ChatPayload):
     inv = get_inventory()
     catalog = ""
     if not inv.empty:
-        # التأكد من أن التصفية آمنة
         available = inv[pd.to_numeric(inv['كمية'], errors='coerce').fillna(0) > 0]
         if not available.empty:
             sampled = available.sample(n=min(5, len(available)))
             catalog = "\n".join([f"- {safe_str(r.get('الصنف', ''))} (السعر: {safe_str(r.get('سعر1 كارت', 'متاح'))})" for _, r in sampled.iterrows()])
 
-    prompt = f"استشارة في قسم {payload.category}: {payload.text}. سياق سابق: {payload.history_context}. المنتجات المتاحة: {catalog}. صيغي رداً ملكياً يرشح منتجاً مع ذكر رابطه صراحة."
+    prompt = f"{BASE_PHILOSOPHY}\nاستشارة في قسم {payload.category}: {payload.text}. سياق سابق: {payload.history_context}. المنتجات المتاحة: {catalog}. صيغي رداً ملكياً يرشح منتجاً مع ذكر رابطه صراحة."
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "answer": res}
+
+@app.post("/api/simulate_makeup")
+async def simulate_makeup(payload: SimulationPayload):
+    prompt = f"{BASE_PHILOSOPHY}\nتخيلي النتيجة عند دمج ملامح العميلة بالصورة المرفقة مع منتج: {payload.product_name_desc}. صفي الأثر الساحر الذي سيولده هذا الإطلال."
+    contents = [prompt]
+    img1 = parse_image(payload.user_selfie)
+    img2 = parse_image(payload.product_image)
+    if img1: contents.append(img1)
+    if img2: contents.append(img2)
+    res = robust_generate(payload.client_api_key, contents, VISION_MODELS)
+    return {"status": "success", "simulation_result": res}
