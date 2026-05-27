@@ -32,13 +32,11 @@
 <body>
 
     <div class="container pt-4 text-center">
-        <!-- تم الربط بدقة هنا لمنع العلامات المكسورة -->
         <img src="Untitled-2_2.jpg" alt="Royal Elchim" style="max-width: 150px; mix-blend-mode: screen;">
         <h5 class="gold-text mt-2">نظام الإدارة الفاخر الموحد</h5>
     </div>
 
     <div class="container mt-4">
-        <!-- 1. شاشة الاستعلام الملكي المباشر -->
         <div id="screen-search" class="app-screen active">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-barcode"></i> الاستعلام الملكي</h3>
@@ -51,7 +49,6 @@
             </div>
         </div>
 
-        <!-- 2. شاشة قراءة الروح -->
         <div id="screen-diagnosis" class="app-screen">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-eye"></i> قراءة الروح</h3>
@@ -67,7 +64,6 @@
             </div>
         </div>
 
-        <!-- 3. شاشة العطور -->
         <div id="screen-perfume" class="app-screen">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> الأثر العطري</h3>
@@ -80,10 +76,9 @@
             </div>
         </div>
 
-        <!-- 4. شاشة المكياج -->
         <div id="screen-makeup" class="app-screen">
             <div class="glass-card">
-                <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-lips"></i> النحت الجمالي</h3>
+                <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-paintbrush"></i> النحت الجمالي</h3>
                 <textarea id="makeupInput" class="form-control bg-dark text-light border-secondary mb-3" rows="3" placeholder="صفي لنا الإطلالة التي تطمحين إليها..."></textarea>
                 <div class="input-toolbar">
                     <button class="icon-btn" onclick="startDictation('makeupInput', this)"><i class="fa-solid fa-microphone"></i></button>
@@ -94,7 +89,6 @@
         </div>
     </div>
 
-    <!-- شريط التنقل السفلي -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('search', this)"><i class="fa-solid fa-search"></i><span>الاستعلام</span></div>
         <div class="nav-item" onclick="switchTab('diagnosis', this)"><i class="fa-solid fa-eye"></i><span>قراءة</span></div>
@@ -105,6 +99,12 @@
     <script>
         const BACKEND_URL = "https://royalmind-api-production-2448.up.railway.app";
         let searchTimer;
+
+        // تفعيل مسبق للأصوات في المتصفح
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+        }
 
         function switchTab(id, el) {
             document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
@@ -121,7 +121,7 @@
 
         async function performRoyalSearch(query) {
             const container = document.getElementById('searchResultsContainer');
-            container.innerHTML = "<p class='text-center gold-text'><i class='fa-solid fa-spinner fa-spin'></i> جاري فحص السجلات الملكية...</p>";
+            container.innerHTML = "<p class='text-center gold-text'><i class='fa-solid fa-spinner fa-spin'></i> جاري فحص الخزينة الملكية...</p>";
             try {
                 const res = await fetch(`${BACKEND_URL}/api/search?query=${encodeURIComponent(query)}`);
                 const result = await res.json();
@@ -150,7 +150,7 @@
         }
 
         function convertLinkToButton(url) {
-            if(!url || url === "#") return "";
+            if(!url || url === "#" || url.includes("https://www.royalelchim.app") === false) return "";
             return `<a href="${url}" target="_blank" class="btn btn-sm gold-btn py-2 px-3" style="text-shadow:none;"><i class="fa-solid fa-bag-shopping"></i> اقتناء الآن</a>`;
         }
 
