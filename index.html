@@ -12,10 +12,10 @@
         
         /* تأثيرات الشعار السحرية */
         .brand-logo {
-            max-width: 180px; /* حجم الشعار */
+            max-width: 180px;
             height: auto;
-            mix-blend-mode: screen; /* إخفاء الخلفية السوداء وترك الذهب */
-            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4)); /* هالة ذهبية حول الشعار */
+            mix-blend-mode: screen; 
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4));
             margin-bottom: 10px;
         }
 
@@ -34,8 +34,10 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .royal-response { background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, rgba(0,0,0,0) 100%); border-top: 2px solid #d4af37; border-bottom: 2px solid #d4af37; padding: 20px; font-size: 1.1rem; line-height: 1.8; margin-top: 20px; white-space: pre-line; }
         .preview-img { max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 8px; border: 1px solid #d4af37; margin-top: 10px; }
-        .input-toolbar { display: flex; gap: 10px; margin-top: -10px; margin-bottom: 15px; justify-content: flex-end; }
-        .icon-btn { background: none; border: none; color: #d4af37; font-size: 1.2rem; cursor: pointer; transition: 0.3s; }
+        
+        /* تصميم أزرار المايك والملفات */
+        .input-toolbar { display: flex; gap: 15px; margin-top: -15px; margin-bottom: 15px; justify-content: flex-end; padding-left: 10px; }
+        .icon-btn { background: none; border: none; color: #d4af37; font-size: 1.4rem; cursor: pointer; transition: 0.3s; padding: 0; }
         .icon-btn:hover { color: #fff; transform: scale(1.1); }
         .recording { color: #ff4d4d; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
@@ -45,13 +47,13 @@
 
     <!-- الشعار والترويسة -->
     <div class="container pt-4 pb-2 text-center">
-        <img src="Untitled-2.jpg" alt="Royal Elchim" class="brand-logo">
+        <img src="logo.jpg" alt="Royal Elchim" class="brand-logo">
         <p class="small text-muted" id="quotaDisplay">جمال يترك أثراً، وحضور يولد الحب</p>
     </div>
 
     <div class="container">
         
-        <!-- التشخيص -->
+        <!-- القراءة (التشخيص) -->
         <div id="screen-diagnosis" class="app-screen active">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-eye"></i> قراءة الروح</h3>
@@ -71,8 +73,9 @@
         <div id="screen-perfume" class="app-screen">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> الأثر العطري</h3>
-                <textarea id="perfumeInput" class="form-control bg-dark text-light border-secondary mb-3" rows="3" placeholder="تحدثي عن العطر الذي يعبر عنكِ..."></textarea>
+                <textarea id="perfumeInput" class="form-control bg-dark text-light border-secondary mb-4" rows="3" placeholder="تحدثي عن العطر الذي يعبر عنكِ..."></textarea>
                 
+                <!-- أزرار المايك والملفات -->
                 <div class="input-toolbar">
                     <button class="icon-btn" onclick="startDictation('perfumeInput', this)" title="تحدثي لرويال مايند"><i class="fa-solid fa-microphone"></i></button>
                     <label class="icon-btn" title="رفع ملف نصي للتحليل">
@@ -90,8 +93,9 @@
         <div id="screen-makeup" class="app-screen">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-paintbrush"></i> النحت الجمالي</h3>
-                <textarea id="makeupInput" class="form-control bg-dark text-light border-secondary mb-3" rows="3" placeholder="صفي لنا ملامحكِ أو الإطلالة التي تطمحين لها..."></textarea>
+                <textarea id="makeupInput" class="form-control bg-dark text-light border-secondary mb-4" rows="3" placeholder="صفي لنا ملامحكِ أو الإطلالة التي تطمحين لها..."></textarea>
                 
+                <!-- أزرار المايك والملفات -->
                 <div class="input-toolbar">
                     <button class="icon-btn" onclick="startDictation('makeupInput', this)" title="تحدثي لرويال مايند"><i class="fa-solid fa-microphone"></i></button>
                     <label class="icon-btn" title="رفع ملف نصي للتحليل">
@@ -105,7 +109,7 @@
             </div>
         </div>
 
-        <!-- المحاكاة (التخيل البصري) -->
+        <!-- التخيل البصري -->
         <div id="screen-simulation" class="app-screen">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> التخيل الفلسفي</h3>
@@ -131,7 +135,7 @@
             </div>
         </div>
 
-        <!-- المخزن -->
+        <!-- السجلات -->
         <div id="screen-vault" class="app-screen">
             <div class="glass-card">
                 <h3 class="gold-text mb-3 text-center"><i class="fa-solid fa-book-journal-whills"></i> السجلات الملكية</h3>
@@ -174,17 +178,20 @@
             reader.readAsDataURL(file);
         }
 
-        // الصوت
+        // ===================================
+        // خاصية الاستماع للميكروفون
+        // ===================================
         function startDictation(inputId, btnElement) {
-            if (window.hasOwnProperty('webkitSpeechRecognition')) {
-                var recognition = new webkitSpeechRecognition();
+            if (window.hasOwnProperty('webkitSpeechRecognition') || window.hasOwnProperty('SpeechRecognition')) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                var recognition = new SpeechRecognition();
                 recognition.continuous = false;
                 recognition.interimResults = false;
                 recognition.lang = "ar-EG";
                 
                 recognition.onstart = function() {
                     btnElement.classList.add('recording');
-                    document.getElementById(inputId).placeholder = "رويال مايند تستمع لذبذبات صوتكِ...";
+                    document.getElementById(inputId).placeholder = "رويال مايند تستمع إليكِ الآن... تحدثي";
                 };
 
                 recognition.onresult = function(e) {
@@ -192,7 +199,11 @@
                     recognition.stop();
                 };
 
-                recognition.onerror = function(e) { recognition.stop(); };
+                recognition.onerror = function(e) { 
+                    recognition.stop(); 
+                    alert("تعذر الوصول للميكروفون، يرجى إعطاء الصلاحية للمتصفح.");
+                };
+                
                 recognition.onend = function() {
                     btnElement.classList.remove('recording');
                     document.getElementById(inputId).placeholder = "اكتبي أو تحدثي لرويال مايند...";
@@ -200,11 +211,13 @@
 
                 recognition.start();
             } else {
-                alert("عذراً، متصفحك لا يدعم خاصية الإدخال الصوتي.");
+                alert("عذراً، متصفحك لا يدعم خاصية الإدخال الصوتي التلقائي.");
             }
         }
 
-        // الملفات
+        // ===================================
+        // خاصية رفع الملفات النصية
+        // ===================================
         function handleFileUpload(event, inputId) {
             const file = event.target.files[0];
             if (!file) return;
@@ -212,8 +225,8 @@
             reader.onload = function(e) {
                 const text = e.target.result;
                 let currentVal = document.getElementById(inputId).value;
-                document.getElementById(inputId).value = currentVal + "\n\n[محتوى السجل المرفق للتحليل]:\n" + text;
-                alert("تم تحميل السجل بنجاح.");
+                document.getElementById(inputId).value = currentVal + "\n\n[ملف مرفق للتحليل]:\n" + text;
+                alert("تم إرفاق السجل بنجاح، يمكنك الآن بدء التحليل.");
             };
             reader.readAsText(file);
         }
