@@ -6,11 +6,11 @@ from google.genai import types
 import os
 import random
 import io
-import base64
 import pandas as pd
 from PIL import Image
 from typing import Optional, Dict
 import time
+import math
 
 app = FastAPI(title="Royal Elchim - Luxury Engine")
 
@@ -31,14 +31,18 @@ TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 # ==========================================
 # وظائف جلب البيانات (محمية ضد الأخطاء والنصوص الفارغة)
 # ==========================================
+def clean_numeric_column(df, col_name):
+    """تنظيف عمود وتحويله لأرقام آمنة"""
+    if col_name in df.columns:
+        df[col_name] = df[col_name].astype(str).str.replace(',', '.')
+        df[col_name] = pd.to_numeric(df[col_name], errors='coerce').fillna(0)
+    return df
+
 def get_inventory():
     try:
         if os.path.exists("last.xls - Sheet1.csv"):
             df = pd.read_csv("last.xls - Sheet1.csv")
-            # تنظيف عمود الكمية وتحويله لأرقام إجبارياً لمنع الانهيار
-            if 'كمية' in df.columns:
-                df['كمية'] = df['كمية'].astype(str).str.replace(',', '.')
-                df['كمية'] = pd.to_numeric(df['كمية'], errors='coerce').fillna(0)
+            df = clean_numeric_column(df, 'كمية')
             return df.fillna("")
         return pd.DataFrame()
     except Exception as e:
@@ -89,6 +93,11 @@ class ChatPayload(BaseModel):
 # ==========================================
 # المسارات البرمجية (API Endpoints)
 # ==========================================
+def safe_str(val):
+    """تحويل القيمة لنص والتأكد من عدم وجود nan"""
+    s = str(val).strip()
+    return "" if s.lower() == 'nan' else s
+
 @app.get("/api/search")
 async def search(query: str):
     inv = get_inventory()
@@ -104,6 +113,8 @@ async def search(query: str):
     data = []
     for _, row in results.iterrows():
         qty = float(row.get('كمية', 0))
+        if math.isnan(qty): qty = 0 # فحص إضافي للتأكد
+
         if qty > 5: status, color = "متوفر حالياً", "success"
         elif 0 < qty <= 5: status, color = f"قطع أخيرة ({int(qty)})", "warning"
         else: status, color = "نفذت الكمية", "danger"
@@ -112,16 +123,16 @@ async def search(query: str):
         link_match = db[db['Product_Name'].astype(str).str.contains(str(row['الصنف']), na=False, case=False)] if not db.empty else pd.DataFrame()
         link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
 
-        price = str(row.get('سعر1 كارت', 'اتصلي بنا')).strip()
-        if price == 'nan' or price == "": price = "اتصلي بنا"
+        price = safe_str(row.get('سعر1 كارت', 'اتصلي بنا'))
+        if not price: price = "اتصلي بنا"
 
         data.append({
-            "name": str(row['الصنف']),
+            "name": safe_str(row.get('الصنف', 'بدون اسم')),
             "price": price,
             "status": status,
             "color": color,
-            "barcode": str(row.get('الباركود', '---')),
-            "link": str(link)
+            "barcode": safe_str(row.get('الباركود', '---')),
+            "link": safe_str(link)
         })
     return {"status": "success", "data": data}
 
@@ -130,10 +141,11 @@ async def diagnose(payload: DiagnosisPayload):
     inv = get_inventory()
     sampled_items = ""
     if not inv.empty:
-        available = inv[inv['كمية'] > 0]
+        # التأكد من أن التصفية آمنة
+        available = inv[pd.to_numeric(inv['كمية'], errors='coerce').fillna(0) > 0]
         if not available.empty:
             sampled = available.sample(n=min(3, len(available)))
-            sampled_items = "\n".join([f"- {r['الصنف']} (السعر: {r.get('سعر1 كارت', 'متاح')})" for _, r in sampled.iterrows()])
+            sampled_items = "\n".join([f"- {safe_str(r.get('الصنف', ''))} (السعر: {safe_str(r.get('سعر1 كارت', 'متاح'))})" for _, r in sampled.iterrows()])
     
     prompt = f"أنتِ رويال مايند. حللي مزاج العميل: {payload.mood_answers}. المنتجات المتاحة: {sampled_items}. صيغي رداً ملكياً بمنتج واحد."
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
@@ -144,10 +156,11 @@ async def chat(payload: ChatPayload):
     inv = get_inventory()
     catalog = ""
     if not inv.empty:
-        available = inv[inv['كمية'] > 0]
+        # التأكد من أن التصفية آمنة
+        available = inv[pd.to_numeric(inv['كمية'], errors='coerce').fillna(0) > 0]
         if not available.empty:
             sampled = available.sample(n=min(5, len(available)))
-            catalog = "\n".join([f"- {r['الصنف']} (السعر: {r.get('سعر1 كارت', 'متاح')})" for _, r in sampled.iterrows()])
+            catalog = "\n".join([f"- {safe_str(r.get('الصنف', ''))} (السعر: {safe_str(r.get('سعر1 كارت', 'متاح'))})" for _, r in sampled.iterrows()])
 
     prompt = f"استشارة في قسم {payload.category}: {payload.text}. سياق سابق: {payload.history_context}. المنتجات المتاحة: {catalog}. صيغي رداً ملكياً يرشح منتجاً مع ذكر رابطه صراحة."
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
