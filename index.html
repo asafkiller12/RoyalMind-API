@@ -10,7 +10,7 @@
         @keyframes aurora { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         body { background: linear-gradient(135deg, #0b0914, #2a113b, #0f2027, #3a1c2a, #0b0914); background-size: 400% 400%; animation: aurora 15s ease infinite; color: #e6e6e6; font-family: 'Times New Roman', Times, serif; margin: 0; padding-bottom: 80px; min-height: 100vh; }
         
-        /* ضبط الشعار */
+        /* ضبط الشعار الملكي السحري */
         .brand-logo {
             max-width: 180px;
             height: auto;
@@ -47,9 +47,9 @@
 </head>
 <body>
 
-    <!-- الشعار والترويسة مضبوط هنا على logo.jpg -->
+    <!-- تم التعديل هنا ليطابق اسم الملف بدقة واحترافية -->
     <div class="container pt-4 pb-2 text-center">
-        <img src="logo.jpg" alt="Royal Elchim" class="brand-logo">
+        <img src="Untitled-2_2.jpg" alt="Royal Elchim" class="brand-logo">
         <p class="small text-muted" id="quotaDisplay">جمال يترك أثراً، وحضور يولد الحب</p>
     </div>
 
@@ -156,6 +156,7 @@
             if(element) element.classList.add('active');
         }
 
+        // معالجة وحفظ الصور المرفقة
         function previewImage(event, previewId, dataKey) {
             const file = event.target.files[0];
             if(!file) return;
@@ -167,6 +168,7 @@
             reader.readAsDataURL(file);
         }
 
+        // الإدخال الصوتي (تحويل الصوت لنص)
         function startDictation(inputId, btnElement) {
             if (window.hasOwnProperty('webkitSpeechRecognition') || window.hasOwnProperty('SpeechRecognition')) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -197,6 +199,7 @@
             }
         }
 
+        // رفع وقراءة الملفات النصية
         function handleFileUpload(event, inputId) {
             const file = event.target.files[0];
             if (!file) return;
@@ -210,21 +213,23 @@
             reader.readAsText(file);
         }
 
+        // تحويل الروابط النصية لأزرار ذهبية حقيقية
         function convertLinksToButtons(text) {
             const urlRegex = /(https?:\/\/[^\s\]\)\*]+)/g;
             return text.replace(urlRegex, function(url) {
                 return `<br><a href="${url}" target="_blank" class="btn gold-btn mt-2 mb-2 px-4" style="display:inline-block; text-decoration:none; text-shadow:none;">
-                            <i class="fa-solid fa-bag-shopping"></i> اضغطي هنا لاقتناء المنتج من الموقع الرسمي
+                            <i class="fa-solid fa-bag-shopping"></i> اقتناء المنتج عبر الرابط الملكي الرسمي
                         </a><br>`;
             }).replace(/\[رابط الشراء:?\]?/g, '').replace(/\[|\]/g, ''); 
         }
 
+        // نطق الرد بالعربية مع معالجة الروابط صوتياً
         function playVoice(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel(); 
                 
                 let cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[\*#]/g, '');
-                cleanText = cleanText.replace(/(https?:\/\/[^\s]+)/g, 'تم إرفاق رابط شراء المنتج بالأسفل.');
+                cleanText = cleanText.replace(/(https?:\/\/[^\s]+)/g, 'تم إرفاق رابط الشراء بالأسفل.');
                 
                 let utterance = new SpeechSynthesisUtterance(cleanText);
                 utterance.lang = 'ar-SA'; 
@@ -256,6 +261,7 @@
             } catch(e) { return null; }
         }
 
+        // استدعاء التحليل (قراءة الروح)
         async function runDiagnosis() {
             let mood = document.getElementById('qMood').value;
             let out = document.getElementById('diagResponse');
@@ -273,6 +279,7 @@
             } catch(e) { out.innerHTML = `<span class="text-danger">خطأ اتصال: ${e.message}</span>`; }
         }
 
+        // استدعاء استشارة العطور والمكياج
         async function runChat(category, inputId, outId) {
             let text = document.getElementById(inputId).value;
             let out = document.getElementById(outId);
@@ -297,6 +304,7 @@
             } catch(e) { out.innerHTML = `<span class="text-danger">خطأ اتصال: ${e.message}</span>`; }
         }
 
+        // استدعاء التخيل الفلسفي البصري
         async function runSimulation() {
             if(!imagesData.selfieBase64 || !imagesData.productBase64) return alert("يجب رفع الصورتين.");
             let name = document.getElementById('simProductName').value || "منتج فاخر";
@@ -320,6 +328,7 @@
             } catch(e) { out.innerHTML = `<span class="text-danger">فشل الاتصال.</span>`; }
         }
 
+        // إدارة السجلات التاريخية المحلية
         function saveToVault(type, text, img=null) {
             let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
             vault.unshift({ date: new Date().toLocaleString('ar-EG'), type, text, img });
