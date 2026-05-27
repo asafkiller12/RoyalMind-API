@@ -2,7 +2,7 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google import genai
-from google.genai import types # تم استيراد الأنواع لإعداد الـ Temperature
+from google.genai import types
 import os
 import random
 import base64
@@ -13,9 +13,9 @@ from typing import Optional, Dict
 import time
 
 # ==========================================
-# 1. إعدادات الخادم
+# 1. إعدادات الخادم المركزي
 # ==========================================
-app = FastAPI(title="Royal Elchim - Philosophical Resilient Ecosystem")
+app = FastAPI(title="Royal Elchim - commercial Philosophical Engine")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,37 +25,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# جلب مفاتيح النظام الاحتياطية
 keys_string = os.environ.get("GOOGLE_API_KEY", os.environ.get("GOOGLE_API_KEYS", ""))
 SYSTEM_API_KEYS = [key.strip() for key in keys_string.split(",") if key.strip()]
 
-# النماذج الحديثة لعام 2026
+# النماذج القياسية المستقرة
 VISION_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
 # ==========================================
-# 2. قراءة قاعدة البيانات
+# 2. إدارة وقراءة قواعد البيانات (المخزون والروابط)
 # ==========================================
-def load_inventory():
+def get_inventory():
+    try:
+        if os.path.exists("last.xls - Sheet1.csv"):
+            return pd.read_csv("last.xls - Sheet1.csv")
+        return pd.DataFrame()
+    except Exception as e:
+        print("خطأ في قراءة ملف المخزون الجغرافي:", e)
+        return pd.DataFrame()
+
+def get_links_db():
     try:
         if os.path.exists("Royal_Elchim_Final_Database.csv"):
-            df = pd.read_csv("Royal_Elchim_Final_Database.csv")
-            products = []
-            for _, row in df.iterrows():
-                products.append({
-                    "name": str(row.get('Product_Name', '')).strip(),
-                    "price": str(row.get('Price', '')).strip(),
-                    "link": str(row.get('Product_Link', '')).strip()
-                })
-            return products
-        return []
+            return pd.read_csv("Royal_Elchim_Final_Database.csv")
+        return pd.DataFrame()
     except Exception as e:
-        print("Database load error:", e)
-        return []
-
-PRODUCTS_DATABASE = load_inventory()
+        print("خطأ في قراءة ملف روابط الموقع الإلكتروني:", e)
+        return pd.DataFrame()
 
 # ==========================================
-# 3. هياكل البيانات
+# 3. هياكل البيانات واستقبال الطلبات (Payloads)
 # ==========================================
 class DiagnosisPayload(BaseModel):
     mood_answers: Dict[str, str]
@@ -76,14 +76,14 @@ class SimulationPayload(BaseModel):
     client_api_key: Optional[str] = None
 
 # ==========================================
-# 4. محرك المرونة (MATRIX ROUTER المطور)
+# 4. محرك الـ Router المرن والمقاوم للأخطاء
 # ==========================================
 def robust_generate(client_api_key, contents, models_list):
     if client_api_key and client_api_key.strip():
         keys_to_use = [client_api_key.strip()]
     else:
         if not SYSTEM_API_KEYS:
-            raise HTTPException(status_code=500, detail="لا توجد مفاتيح النظام المتاحة للخدمة.")
+            raise HTTPException(status_code=500, detail="مفاتيح النظام غير مهيأة بالسيرفر حالياً.")
         keys_to_use = SYSTEM_API_KEYS.copy()
         random.shuffle(keys_to_use)
 
@@ -93,19 +93,15 @@ def robust_generate(client_api_key, contents, models_list):
             for attempt in range(max_retries):
                 try:
                     client = genai.Client(api_key=key)
-                    
-                    # رفع معدل الابتكار والتنوع (Temperature = 0.75) لمنع تكرار عطر واحد دائماً
                     config = types.GenerateContentConfig(
                         temperature=0.75,
                         top_p=0.95
                     )
-                    
                     response = client.models.generate_content(
                         model=model_name, 
                         contents=contents,
                         config=config
                     )
-                    
                     if response and response.text:
                         return response.text, model_name
                 except Exception as e:
@@ -116,57 +112,19 @@ def robust_generate(client_api_key, contents, models_list):
                     else:
                         break
                         
-    raise HTTPException(status_code=503, detail="خبراء رويال مايند مشغولون حالياً. يرجى المحاولة بعد لحظات قليلة.")
+    raise HTTPException(status_code=503, detail="جلسة رويال مايند ممتلئة حالياً، ثوانٍ وأعيدي المحاولة.")
 
 # ==========================================
-# 5. التوجيهات الفلسفية المحدثة (THE BEAUTY PRESENCE)
+# 5. الفلسفة الجمالية الجديدة لـ "رويال مايند"
 # ==========================================
-DIAGNOSIS_PROMPT = """
-أنتِ 'رويال مايند'، الفيلسوفة الجمالية لـ Royal Elchim.
-تؤمنين بأن الجمال الحقيقي ليس مجرد مظهر، بل هو "معنى عميق له أثر وحضور، يولد حباً وانجذاباً من الجميع".
-
-أمامك الآن إجابات عميل تصف حالته النفسية.
-مهمتك:
-1. قراءة روحه بعمق وأنثوية فاخرة.
-2. تحديد المسار المناسب (عطور أم مكياج).
-3. صياغة التوصية بأسلوب يخبر العميل أن غايتنا هي إبراز حضوره الساحر، ليترك أثراً لا يُنسى في قلوب كل من يراه.
-"""
-
-PERFUME_PROMPT = """
-أنتِ 'رويال مايند'، خبيرة العطور وفيلسوفة الجمال في Royal Elchim.
-رسالتكِ هي البحث عن الجمال الذي يملك حضوراً طاغياً ويولد المحبة والانجذاب من الجميع.
-
-تعليمات صارمة لمنع التكرار:
-1. اقرأي رسالة العميل بعمق واستنتجي حالته ومزاجه الحاليين.
-2. ابحثي في قائمة المنتجات المتاحة واختاري عطراً (فريداً ومختلفاً يتناسب دمج نغماته مع كلمات العميل). تجنبي تكرار نفس العطر لكل الطلبات بشكل عشوائي، واحرصي على تقديم خيارات متنوعة من الكتالوج.
-3. اشرحي كيف سيكون هذا العطر بمثابة توقيع غير مرئي للعميل، يسبق حضوره، ويأسر القلوب، ويجعل كل من حوله يقع في حب وجوده وطاقته.
-4. ضعي اسم المنتج وسعره ورابط الشراء المباشر بوضوح وصراحة ليبدأ بـ https.
-"""
-
-MAKEUP_PROMPT = """
-أنتِ 'رويال مايند'، فيلسوفة النحت الجمالي لـ Royal Elchim.
-تؤمنين بأن المكياج ليس لإخفاء الملامح، بل لإبراز "الجمال الساحر الذي يترك أثراً في النفوس ويولد حباً فورياً".
-
-اقترحي منتجات مناسبة ومتنوعة من الكتالوج المتاح بناءً على رغبة ومظهر العميلة وضعي روابط شرائها المباشرة.
-اشرحي كيف ستجعل هذه اللمسات ملامح العميلة تشع بالثقة الطاغية، لتصبح مركز الجاذبية والإعجاب وتأسر عقول وقلوب كل من ينظر إليها في أي مكان تدخله.
-"""
-
-MAKEUP_SIMULATION_PROMPT = """
-أنتِ 'رويال مايند'، العقل الفلسفي والجمالي لـ Royal Elchim.
-أمامك صورة للعميلة وصورة لمنتج.
-تؤمنين بفلسفة "الجمال كأثر وحضور عارم يولد الحب والإعجاب المطلق من الجميع".
-
-تخيلي النتيجة الجمالية والنفسية الفاخرة عند تطبيق هذا المنتج على ملامحها، وصيغي رداً ساحراً يحتوي على العناوين التالية:
-1. ديباجة عن كيف سيُبرز هذا المنتج روحها الساحرة وجمالها الكامن.
-2. وصف التأثير العاطفي والبصري: كيف سيجعل ملامحها تشع بالحضور الساحر الذي لا يُقاوم.
-3. التوافق الملكي: (أعطي نسبة مئوية دقيقة %).
-4. الأثر المحبب: كيف سيجعلها هذا الإطلال تكتسب حباً، تقديراً، وانجذاباً جارفاً من الجميع.
-
-تحدثي دائماً بفخامة، رقي، وعاطفة ملكية صادقة.
+BASE_PHILOSOPHY = """
+أنتِ 'رويال مايند'، الفيلسوفة الجمالية وخبيرة الجمال والعطور لـ Royal Elchim.
+تؤمنين بأن الجمال ليس مجرد طبقة خارجية أو زينة، بل هو 'معنى عميق، حضور ساحر، وأثر دافئ يولد حباً وانجذاباً نقياً من الجميع'.
+تتحدثين دائماً بنبرة أنثوية فاخرة، راقية، وممتلئة بالعاطفة الصادقة.
 """
 
 # ==========================================
-# 6. المسارات (API ENDPOINTS)
+# 6. المسارات البرمجية (API Endpoints)
 # ==========================================
 def parse_image(base64_string):
     if base64_string and "," in base64_string:
@@ -177,44 +135,152 @@ def parse_image(base64_string):
             return None
     return None
 
+# مسار البحث المباشر في المخزون والأسعار والروابط
+@app.get("/api/search")
+async def search(query: str):
+    inv = get_inventory()
+    db = get_links_db()
+    
+    if inv.empty:
+        return {"status": "error", "message": "قاعدة بيانات المخزون غير متوفرة حالياً."}
+
+    # البحث المرن في أعمدة الصنف أو الباركود
+    results = inv[
+        inv['الصنف'].str.contains(query, na=False, case=False) | 
+        inv['الباركود'].astype(str).str.contains(query, na=False)
+    ].head(8)
+
+    data = []
+    for _, row in results.iterrows():
+        # بحث مرن وجزئي عن الرابط الإلكتروني لمنع انكسار الروابط
+        link_match = db[db['Product_Name'].str.contains(str(row['الصنف']), na=False, case=False)] if not db.empty else pd.DataFrame()
+        link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
+        
+        data.append({
+            "name": row['الصنف'],
+            "price": row['سعر1 كارت'] if 'سعر1 كارت' in inv.columns else "غير محدد",
+            "stock": int(row['كمية']) if 'كمية' in inv.columns else 0,
+            "barcode": row['الباركود'] if 'الباركود' in inv.columns else "",
+            "link": link
+        })
+    
+    return {"status": "success", "data": data}
+
+# مسار قراءة الروح (التشخيص) وربطه بمنتجات حقيقية متوفرة في صالات العرض
 @app.post("/api/diagnose")
 async def diagnose(payload: DiagnosisPayload):
+    inv = get_inventory()
+    db = get_links_db()
+    
+    # استخراج عينة عشوائية متغيرة من المنتجات المتوفرة حالياً بالمستودع
+    suggestions_context = ""
+    if not inv.empty and 'كمية' in inv.columns:
+        available = inv[inv['كمية'] > 0]
+        if not available.empty:
+            sampled = available.sample(n=min(5, len(available)))
+            items_list = []
+            for _, r in sampled.iterrows():
+                link_m = db[db['Product_Name'].str.contains(str(r['الصنف']), na=False, case=False)] if not db.empty else pd.DataFrame()
+                ln = link_m['Product_Link'].values[0] if not link_m.empty else "https://www.royalelchim.app"
+                items_list.append(f"- {r['الصنف']} (السعر: {r.get('سعر1 كارت', 'متاح')}) -> رابط الاقتناء: {ln}")
+            suggestions_context = "\n".join(items_list)
+
     formatted_answers = "\n".join([f"- {k}: {v}" for k, v in payload.mood_answers.items()])
-    contents = [DIAGNOSIS_PROMPT, f"الإجابات:\n{formatted_answers}"]
+    
+    prompt = f"""
+    {BASE_PHILOSOPHY}
+    أمامكِ إجابات ومزاج العميل الحالي:
+    {formatted_answers}
+    
+    المنتجات الحقيقية المتوفرة حالياً في صالة العرض والمخازن لترشيحها هي:
+    {suggestions_context}
+    
+    المطلوب منكِ:
+    1. تحليل طاقة وحضور العميل بأسلوب عاطفي ملكي فاخر.
+    2. اختيار منتج أو اثنين كحد أقصى من المنتجات المتاحة بالأعلى، والتي تتوافق مع غايته في ترك أثر ساحر يولد الحب.
+    3. صياغة الرد مع تضمين اسم المنتج ورابط الشراء الصريح المرفق معه بالأعلى (يبدأ بـ https) ليظهر كزر لاحقاً.
+    """
+    
+    contents = [prompt]
     img = parse_image(payload.image)
-    if img: 
-        contents.append(img)
+    if img: contents.append(img)
+        
     res, model = robust_generate(payload.client_api_key, contents, VISION_MODELS if img else TEXT_MODELS)
     return {"status": "success", "diagnosis": res, "is_byok": bool(payload.client_api_key)}
 
+# مسار الاستشارات التفاعلية (عطور ومكياج) المربوط كلياً بالكتالوج الحي
 @app.post("/api/chat")
 async def chat(payload: ChatPayload):
-    inst = PERFUME_PROMPT if payload.category == "perfume" else MAKEUP_PROMPT
+    inv = get_inventory()
+    db = get_links_db()
     
-    ctx = ""
-    if PRODUCTS_DATABASE:
-        ctx = f"\n\nالمنتجات المتاحة في المتجر وروابط اقتنائها:\n" + "\n".join([f"- {p['name']} ({p['price']}): {p['link']}" for p in PRODUCTS_DATABASE[:60]])
+    # تصفية المنتجات بناءً على القسم المطلوب (عطور أم أدوات تجميل ونحت) لزيادة دقة الترشيح
+    catalog_context = ""
+    if not inv.empty:
+        available = inv[inv['كمية'] > 0] if 'كمية' in inv.columns else inv
         
-    if payload.history_context: 
-        ctx += f"\n\nالتاريخ السابق والمزاج المحفوظ للمحادثة:\n{payload.history_context[:500]}"
+        # فلترة ذكية بناءً على الكلمات المفتاحية في القسم
+        if payload.category == "perfume":
+            filtered = available[available['الصنف'].str.contains("عطر|برفيوم|Mist|عود|مسك|بودي", na=False, case=False)]
+        else:
+            filtered = available[available['الصنف'].str.contains("كريم|روج|ماسك|غسول|مكياج|جل|لوشن|شامبو|صنفرة", na=False, case=False)]
+            
+        if filtered.empty: filtered = available
         
-    contents = [inst + ctx, payload.text]
+        # اختيار عينة عشوائية مكونة من 8 منتجات لضمان تنوع الإجابات وعدم تكرار منتج واحد دائماً
+        sampled = filtered.sample(n=min(8, len(filtered))) if not filtered.empty else pd.DataFrame()
+        
+        items_list = []
+        for _, r in sampled.iterrows():
+            link_m = db[db['Product_Name'].str.contains(str(r['الصنف']), na=False, case=False)] if not db.empty else pd.DataFrame()
+            ln = link_m['Product_Link'].values[0] if not link_m.empty else "https://www.royalelchim.app"
+            items_list.append(f"- {r['الصنف']} (السعر: {r.get('سعر1 كارت', 'متاح')}) -> رابط الاقتناء الرسمي: {ln}")
+        catalog_context = "\n".join(items_list)
+
+    category_instruction = "أنتِ في مسار ابتكار الأثر والتوقيع العطري الساحر." if payload.category == "perfume" else "أنتِ في مسار النحت والجمال البصري الذي يأسر القلوب."
+    
+    prompt = f"""
+    {BASE_PHILOSOPHY}
+    {category_instruction}
+    
+    كتالوج المنتجات الحقيقية المتاحة للبيع حالياً وروابطها المباشرة:
+    {catalog_context}
+    
+    إذا كان هناك تاريخ ومزاج سابق للمحادثة، ضعيها في اعتباركِ: {payload.history_context if payload.history_context else 'بداية حوار جديد'}
+    
+    رسالة العميل الحالية: "{payload.text}"
+    
+    المطلوب:
+    1. ابحثي في المنتجات المتاحة بالأعلى واختاري المنتج الأقرب لمساعدة العميل في البحث عن الجمال الذي يملك حضوراً وتأثيراً طاغياً ويولد المحبة والانجذاب من الجميع. (تنّوعي تماماً ولا تكرري نفس الاختيار).
+    2. صوغي ديباجة عاطفية ساحرة حول المنتج، واذكري رابط الشراء الخاص به (الذي يبدأ بـ https) والموجود بجانبه في القائمة بالأعلى بوضوح ودقة تامة.
+    """
+    
+    contents = [prompt]
     img = parse_image(payload.image)
-    if img: 
-        contents.append(img)
+    if img: contents.append(img)
         
     res, model = robust_generate(payload.client_api_key, contents, VISION_MODELS if img else TEXT_MODELS)
     return {"status": "success", "answer": res, "is_byok": bool(payload.client_api_key)}
 
+# مسار التخيل الفلسفي البصري (المحاكاة)
 @app.post("/api/simulate_makeup")
 async def simulate_makeup(payload: SimulationPayload):
-    contents = [f"{MAKEUP_SIMULATION_PROMPT}\n\nاسم المنتج المستهدف وصفته الساحرة:\n{payload.product_name_desc}"]
+    prompt = f"""
+    {BASE_PHILOSOPHY}
+    أمامكِ صورة للعميلة وصورة لمنتج تجميلي مستهدف.
+    اسم المنتج ومواصفاته: {payload.product_name_desc}
+    
+    تخيلي الأثر البصري والحسي عند امتزاج هذا المنتج بملامحها، وصيغي رداً ممتلئاً بالحب والفخامة الملكية يحتوي على:
+    1. ديباجة عن كيف سيُبرز هذا المنتج جمالها الكامن حضورها الأخاذ.
+    2. وصف التأثير البصري: كيف ستشع ملامحها بالجاذبية والثقة.
+    3. التوافق الملكي بين المنتج وروحها (نسبة مئوية %).
+    4. الأثر العاطفي: كيف سيولد هذا الإطلال حباً وانبهاراً من كل من يراها.
+    """
+    contents = [prompt]
     img1 = parse_image(payload.user_selfie)
     img2 = parse_image(payload.product_image)
-    if img1: 
-        contents.append(img1)
-    if img2: 
-        contents.append(img2)
+    if img1: contents.append(img1)
+    if img2: contents.append(img2)
         
     res, model = robust_generate(payload.client_api_key, contents, VISION_MODELS)
     return {"status": "success", "simulation_result": res, "is_byok": bool(payload.client_api_key)}
