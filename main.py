@@ -29,7 +29,7 @@ SYSTEM_API_KEYS = [key.strip() for key in keys_string.split(",") if key.strip()]
 VISION_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
-# وظائف جلب البيانات من الملفات المرفوعة
+# وظائف جلب البيانات الآمنة من الملفات المرفوعة
 def get_inventory():
     try:
         if os.path.exists("last.xls - Sheet1.csv"):
@@ -78,7 +78,7 @@ def robust_generate(client_api_key, contents, models_list):
 BASE_PHILOSOPHY = """
 أنتِ 'رويال مايند'، الفيلسوفة الجمالية لـ Royal Elchim.
 تؤمنين بأن الجمال ليس مجرد طبقة خارجية، بل هو 'معنى عميق، حضور ساحر، وأثر دافئ يولد حباً وانجذاباً نقياً من الجميع'.
-تتحدثين دائماً بنبرة أنثوية فاخرة، راقية، وممتلئة بالعاطفة الصادقة والتخفيف من المصطلحات المعقدة.
+تتحدثين دائماً بنبرة أنثوية فاخرة، راقية، وممتلئة بالعاطفة الصادقة مع تخفيف المصطلحات المعقدة لراحة العميل.
 """
 
 class DiagnosisPayload(BaseModel):
@@ -102,13 +102,20 @@ def parse_image(base64_string):
             return None
     return None
 
-# مسار البحث الملكي (المحسن لعرض الحالة والربط الذكي)
+# مسار البحث الملكي الفوري (المنظف والمحسن تماماً لسرعة الأداء وعدم التكرار)
 @app.get("/api/search")
 async def search(query: str):
     inv = get_inventory()
     db = get_links_db()
-    if inv.empty: return {"status": "error", "message": "السجلات غير متاحة"}
+    
+    if inv.empty:
+        return {"status": "error", "message": "قاعدة بيانات المخزون غير متوفرة حالياً."}
 
+    # تنظيف الجداول من الـ NaN خارج حلقة التكرار للتسريع الأقصى
+    inv = inv.fillna("") 
+    db_clean = db.fillna("") if not db.empty else pd.DataFrame()
+    
+    # البحث المرن في اسم الصنف أو الباركود
     results = inv[
         inv['الصنف'].str.contains(query, na=False, case=False) | 
         inv['الباركود'].astype(str).str.contains(query, na=False)
@@ -118,8 +125,8 @@ async def search(query: str):
     for _, row in results.iterrows():
         try:
             raw_qty = str(row['كمية']).replace(',', '.')
-            stock_count = float(raw_qty) if raw_qty != 'nan' else 0
-        except: 
+            stock_count = float(raw_qty) if (raw_qty and raw_qty != 'nan') else 0
+        except:
             stock_count = 0
 
         if stock_count > 5:
@@ -129,17 +136,22 @@ async def search(query: str):
         else:
             status, color = "نفذت الكمية", "danger"
 
-        link_match = db[db['Product_Name'].str.contains(str(row['الصنف']), na=False, case=False)] if not db.empty else pd.DataFrame()
+        link_match = db_clean[db_clean['Product_Name'].str.contains(str(row['الصنف']), na=False, case=False)] if not db_clean.empty else pd.DataFrame()
         link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
 
+        price = row.get('سعر1 كارت', 'اتصلي بنا')
+        if str(price) == 'nan' or price == "":
+            price = "اتصلي بنا"
+
         data.append({
-            "name": row['الصنف'],
-            "price": row.get('سعر1 كارت', 'اتصلي بنا'),
+            "name": str(row['الصنف']),
+            "price": str(price),
             "status": status,
             "color": color,
-            "barcode": row.get('الباركود', '---'),
-            "link": link
+            "barcode": str(row.get('الباركود', '---')),
+            "link": str(link)
         })
+    
     return {"status": "success", "data": data}
 
 @app.post("/api/diagnose")
@@ -147,13 +159,14 @@ async def diagnose(payload: DiagnosisPayload):
     inv = get_inventory()
     suggestions_context = ""
     if not inv.empty and 'كمية' in inv.columns:
-        available = inv[inv['كمية'] > 0]
+        inv_clean = inv.fillna("")
+        available = inv_clean[inv_clean['كمية'] != ""]
         if not available.empty:
             sampled = available.sample(n=min(3, len(available)))
             suggestions_context = "\n".join([f"- {r['الصنف']} (السعر: {r.get('سعر1 كارت', 'متاح')})" for _, r in sampled.iterrows()])
 
     formatted_answers = "\n".join([f"- {k}: {v}" for k, v in payload.mood_answers.items()])
-    prompt = f"{BASE_PHILOSOPHY}\nالعميل يمر بحدث ومزاج متمثل في:\n{formatted_answers}\nالمنتجات الحقيقية المتاحة بالمعرض حالياً:\n{suggestions_context}\nصيغي قراءة لروحه ورشحي منتجاً يترك أثراً وحضوراً يولد الحب."
+    prompt = f"{BASE_PHILOSOPHY}\nالعميل يمر بمزاج حالي:\n{formatted_answers}\nالمنتجات الحقيقية المتاحة بالمعرض:\n{suggestions_context}\nحللي هالتها واقترحي منتجاً يترك أثراً وحضوراً يولد الحب والقبول."
     
     contents = [prompt]
     img = parse_image(payload.image)
@@ -166,11 +179,11 @@ async def chat(payload: ChatPayload):
     inv = get_inventory()
     catalog_context = ""
     if not inv.empty:
-        available = inv[inv['كمية'] > 0] if 'كمية' in inv.columns else inv
-        sampled = available.sample(n=min(5, len(available))) if not available.empty else pd.DataFrame()
+        inv_clean = inv.fillna("")
+        sampled = inv_clean.sample(n=min(5, len(inv_clean)))
         catalog_context = "\n".join([f"- {r['الصنف']} (السعر: {r.get('سعر1 كارت', 'متاح')})" for _, r in sampled.iterrows()])
 
-    prompt = f"{BASE_PHILOSOPHY}\nالمسار الحالي: {payload.category}\nالمنتجات الحية بالمخزن المتاحة للترشيح المباشر:\n{catalog_context}\nرسالة العميل: {payload.text}\nصيغي رداً جذاباً يولد الانجذاب والمحبة مع ذكر اسم المنتج ورابط الشراء المتوقع صراحة بـ https."
+    prompt = f"{BASE_PHILOSOPHY}\nالقسم الحالي: {payload.category}\nالمنتجات المتوفرة حالياً بالمخزن للترشيح الفوري:\n{catalog_context}\nرسالة العميل: {payload.text}\nصيغي رداً جذاباً يولد المحبة والانجذاب مع ذكر اسم الصنف ورابط الشراء المتوقع المرفق بالأعلى بـ https صريحة."
     
     contents = [prompt]
     img = parse_image(payload.image)
