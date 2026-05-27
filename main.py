@@ -29,6 +29,8 @@ VISION_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
 # ==========================================
+# وظائف جلب البيانات (مع التنظيف الإجباري للأرقام)
+# ==========================================
 def clean_numeric_column(df, col_name):
     if col_name in df.columns:
         df[col_name] = df[col_name].astype(str).str.replace(',', '.')
@@ -42,7 +44,8 @@ def get_inventory():
             df = clean_numeric_column(df, 'كمية')
             return df.fillna("")
         return pd.DataFrame()
-    except:
+    except Exception as e:
+        print(f"Error reading inventory: {e}")
         return pd.DataFrame()
 
 def get_links_db():
@@ -56,6 +59,7 @@ def get_links_db():
 def robust_generate(client_api_key, contents, models_list):
     keys_to_use = [client_api_key.strip()] if client_api_key else SYSTEM_API_KEYS.copy()
     if not keys_to_use: raise HTTPException(status_code=500, detail="API Keys not configured.")
+    
     random.shuffle(keys_to_use)
     for model_name in models_list:
         for key in keys_to_use:
@@ -107,6 +111,8 @@ BASE_PHILOSOPHY = """
 """
 
 # ==========================================
+# المسارات البرمجية (API Endpoints)
+# ==========================================
 @app.get("/api/search")
 async def search(query: str):
     inv = get_inventory()
@@ -147,8 +153,8 @@ async def search(query: str):
 async def diagnose(payload: DiagnosisPayload):
     inv = get_inventory()
     sampled_items = ""
-    if not inv.empty:
-        available = inv[pd.to_numeric(inv['كمية'], errors='coerce').fillna(0) > 0]
+    if not inv.empty and 'كمية' in inv.columns:
+        available = inv[inv['كمية'] > 0]
         if not available.empty:
             sampled = available.sample(n=min(3, len(available)))
             sampled_items = "\n".join([f"- {safe_str(r.get('الصنف', ''))} (السعر: {safe_str(r.get('سعر1 كارت', 'متاح'))})" for _, r in sampled.iterrows()])
@@ -161,8 +167,8 @@ async def diagnose(payload: DiagnosisPayload):
 async def chat(payload: ChatPayload):
     inv = get_inventory()
     catalog = ""
-    if not inv.empty:
-        available = inv[pd.to_numeric(inv['كمية'], errors='coerce').fillna(0) > 0]
+    if not inv.empty and 'كمية' in inv.columns:
+        available = inv[inv['كمية'] > 0]
         if not available.empty:
             sampled = available.sample(n=min(5, len(available)))
             catalog = "\n".join([f"- {safe_str(r.get('الصنف', ''))} (السعر: {safe_str(r.get('سعر1 كارت', 'متاح'))})" for _, r in sampled.iterrows()])
