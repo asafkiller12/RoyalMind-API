@@ -40,7 +40,6 @@
 
     <div class="container mt-2">
         
-        <!-- 1. شاشة الاستعلام الملكي المباشر -->
         <div id="screen-search" class="app-screen active">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-barcode"></i> الاستعلام والمخزون</h4>
@@ -51,7 +50,6 @@
             </div>
         </div>
 
-        <!-- 2. شاشة قراءة الروح -->
         <div id="screen-diagnosis" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-eye"></i> قراءة الروح</h4>
@@ -67,7 +65,6 @@
             </div>
         </div>
 
-        <!-- 3. شاشة العطور -->
         <div id="screen-perfume" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> الأثر العطري</h4>
@@ -81,7 +78,6 @@
             </div>
         </div>
 
-        <!-- 4. شاشة المكياج -->
         <div id="screen-makeup" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-paintbrush"></i> النحت الجمالي</h4>
@@ -95,7 +91,6 @@
             </div>
         </div>
 
-        <!-- 5. شاشة التخيل البصري (رفع الصور) -->
         <div id="screen-simulation" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> التخيل الفلسفي</h4>
@@ -115,7 +110,6 @@
             </div>
         </div>
 
-        <!-- 6. شاشة السجلات التاريخية -->
         <div id="screen-vault" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book-journal-whills"></i> السجلات الملكية</h4>
@@ -124,7 +118,6 @@
         </div>
     </div>
 
-    <!-- شريط التنقل السفلي السداسي -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('search', this)"><i class="fa-solid fa-barcode"></i><span>استعلام</span></div>
         <div class="nav-item" onclick="switchTab('diagnosis', this)"><i class="fa-solid fa-eye"></i><span>قراءة</span></div>
@@ -213,7 +206,7 @@
             return `<div>${richHtml}</div><button class="play-voice-btn" onclick="playVoice(decodeURIComponent('${encoded}'))"><i class="fa-solid fa-volume-high"></i> استمع للرد الملكي</button>`;
         }
 
-        /* --- 3. محرك الاستعلام المباشر --- */
+        /* --- 3. محرك الاستعلام --- */
         function debounceSearch(val) {
             clearTimeout(searchTimer);
             if(val.length < 2) return;
@@ -250,7 +243,7 @@
             }
         }
 
-        /* --- 4. محركات الذكاء الاصطناعي والتخيل --- */
+        /* --- 4. محركات الذكاء الاصطناعي --- */
         async function runDiagnosis() {
             let mood = document.getElementById('qMood').value;
             let out = document.getElementById('diagResponse');
@@ -297,7 +290,7 @@
             } catch { out.innerHTML = "<span class='text-danger'>فشل الاتصال بالسيرفر.</span>"; }
         }
 
-        /* --- 5. نظام السجلات --- */
+        /* --- 5. السجلات --- */
         function saveToVault(type, text) {
             let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
             vault.unshift({ date: new Date().toLocaleString('ar-EG'), type, text });
