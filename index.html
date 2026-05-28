@@ -29,6 +29,9 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         .play-voice-btn { background: #d4af37; color: #0b0914; border: none; border-radius: 5px; padding: 6px 15px; font-weight: bold; margin-top: 15px; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; }
         .preview-img { max-width: 100%; max-height: 120px; object-fit: contain; border-radius: 8px; border: 1px solid #d4af37; margin-top: 10px; }
+        
+        /* تنسيق إطار موقع الحسابات الذكي */
+        .acc-frame { width: 100%; height: 550px; border: 2px solid rgba(212, 175, 55, 0.3); border-radius: 12px; background: #fff; }
     </style>
 </head>
 <body>
@@ -116,6 +119,14 @@
                 <div id="vaultContainer" style="max-height: 400px; overflow-y: auto;"></div>
             </div>
         </div>
+
+        <div id="screen-admin" class="app-screen">
+            <div class="glass-card p-2">
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-user-gear"></i> الإدارة والربط الحسابي</h4>
+                <iframe src="https://www.royalelchim.app/acc" class="acc-frame" title="Royal Accounting System"></iframe>
+            </div>
+        </div>
+
     </div>
 
     <div class="bottom-nav">
@@ -125,6 +136,7 @@
         <div class="nav-item" onclick="switchTab('makeup', this)"><i class="fa-solid fa-paintbrush"></i><span>مكياج</span></div>
         <div class="nav-item" onclick="switchTab('simulation', this)"><i class="fa-solid fa-camera-retro"></i><span>تخيل</span></div>
         <div class="nav-item" onclick="switchTab('vault', this)"><i class="fa-solid fa-folder-open"></i><span>سجلات</span></div>
+        <div class="nav-item" onclick="switchTab('admin', this)"><i class="fa-solid fa-user-gear"></i><span>الإدارة</span></div>
     </div>
 
     <script>
@@ -147,7 +159,6 @@
             el.classList.add('active');
         }
 
-        /* --- 1. قسم المايكروفون والملفات والصور --- */
         function startDictation(inputId, btn) {
             if (window.hasOwnProperty('webkitSpeechRecognition') || window.hasOwnProperty('SpeechRecognition')) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -181,7 +192,6 @@
             reader.readAsDataURL(file);
         }
 
-        /* --- 2. قسم الصوت والروابط الذكية --- */
         function playVoice(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
@@ -206,7 +216,6 @@
             return `<div>${richHtml}</div><button class="play-voice-btn" onclick="playVoice(decodeURIComponent('${encoded}'))"><i class="fa-solid fa-volume-high"></i> استمع للرد الملكي</button>`;
         }
 
-        /* --- 3. محرك الاستعلام --- */
         function debounceSearch(val) {
             clearTimeout(searchTimer);
             if(val.length < 2) return;
@@ -243,7 +252,6 @@
             }
         }
 
-        /* --- 4. محركات الذكاء الاصطناعي --- */
         async function runDiagnosis() {
             let mood = document.getElementById('qMood').value;
             let out = document.getElementById('diagResponse');
@@ -290,7 +298,6 @@
             } catch { out.innerHTML = "<span class='text-danger'>فشل الاتصال بالسيرفر.</span>"; }
         }
 
-        /* --- 5. السجلات --- */
         function saveToVault(type, text) {
             let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
             vault.unshift({ date: new Date().toLocaleString('ar-EG'), type, text });
