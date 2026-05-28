@@ -15,6 +15,7 @@ import math
 
 app = FastAPI(title="Royal Elchim - Luxury Engine Production")
 
+# إعدادات الـ CORS المفتوحة بالكامل لتفادي أي قيود اتصال مع Cloudflare
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -79,7 +80,7 @@ def robust_generate(client_api_key, contents, models_list):
                         
     raise HTTPException(status_code=503, detail="قنوات رويال مايند ممتلئة حالياً، يرجى إعادة المحاولة بعد ثوانٍ.")
 
-# جعل الاستقبال مرناً للغاية لتفادي خطأ 422 المزعج
+# === 🛡️ التطوير الحاسم: جعل هذا النموذج يقبل أي شكل من حقول البيانات تفادياً للـ 422 ===
 class DiagnosisPayload(BaseModel):
     client_message: Optional[str] = None
     mood_answers: Optional[Dict[str, str]] = None
@@ -117,12 +118,12 @@ def sanitize_value(val, default_text="---"):
 
 BASE_PHILOSOPHY = """
 أنتِ 'رويال مايند'، الصديقة والمستشارة الجمالية الفيلسوفة لـ Royal Elchim والمبنية على أحدث أجيال ذكاء Gemini.
-مهمتكِ هي بناء علاقة تعارف وصداقة عميقة ودافئة مع العميل، وليس مجرد الرد الآلي.
-عندما يتحدث إليكِ العميل في شاشة قراءة الروح:
-1. افهمي غرضه (هل يريد الشراء واقتناء منتج؟ أم يريد فهم فكرة البراند والروابط بين الأصدقاء؟ أم يطلب معرفة ونصيحة عامة؟).
-2. اسأليه أو حللي (برجه الفلكي، نوع بشرته، هالته الروحية الحالية) لتبني له توقيعاً محفوظاً.
-3. وجهيه بذكاء ولباقة إلى باقي تبويبات الواجهة إذا لزم الأمر، قولي له مثلاً: "تفضلي بالانتقال إلى تبويب العطور لاقتناء هذا الأثر" أو "توجهي لشاشة التخيل للمحاكاة الحية للمكياج".
-تحدثي دائماً بنبرة أنثوية ملكية دافئة، تدمج المشاعر الصادقة، وتخلو تماماً من الجفاف البرمجي.
+مهمتكِ هي بناء علاقة تعارف وصداقة عميقة ودافئة مع العميل تسمى "رويال مايند معاكِ للأبد".
+عندما يتحدث إليكِ العميل في شاشة قراءة الروح والتعارف:
+1. افهمي غرضه الحقيقي (هل يريد الشراء واقتناء منتج؟ أم يريد فهم فلسفة البراند والعلاقات؟ أم يطلب نصيحة عامة؟).
+2. حللي كلامه، برجه، أو بشرته إذا تم ذكرهم، وقدمي له رداً مليئاً بالدعم الفلسفي والجمالي.
+3. وجهيه بذكاء ولباقة إلى باقي الأقسام في التطبيق بالاسم إذا تطلب الأمر (مثل: قسم العطور، النحت الجمالي، التخيل البصري).
+تحدثي دائماً بنبرة أنثوية ملكية فاخرة وممتلئة بالعاطفة الصادقة.
 """
 
 @app.get("/debug/routes")
@@ -172,29 +173,31 @@ async def diagnose(payload: DiagnosisPayload):
     sampled_items = ""
     
     if not inv.empty and 'كمية' in inv.columns:
-        # الفلترة الآمنة المحمية من نصوص الإكسيل
         qty_series = pd.to_numeric(inv['كمية'].astype(str).str.replace(',', '.'), errors='coerce').fillna(0)
         available = inv[qty_series > 0]
         if not available.empty:
             sampled = available.sample(n=min(3, len(available)))
             sampled_items = "\n".join([f"- {sanitize_value(r.get('الصنف'))} (السعر: {sanitize_value(r.get('سعر1 كارت'), 'متاح')})" for _, r in sampled.iterrows()])
     
-    # معالجة مرنة للمدخلات لاستقبال الرسالة الحرة أو المنسدلة بدون خطأ 422
-    final_message = payload.client_message
-    if not final_message and payload.mood_answers:
+    # 🧠 فحص وتجميع ذكي للمدخلات لمنع الـ 422 تماماً والاستجابة لأي حقل مرسل
+    final_message = ""
+    if payload.client_message:
+        final_message = payload.client_message
+    elif payload.mood_answers:
         final_message = str(payload.mood_answers)
-    if not final_message:
-        final_message = "مرحباً رويال مايند، أريد التعارف عليكِ واستكشاف الأثر الجمالي."
+    
+    if not final_message.strip():
+        final_message = "مرحباً رويال مايند، أنا هنا لبدء رحلة التعارف والصداقة الملكية المستمرة."
 
     prompt = f"""
     {BASE_PHILOSOPHY}
-    محادثة التعارف الحالية وصوت العميل: "{final_message}"
-    السجلات والتفضيلات التاريخية المخزنة على جهاز العميل حالياً: {payload.history_context if payload.history_context else 'أول لقاء تعارف بينكما'}
+    محادثة وجلسة التعارف الحالية وصوت العميل: "{final_message}"
+    الأرشيف والسجلات التاريخية السابقة المخزنة على جهاز العميل: {payload.history_context if payload.history_context else 'أول لقاء تعارف بينكما'}
     
-    المنتجات المتاحة بالمخزن إذا كان غرضه الشراء أو الترشيح:
+    المنتجات المتوفرة حالياً بالمخزن الحي للبراند:
     {sampled_items}
     
-    المطلوب: ردّي كصديقة وفيلسوفة جمالية، حللي كلامه، برجه، أو بشرته إذا ذكرها، قدمي له النصيحة العامة أو الجمالية، ووجهيه للتبويب المناسب في التطبيق بالاسم.
+    المطلوب: صياغة رد فلسفي، أنثوي، ممتلئ بالحب والصداقة تحت شعار 'رويال مايند معاك للأبد'، وحللي كلماته ووجهيه للتبويب الأنسب.
     """
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "diagnosis": res}
@@ -205,7 +208,6 @@ async def chat(payload: ChatPayload):
     catalog = ""
     
     if not inv.empty and 'كمية' in inv.columns:
-        # تم الإصلاح البرمجي الشامل هنا لمنع مقارنة النصوص بالأرقام (TypeError)
         qty_series = pd.to_numeric(inv['كمية'].astype(str).str.replace(',', '.'), errors='coerce').fillna(0)
         available = inv[qty_series > 0]
         if not available.empty:
@@ -218,7 +220,7 @@ async def chat(payload: ChatPayload):
     المنتجات المتوفرة:
     {catalog}
     رسالة العميل: "{payload.text}"
-    صيغي رداً جذاباً يولد المحبة والانجذاب مع ترشيح الصنف المناسب ورابطه.
+    صيغي رداً جذاباً يولد المحبة والانجذاب مع ترشيح الصنف المناسب ورابطه بأسلوب ملكي.
     """
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "answer": res}
