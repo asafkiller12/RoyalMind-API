@@ -45,13 +45,13 @@
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-barcode"></i> الاستعلام والمخزون</h4>
                 <div class="input-group mb-3">
-                    <input type="text" id="royalSearchInput" class="form-control bg-dark text-light border-secondary text-center" placeholder="ادخلي اسم المنتج أو امسحي الباركود..." oninput="debounceSearch(this.value)">
+                    <input type="text" id="royalSearchInput" class="form-control bg-dark text-light border-secondary text-center" placeholder="ادخلي اسم... أو امسحي الباركود..." oninput="debounceSearch(this.value)">
                 </div>
                 <div id="searchResultsContainer"></div>
             </div>
         </div>
 
-        <!-- 2. شاشة رويال مايند معاك للأبد (صداقة وحوار حر) -->
+        <!-- 2. شاشة رويال مايند معاك للأبد -->
         <div id="screen-diagnosis" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-heart"></i> رويال مايند معاكِ للأبد</h4>
@@ -69,7 +69,7 @@
         <div id="screen-perfume" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> الأثر العطري</h4>
-                <textarea id="perfumeInput" class="form-control bg-dark text-light border-secondary mb-4" rows="3" placeholder="تحدثي أو اكتبي عما يجول بخاطركِ لعطركِ القادم..."></textarea>
+                <textarea id="perfumeInput" class="form-control bg-dark text-light border-secondary mb-4" rows="3" placeholder="تحدثي أو اكتبي عما يجول بخاطركِ لعطركِ القادم بالجرام..."></textarea>
                 <div class="input-toolbar">
                     <button class="icon-btn" onclick="startDictation('perfumeInput', this)" title="إدخال بالصوت"><i class="fa-solid fa-microphone"></i></button>
                     <label class="icon-btn" title="رفع ملف للتحليل"><i class="fa-solid fa-paperclip"></i><input type="file" hidden accept=".txt" onchange="handleFileUpload(event, 'perfumeInput')"></label>
@@ -93,22 +93,23 @@
             </div>
         </div>
 
-        <!-- 5. شاشة التخيل البصري -->
+        <!-- 5. شاشة التخيل البصري المحدثة والمرنة جداً -->
         <div id="screen-simulation" class="app-screen">
             <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> التخيل الفلسفي</h4>
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> التخيل الفلسفي الوجداني</h4>
+                <p class="text-muted small text-center mb-3">ارفعي صورتكِ الشخصية (السيلفي)، ويمكنكِ اختيار صورة منتج معها للمحاكاة، أو ارفعي صورتكِ بمفردها لتقرأ رويال مايند ملامحكِ وتمنحكِ دليلاً وجدانياً ونفسياً مخصصاً لروحكِ.</p>
                 <div class="row text-center mb-3">
                     <div class="col-6">
-                        <label class="btn btn-outline-warning w-100 p-2" style="border-color:#d4af37; color:#d4af37;"><i class="fa-solid fa-user"></i> وجهكِ<input type="file" hidden accept="image/*" onchange="previewImage(event, 'simSelfiePreview', 'selfieBase64')"></label>
+                        <label class="btn btn-outline-warning w-100 p-2" style="border-color:#d4af37; color:#d4af37;"><i class="fa-solid fa-user"></i> وجهكِ السيلفي<input type="file" hidden accept="image/*" onchange="previewImage(event, 'simSelfiePreview', 'selfieBase64')"></label>
                         <div id="simSelfiePreview"></div>
                     </div>
                     <div class="col-6">
-                        <label class="btn btn-outline-warning w-100 p-2" style="border-color:#d4af37; color:#d4af37;"><i class="fa-solid fa-box-open"></i> المنتج<input type="file" hidden accept="image/*" onchange="previewImage(event, 'simProductPreview', 'productBase64')"></label>
+                        <label class="btn btn-outline-warning w-100 p-2" style="border-color:#d4af37; color:#d4af37;"><i class="fa-solid fa-box-open"></i> المنتج (اختياري)<input type="file" hidden accept="image/*" onchange="previewImage(event, 'simProductPreview', 'productBase64')"></label>
                         <div id="simProductPreview"></div>
                     </div>
                 </div>
-                <input type="text" id="simProductName" class="form-control bg-dark text-light border-secondary mb-3 text-center" placeholder="أدخلي اسم المنتج (مثال: روج عنابي)">
-                <button class="btn gold-btn w-100 py-2" onclick="runSimulation()">تخيل الأثر الجمالي <i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                <input type="text" id="simProductName" class="form-control bg-dark text-light border-secondary mb-3 text-center" placeholder="اسم المنتج إذا تم رفعه (مثال: روج عنابي ملكي)">
+                <button class="btn gold-btn w-100 py-2" onclick="runSimulation()">بدء التحليل البصري والوجداني <i class="fa-solid fa-wand-magic-sparkles"></i></button>
                 <div id="simResponse" class="royal-response" style="display:none;"></div>
             </div>
         </div>
@@ -121,7 +122,7 @@
             </div>
         </div>
 
-        <!-- 7. شاشة الإدارة للعبور المباشر لحسابات المعرض -->
+        <!-- 7. شاشة الإدارة -->
         <div id="screen-admin" class="app-screen">
             <div class="glass-card text-center py-5">
                 <h4 class="gold-text mb-4"><i class="fa-solid fa-user-gear"></i> بوابة الإدارة والربط الحسابي</h4>
@@ -134,7 +135,7 @@
 
     </div>
 
-    <!-- شريط التنقل السفلي المحدث -->
+    <!-- شريط التنقل السفلي الموحد -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('search', this)"><i class="fa-solid fa-barcode"></i><span>استعلام</span></div>
         <div class="nav-item" onclick="switchTab('diagnosis', this)"><i class="fa-solid fa-heart"></i><span>معاكِ للأبد</span></div>
@@ -201,8 +202,8 @@
         function playVoice(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                let cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[\*#]/g, '').replace(/(https?:\/\/[^\s]+)/g, 'تم إرفاق الرابط بالأسفل.');
-                let utterance = new SynthesisUtterance(cleanText);
+                let cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[\*#]/g, '').replace(/(https?:\/\/[^\s]+)/g, 'تم إرفاق التفاصيل بالأسفل.');
+                let utterance = new SpeechSynthesisUtterance(cleanText);
                 utterance.lang = 'ar-SA';
                 utterance.rate = 0.85;
                 let voices = window.speechSynthesis.getVoices();
@@ -273,16 +274,10 @@
             try {
                 let res = await fetch(`${BACKEND_URL}/api/diagnose`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        client_message: msg,
-                        history_context: getLocalHistoryContext() 
-                    })
+                    body: JSON.stringify({ client_message: msg, history_context: getLocalHistoryContext() })
                 });
                 let data = await res.json();
-                if(data.status === 'success') { 
-                    out.innerHTML = formatResponse(data.diagnosis); 
-                    saveToVault('صداقة رويال مايند للأبد', data.diagnosis); 
-                }
+                if(data.status === 'success') { out.innerHTML = formatResponse(data.diagnosis); saveToVault('صداقة رويال مايند للأبد', data.diagnosis); }
             } catch { out.innerHTML = "<span class='text-danger'>خطأ اتصال.</span>"; }
         }
 
@@ -301,18 +296,28 @@
             } catch { out.innerHTML = "<span class='text-danger'>خطأ اتصال.</span>"; }
         }
 
+        // === 🛡️ التعديل الجوهري: فتح القيد البرمجي لرفع السيلفي بمفرده أو الصورتين معاً ===
         async function runSimulation() {
-            if(!imagesData.selfieBase64 || !imagesData.productBase64) return alert("يجب رفع صورة الوجه وصورة المنتج.");
-            let name = document.getElementById('simProductName').value || "منتج تجميلي فاخر";
+            if(!imagesData.selfieBase64) return alert("يجب رفع صورة وجهكِ السيلفي أولاً لبدء التحليل الوجداني.");
+            
+            let name = document.getElementById('simProductName').value || "";
             let out = document.getElementById('simResponse');
-            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'>رويال مايند تتخيل الأثر الساحر...</span>";
+            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'>رويال مايند تتأمل ملامحكِ وتستخلص هالتكِ الوجدانية...</span>";
+            
             try {
                 let res = await fetch(`${BACKEND_URL}/api/simulate_makeup`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_selfie: imagesData.selfieBase64, product_image: imagesData.productBase64, product_name_desc: name })
+                    body: JSON.stringify({ 
+                        user_selfie: imagesData.selfieBase64, 
+                        product_image: imagesData.productBase64, // سيرسل null إذا لم يُرفع منتج، والسيرفر سيفهم ذلك فوراً
+                        product_name_desc: name 
+                    })
                 });
                 let data = await res.json();
-                if(data.status === 'success') { out.innerHTML = formatResponse(data.simulation_result); saveToVault('تخيل بصري', data.simulation_result); }
+                if(data.status === 'success') { 
+                    out.innerHTML = formatResponse(data.simulation_result); 
+                    saveToVault(imagesData.productBase64 ? 'محاكاة جمالية كاملة' : 'قراءة تعبيرية للملامح والروح', data.simulation_result); 
+                }
             } catch { out.innerHTML = "<span class='text-danger'>فشل الاتصال بالسيرفر.</span>"; }
         }
 
