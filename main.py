@@ -80,8 +80,8 @@ def robust_generate(client_api_key, contents, models_list):
     raise HTTPException(status_code=503, detail="قنوات رويال مايند ممتلئة حالياً، يرجى إعادة المحاولة بعد ثوانٍ.")
 
 class DiagnosisPayload(BaseModel):
-    mood_answers: Dict[str, str]
-    image: Optional[str] = None
+    client_message: str
+    history_context: Optional[str] = None
     client_api_key: Optional[str] = None
 
 class ChatPayload(BaseModel):
@@ -106,19 +106,21 @@ def parse_image(base64_string):
             return None
     return None
 
-# دالة صارمة لفحص وتطهير المخرجات النهائية قبل إرسالها لـ JSON
 def sanitize_value(val, default_text="---"):
-    if val is None:
-        return default_text
+    if val is None: return default_text
     s = str(val).strip()
-    if s.lower() == 'nan' or s == '':
-        return default_text
+    if s.lower() == 'nan' or s == '': return default_text
     return s
 
+# تحديث الفلسفة الملكية الممنوحة لأحدث أجيال جيميناي
 BASE_PHILOSOPHY = """
-أنتِ 'رويال مايند'، الفيلسوفة الجمالية وخبيرة الجمال والعطور الفاخرة لبراند Royal Elchim.
-تؤمنين بأن الجمال ليس مظهراً خارجيفحسب، بل هو 'معنى عميق، حضور ساحر، وأثر دافئ يولد حباً وانجذاباً نقياً من الجميع'.
-تتحدثين دائماً بنبرة أنثوية ملكية، راقية وممتلئة بالعاطفة الصادقة والتخفيف التام من التعقيدات التقنية.
+أنتِ 'رويال مايند'، الصديقة والمستشارة الجمالية الفيلسوفة لـ Royal Elchim والمبنية على أحدث أجيال ذكاء Gemini.
+مهمتكِ هي بناء علاقة تعارف وصداقة عميقة ودافئة مع العميل، وليس مجرد الرد الآلي.
+عندما يتحدث إليكِ العميل في شاشة قراءة الروح:
+1. افهمي غرضه (هل يريد الشراء واقتناء منتج؟ أم يريد فهم فكرة البراند والروابط بين الأصدقاء؟ أم يطلب معرفة ونصيحة عامة؟).
+2. اسأليه أو حللي (برجه الفلكي، نوع بشرته، هالته الروحية الحالية) لتبني له توقيعاً محفوظاً.
+3. وجهيه بذكاء ولباقة إلى باقي تبويبات الواجهة إذا لزم الأمر، قولي له مثلاً: "تفضلي بالانتقال إلى تبويب العطور لاقتناء هذا الأثر" أو "توجهي لشاشة التخيل للمحاكاة الحية للمكياج".
+تحدثي دائماً بنبرة أنثوية ملكية دافئة، تدمج المشاعر الصادقة، وتخلو تماماً من الجفاف البرمجي.
 """
 
 @app.get("/debug/routes")
@@ -131,7 +133,6 @@ async def search(query: str):
     db = get_links_db()
     if inv.empty: return {"status": "error", "message": "قاعدة بيانات المعرض غير متوفرة حالياً."}
 
-    # البحث المرن الآمن
     results = inv[
         inv['الصنف'].astype(str).str.contains(query, na=False, case=False) | 
         inv['الباركود'].astype(str).str.contains(query, na=False)
@@ -146,32 +147,24 @@ async def search(query: str):
             qty = 0.0
         if math.isnan(qty): qty = 0.0
 
-        if qty > 5:
-            status, color = "متوفر حالياً", "success"
-        elif 0 < qty <= 5:
-            status, color = f"قطع أخيرة ({int(qty)})", "warning"
-        else:
-            status, color = "نفذت الكمية", "danger"
+        if qty > 5: status, color = "متوفر حالياً", "success"
+        elif 0 < qty <= 5: status, color = f"قطع أخيرة ({int(qty)})", "warning"
+        else: status, color = "نفذت الكمية", "danger"
 
         link_match = db[db['Product_Name'].astype(str).str.contains(str(row.get('الصنف', '')), na=False, case=False)] if not db.empty else pd.DataFrame()
         link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
 
-        # حقن نظام التطهير الصارم على جميع الحقول المرسلة لـ JSON
-        final_name = sanitize_value(row.get('الصنف'), "منتج غير مسمى")
-        final_price = sanitize_value(row.get('سعر1 كارت'), "اتصلي بنا")
-        final_barcode = sanitize_value(row.get('الباركود'), "---")
-        final_link = sanitize_value(link, "https://www.royalelchim.app")
-
         data.append({
-            "name": final_name,
-            "price": final_price,
+            "name": sanitize_value(row.get('الصنف'), "منتج غير مسمى"),
+            "price": sanitize_value(row.get('سعر1 كارت'), "اتصلي بنا"),
             "status": status,
             "color": color,
-            "barcode": final_barcode,
-            "link": final_link
+            "barcode": sanitize_value(row.get('الباركود'), "---"),
+            "link": sanitize_value(link, "https://www.royalelchim.app")
         })
     return {"status": "success", "data": data}
 
+# تجديد دالة قراءة الروح والتعارف لتصبح حرة بالكامل ومربوطة بالتاريخ المحلي للعميل
 @app.post("/api/diagnose")
 async def diagnose(payload: DiagnosisPayload):
     inv = get_inventory()
@@ -184,16 +177,15 @@ async def diagnose(payload: DiagnosisPayload):
             sampled = available.sample(n=min(3, len(available)))
             sampled_items = "\n".join([f"- {sanitize_value(r.get('الصنف'))} (السعر: {sanitize_value(r.get('سعر1 كارت'), 'متاح')})" for _, r in sampled.iterrows()])
     
-    formatted_answers = "\n".join([f"- {k}: {v}" for k, v in payload.mood_answers.items()])
     prompt = f"""
     {BASE_PHILOSOPHY}
-    العميلة تشعر بطاقة ومزاج متمثل في:
-    {formatted_answers}
+    محادثة التعارف الحالية وصوت العميل: "{payload.client_message}"
+    السجلات والتفضيلات التاريخية المخزنة على جهاز العميل حالياً: {payload.history_context if payload.history_context else 'أول لقاء تعارف بينكما'}
     
-    المنتجات الحقيقية المتوفرة حالياً في صالة العرض والمخازن لترشيحها هي:
+    المنتجات المتاحة بالمخزن إذا كان غرضه الشراء أو الترشيح:
     {sampled_items}
     
-    صيغي قراءة لروحها ورشحي منتجاً واحداً بأسلوب ملكي فاخر، واكتبي اسم المنتج ورابط الشراء المتوقع له المرفق بالأعلى بوضوح.
+    المطلوب: ردّي كصديقة وفيلسوفة جمالية، حللي كلامه، برجه، أو بشرته إذا ذكرها، قدمي له النصيحة العامة أو الجمالية، ووجهيه للتبويب المناسب في التطبيق بالاسم.
     """
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "diagnosis": res}
@@ -202,7 +194,6 @@ async def diagnose(payload: DiagnosisPayload):
 async def chat(payload: ChatPayload):
     inv = get_inventory()
     catalog = ""
-    
     if not inv.empty and 'كمية' in inv.columns:
         qty_series = pd.to_numeric(inv['كمية'].astype(str).str.replace(',', '.'), errors='coerce').fillna(0)
         available = inv[qty_series > 0]
@@ -213,13 +204,10 @@ async def chat(payload: ChatPayload):
     prompt = f"""
     {BASE_PHILOSOPHY}
     المسار الاستشاري الحالي: {payload.category}
-    المنتجات المتوفرة للبيع الفوري داخل المخازن الحية للبراند:
+    المنتجات المتوفرة:
     {catalog}
-    
-    السياق السابق للمحادثة إذا وجد: {payload.history_context if payload.history_context else 'حوار جديد'}
-    رسالة العميل الحالية: "{payload.text}"
-    
-    المطلوب: صياغة ديباجة استشارية جمالية ساحرة، مع اختيار أفضل منتج من قائمة المنتجات المتوفرة بالأعلى وكتابة اسمه ورابط اقتنائه المباشر صراحة بـ https.
+    رسالة العميل: "{payload.text}"
+    صيغي رداً جذاباً يولد المحبة والانجذاب مع ترشيح الصنف المناسب ورابطه.
     """
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "answer": res}
@@ -228,16 +216,12 @@ async def chat(payload: ChatPayload):
 async def simulate_makeup(payload: SimulationPayload):
     prompt = f"""
     {BASE_PHILOSOPHY}
-    أمامكِ صورة للعميلة وصورة لمنتج تجميلي مستهدف ومطروح بالمعارض.
-    اسم وصنف المنتج الحالي: {payload.product_name_desc}
-    
-    تخيلي النتيجة الفلسفية والأثر البصري والحسي الساحر عند امتزاج هذا المنتج بملامحها وعينيها، وصيغي رداً عاطفياً ملكياً ممتلئاً بالحب يصف جودة وتأثير هذا الإطلال وحضورها الأخاذ.
+    تخيلي النتيجة الفلسفية والأثر البصري والحسي الساحر عند امتزاج منتج {payload.product_name_desc} بملامح العميلة المرفقة بالصورة. صيغي رداً عاطفياً ملكياً ممتلئاً بالحب.
     """
     contents = [prompt]
     img1 = parse_image(payload.user_selfie)
     img2 = parse_image(payload.product_image)
     if img1: contents.append(img1)
     if img2: contents.append(img2)
-        
     res = robust_generate(payload.client_api_key, contents, VISION_MODELS)
     return {"status": "success", "simulation_result": res}
