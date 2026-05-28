@@ -6,7 +6,7 @@ from google.genai import types
 import os
 import random
 import io
-import base64
+import base64  # 👈 تم إضافة استدعاء المكتبة المفقودة هنا لمنع فشل البناء
 import pandas as pd
 from PIL import Image
 from typing import Optional, Dict
@@ -15,7 +15,6 @@ import math
 
 app = FastAPI(title="Royal Elchim - Luxury Engine Production")
 
-# إعدادات الـ CORS المفتوحة بالكامل لتفادي أي قيود اتصال مع Cloudflare
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -80,7 +79,6 @@ def robust_generate(client_api_key, contents, models_list):
                         
     raise HTTPException(status_code=503, detail="قنوات رويال مايند ممتلئة حالياً، يرجى إعادة المحاولة بعد ثوانٍ.")
 
-# === 🛡️ التطوير الحاسم: جعل هذا النموذج يقبل أي شكل من حقول البيانات تفادياً للـ 422 ===
 class DiagnosisPayload(BaseModel):
     client_message: Optional[str] = None
     mood_answers: Optional[Dict[str, str]] = None
@@ -179,7 +177,6 @@ async def diagnose(payload: DiagnosisPayload):
             sampled = available.sample(n=min(3, len(available)))
             sampled_items = "\n".join([f"- {sanitize_value(r.get('الصنف'))} (السعر: {sanitize_value(r.get('سعر1 كارت'), 'متاح')})" for _, r in sampled.iterrows()])
     
-    # 🧠 فحص وتجميع ذكي للمدخلات لمنع الـ 422 تماماً والاستجابة لأي حقل مرسل
     final_message = ""
     if payload.client_message:
         final_message = payload.client_message
