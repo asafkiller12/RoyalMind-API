@@ -79,8 +79,11 @@ def robust_generate(client_api_key, contents, models_list):
                         
     raise HTTPException(status_code=503, detail="قنوات رويال مايند ممتلئة حالياً، يرجى إعادة المحاولة بعد ثوانٍ.")
 
+# جعل الاستقبال مرناً للغاية لتفادي خطأ 422 المزعج
 class DiagnosisPayload(BaseModel):
-    client_message: str
+    client_message: Optional[str] = None
+    mood_answers: Optional[Dict[str, str]] = None
+    image: Optional[str] = None
     history_context: Optional[str] = None
     client_api_key: Optional[str] = None
 
@@ -112,7 +115,6 @@ def sanitize_value(val, default_text="---"):
     if s.lower() == 'nan' or s == '': return default_text
     return s
 
-# تحديث الفلسفة الملكية الممنوحة لأحدث أجيال جيميناي
 BASE_PHILOSOPHY = """
 أنتِ 'رويال مايند'، الصديقة والمستشارة الجمالية الفيلسوفة لـ Royal Elchim والمبنية على أحدث أجيال ذكاء Gemini.
 مهمتكِ هي بناء علاقة تعارف وصداقة عميقة ودافئة مع العميل، وليس مجرد الرد الآلي.
@@ -164,22 +166,29 @@ async def search(query: str):
         })
     return {"status": "success", "data": data}
 
-# تجديد دالة قراءة الروح والتعارف لتصبح حرة بالكامل ومربوطة بالتاريخ المحلي للعميل
 @app.post("/api/diagnose")
 async def diagnose(payload: DiagnosisPayload):
     inv = get_inventory()
     sampled_items = ""
     
     if not inv.empty and 'كمية' in inv.columns:
+        # الفلترة الآمنة المحمية من نصوص الإكسيل
         qty_series = pd.to_numeric(inv['كمية'].astype(str).str.replace(',', '.'), errors='coerce').fillna(0)
         available = inv[qty_series > 0]
         if not available.empty:
             sampled = available.sample(n=min(3, len(available)))
             sampled_items = "\n".join([f"- {sanitize_value(r.get('الصنف'))} (السعر: {sanitize_value(r.get('سعر1 كارت'), 'متاح')})" for _, r in sampled.iterrows()])
     
+    # معالجة مرنة للمدخلات لاستقبال الرسالة الحرة أو المنسدلة بدون خطأ 422
+    final_message = payload.client_message
+    if not final_message and payload.mood_answers:
+        final_message = str(payload.mood_answers)
+    if not final_message:
+        final_message = "مرحباً رويال مايند، أريد التعارف عليكِ واستكشاف الأثر الجمالي."
+
     prompt = f"""
     {BASE_PHILOSOPHY}
-    محادثة التعارف الحالية وصوت العميل: "{payload.client_message}"
+    محادثة التعارف الحالية وصوت العميل: "{final_message}"
     السجلات والتفضيلات التاريخية المخزنة على جهاز العميل حالياً: {payload.history_context if payload.history_context else 'أول لقاء تعارف بينكما'}
     
     المنتجات المتاحة بالمخزن إذا كان غرضه الشراء أو الترشيح:
@@ -194,7 +203,9 @@ async def diagnose(payload: DiagnosisPayload):
 async def chat(payload: ChatPayload):
     inv = get_inventory()
     catalog = ""
+    
     if not inv.empty and 'كمية' in inv.columns:
+        # تم الإصلاح البرمجي الشامل هنا لمنع مقارنة النصوص بالأرقام (TypeError)
         qty_series = pd.to_numeric(inv['كمية'].astype(str).str.replace(',', '.'), errors='coerce').fillna(0)
         available = inv[qty_series > 0]
         if not available.empty:
