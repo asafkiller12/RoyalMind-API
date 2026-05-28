@@ -40,6 +40,7 @@
 
     <div class="container mt-2">
         
+        <!-- 1. شاشة الاستعلام والمخزون -->
         <div id="screen-search" class="app-screen active">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-barcode"></i> الاستعلام والمخزون</h4>
@@ -50,19 +51,21 @@
             </div>
         </div>
 
+        <!-- 2. شاشة رويال مايند معاك للأبد (صداقة وحوار حر) -->
         <div id="screen-diagnosis" class="app-screen">
             <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-comments"></i> جلسة تعارف رويال مايند</h4>
-                <p class="text-muted small text-center mb-3">تحدثي مع رويال مايند كصديق مقرب... صفي لها غرضكِ اليوم، برجكِ الفلكي، نوع بشرتكِ، أو أي نصيحة تبحثين عنها في عالم الجمال.</p>
-                <textarea id="diagnosisInput" class="form-control bg-dark text-light border-secondary mb-4" rows="4" placeholder="اكتبي هنا أو اضغطي على المايك للتحدث الفوري والمفتوح..."></textarea>
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-heart"></i> رويال مايند معاكِ للأبد</h4>
+                <p class="text-muted small text-center mb-3">تحدثي مع رويال مايند كصديقة مخلصة تفهم تفاصيلكِ... بوحي لها بغرضكِ اليوم، برجكِ، طاقة روحكِ، أو أي نصيحة تبحثين عنها في سماء الجمال والعلاقات.</p>
+                <textarea id="diagnosisInput" class="form-control bg-dark text-light border-secondary mb-4" rows="4" placeholder="اكتبي ما يجول بخاطركِ أو اضغطي على المايك للتحدث الفوري الحُر..."></textarea>
                 <div class="input-toolbar">
                     <button class="icon-btn" onclick="startDictation('diagnosisInput', this)" title="تحدثي الآن"><i class="fa-solid fa-microphone"></i></button>
                 </div>
-                <button class="btn gold-btn w-100 py-2" onclick="runDiagnosis()">بدء التناغم الملكي <i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                <button class="btn gold-btn w-100 py-2" onclick="runDiagnosis()">إطلاق حديث الصداقة <i class="fa-solid fa-sparkles"></i></button>
                 <div id="diagResponse" class="royal-response" style="display:none;"></div>
             </div>
         </div>
 
+        <!-- 3. شاشة العطور -->
         <div id="screen-perfume" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> الأثر العطري</h4>
@@ -76,6 +79,7 @@
             </div>
         </div>
 
+        <!-- 4. شاشة المكياج -->
         <div id="screen-makeup" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-paintbrush"></i> النحت الجمالي</h4>
@@ -89,6 +93,7 @@
             </div>
         </div>
 
+        <!-- 5. شاشة التخيل البصري -->
         <div id="screen-simulation" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> التخيل الفلسفي</h4>
@@ -108,6 +113,7 @@
             </div>
         </div>
 
+        <!-- 6. شاشة السجلات الملكية -->
         <div id="screen-vault" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book-journal-whills"></i> السجلات الملكية (على جهازكِ)</h4>
@@ -115,6 +121,7 @@
             </div>
         </div>
 
+        <!-- 7. شاشة الإدارة للعبور المباشر لحسابات المعرض -->
         <div id="screen-admin" class="app-screen">
             <div class="glass-card text-center py-5">
                 <h4 class="gold-text mb-4"><i class="fa-solid fa-user-gear"></i> بوابة الإدارة والربط الحسابي</h4>
@@ -127,9 +134,10 @@
 
     </div>
 
+    <!-- شريط التنقل السفلي المحدث -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('search', this)"><i class="fa-solid fa-barcode"></i><span>استعلام</span></div>
-        <div class="nav-item" onclick="switchTab('diagnosis', this)"><i class="fa-solid fa-comments"></i><span>تعارف</span></div>
+        <div class="nav-item" onclick="switchTab('diagnosis', this)"><i class="fa-solid fa-heart"></i><span>معاكِ للأبد</span></div>
         <div class="nav-item" onclick="switchTab('perfume', this)"><i class="fa-solid fa-spray-can"></i><span>عطور</span></div>
         <div class="nav-item" onclick="switchTab('makeup', this)"><i class="fa-solid fa-paintbrush"></i><span>مكياج</span></div>
         <div class="nav-item" onclick="switchTab('simulation', this)"><i class="fa-solid fa-camera-retro"></i><span>تخيل</span></div>
@@ -194,7 +202,7 @@
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 let cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[\*#]/g, '').replace(/(https?:\/\/[^\s]+)/g, 'تم إرفاق الرابط بالأسفل.');
-                let utterance = new SpeechSynthesisUtterance(cleanText);
+                let utterance = new SynthesisUtterance(cleanText);
                 utterance.lang = 'ar-SA';
                 utterance.rate = 0.85;
                 let voices = window.speechSynthesis.getVoices();
@@ -257,7 +265,6 @@
             }
         }
 
-        // إرسال حوار التعارف الحر مع حقن الذاكرة المحلية للجهاز لحظياً للسيرفر
         async function runDiagnosis() {
             let msg = document.getElementById('diagnosisInput').value;
             let out = document.getElementById('diagResponse');
@@ -274,7 +281,7 @@
                 let data = await res.json();
                 if(data.status === 'success') { 
                     out.innerHTML = formatResponse(data.diagnosis); 
-                    saveToVault('تعارف ملكي ونصيحة عامة', data.diagnosis); 
+                    saveToVault('صداقة رويال مايند للأبد', data.diagnosis); 
                 }
             } catch { out.innerHTML = "<span class='text-danger'>خطأ اتصال.</span>"; }
         }
