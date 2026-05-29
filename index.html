@@ -204,6 +204,7 @@
 
     <div class="container mt-2">
         
+        <!-- 1. شاشة الاستعلام والمخزون -->
         <div id="screen-search" class="app-screen active">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-barcode"></i> الاستعلام والمخزون الحقيقي</h4>
@@ -214,6 +215,7 @@
             </div>
         </div>
 
+        <!-- 2. شاشة رويال مايند معاك للأبد -->
         <div id="screen-diagnosis" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-heart"></i> رويال مايند معاكِ للأبد</h4>
@@ -224,6 +226,7 @@
             </div>
         </div>
 
+        <!-- 3. شاشة العطور -->
         <div id="screen-perfume" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> الأثر العطري (تركيب الزيوت)</h4>
@@ -234,6 +237,7 @@
             </div>
         </div>
 
+        <!-- 4. شاشة المكياج -->
         <div id="screen-makeup" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-paintbrush"></i> النحت الجمالي والموضة</h4>
@@ -243,6 +247,7 @@
             </div>
         </div>
 
+        <!-- 5. شاشة التخيل البصري والتحليل الوجداني -->
         <div id="screen-simulation" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> التخيل والتحليل الوجداني</h4>
@@ -267,6 +272,7 @@
                 
                 <input type="text" id="simProductName" class="form-control mb-3 text-center" placeholder="اسم منتج التجميل أو درجته ليتم دمجها">
                 
+                <!-- القائمة المنسدلة لاختيار نوع المكياج -->
                 <select id="simMakeupType" class="form-control mb-3 text-center fw-bold" style="color: #b58900 !important; cursor: pointer;">
                     <option value="lips">💄 روج للشفاه</option>
                     <option value="eyeshadow">👁️ آيشادو للعيون</option>
@@ -281,6 +287,7 @@
             </div>
         </div>
 
+        <!-- 6. شاشة المانيفستو -->
         <div id="screen-manifesto" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book"></i> مانيفستو رويال إلكيم</h4>
@@ -305,6 +312,7 @@
             </div>
         </div>
 
+        <!-- 7. شاشة السجلات الملكية -->
         <div id="screen-vault" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book-journal-whills"></i> السجلات الملكية الذاتية</h4>
@@ -314,6 +322,7 @@
             </div>
         </div>
 
+        <!-- 8. شاشة الإدارة -->
         <div id="screen-admin" class="app-screen">
             <div class="glass-card text-center py-5">
                 <h4 class="gold-text mb-4"><i class="fa-solid fa-user-gear"></i> بوابة الإدارة والربط الحسابي</h4>
@@ -324,6 +333,7 @@
 
     </div>
 
+    <!-- شريط التنقل السفلي -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('search', this)"><i class="fa-solid fa-barcode"></i><span>استعلام</span></div>
         <div class="nav-item" onclick="switchTab('diagnosis', this)"><i class="fa-solid fa-heart"></i><span>معاكِ للأبد</span></div>
@@ -426,7 +436,6 @@
             searchTimer = setTimeout(() => performRoyalSearch(val), 500);
         }
 
-        // استعادة دالة البحث المطورة التي تظهر جرد الفروع بشكل أنيق
         async function performRoyalSearch(query) {
             const container = document.getElementById('searchResultsContainer');
             container.innerHTML = "<p class='text-center gold-text'><i class='fa-solid fa-spinner fa-spin'></i> جاري فحص المخازن الملكية...</p>";
@@ -439,7 +448,8 @@
                             <div class="d-flex justify-content-between"><span class="gold-text fw-bold" style="font-size:1.1rem;">${item.name}</span></div>
                             
                             <div class="mt-3 p-2" style="background: rgba(0,0,0,0.03); border-radius: 8px;">
-                                <div class="d-flex justify-content-between small mb-1"><span>📍 فرع الأقصر (اللوتس):</span> <span class="fw-bold ${item.luxor_lotus_qty > 0 ? 'text-success' : 'text-danger'}">${item.luxor_lotus_qty > 0 ? 'متوفر (' + item.luxor_lotus_qty + ')' : 'نفذ'}</span></div>
+                                <div class="d-flex justify-content-between small mb-1"><span>📍 الأقصر (اللوتس):</span> <span class="fw-bold ${item.luxor_lotus_qty > 0 ? 'text-success' : 'text-danger'}">${item.luxor_lotus_qty > 0 ? 'متوفر (' + item.luxor_lotus_qty + ')' : 'نفذ'}</span></div>
+                                <div class="d-flex justify-content-between small mb-1"><span>📍 الأقصر (المروة):</span> <span class="fw-bold ${item.marrowa_qty > 0 ? 'text-success' : 'text-danger'}">${item.marrowa_qty > 0 ? 'متوفر (' + item.marrowa_qty + ')' : 'نفذ'}</span></div>
                                 <div class="d-flex justify-content-between small mb-1"><span>📍 فرع الغردقة:</span> <span class="fw-bold ${item.hurgada_qty > 0 ? 'text-success' : 'text-danger'}">${item.hurgada_qty > 0 ? 'متوفر (' + item.hurgada_qty + ')' : 'نفذ'}</span></div>
                                 <div class="d-flex justify-content-between small"><span>🌐 أونلاين:</span> <span class="fw-bold ${item.online_qty > 0 ? 'text-success' : 'text-danger'}">${item.online_qty > 0 ? 'متوفر (' + item.online_qty + ')' : 'نفذ'}</span></div>
                             </div>
