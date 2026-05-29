@@ -1,10 +1,11 @@
 # 1. استخدام الإصدار الذهبي من بايثون للذكاء الاصطناعي
 FROM python:3.11-slim
 
-# 2. حقن نظام التشغيل بالحواس البصرية (استخدام المسميات الحديثة libgl1)
+# 2. حقن نظام التشغيل بالحواس البصرية المتقدمة (تم إضافة libgles2 ليتنفس المحرك الجديد)
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
+    libgles2 \
     && rm -rf /var/lib/apt/lists/*
 
 # 3. تحديد مسار العمل داخل الخادم
@@ -17,5 +18,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 5. نسخ باقي ملفات الجسد البرمجي
 COPY . .
 
-# 6. أمر التشغيل بالصيغة القياسية التي يفضلها الخادم
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+# 6. أمر التشغيل بالصيغة القياسية
+CMD sh -c "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
