@@ -114,6 +114,18 @@ def sanitize_value(val, default_text="---"):
     if s.lower() == 'nan' or s == '': return default_text
     return s
 
+# دالة تنظيف وتحويل القيم النصية إلى أرقام حسابية نقية لقطع أخطاء الجرد
+def clean_qty_value(val):
+    if val is None:
+        return 0.0
+    s = str(val).strip().replace(',', '.')
+    if s == '' or s.lower() == 'nan':
+        return 0.0
+    try:
+        return float(s)
+    except:
+        return 0.0
+
 ROYAL_MANIFESTO_DATA = """
 - رسالة البراند: 'العطر فكرة تُشم، لا تُقال. رويال إلكيم... فلسفة تُقطّر، لا تُنتَج.'
 - الرموز الفلكية الحية لقوة الصمت والجاذبية:
@@ -152,7 +164,6 @@ BASE_PHILOSOPHY = f"""
 async def get_routes():
     return [{"path": route.path, "methods": list(route.methods)} for route in app.routes]
 
-# === 🛒 دالة الاستعلام الجوهري للفصل الكامل بين الفروع والمخزن الإلكتروني ===
 @app.get("/api/search")
 async def search(query: str):
     inv = get_inventory()
@@ -167,23 +178,10 @@ async def search(query: str):
     data = []
     for _, row in results.iterrows():
         
-        # 📍 1. فرع الأقصر (رويال الكيم / سنتر اللوتس التجاري)
-        try:
-            qty_luxor = float(str(row.get('رويال الكيم / سنتر اللوتس التجاري', '0')).replace(',', '.'))
-        except: qty_luxor = 0.0
-        if math.isnan(qty_luxor): qty_luxor = 0.0
-
-        # 📍 2. فرع الغردقة (ROYAL ELCHIM . HURGADA)
-        try:
-            qty_hurgada = float(str(row.get('ROYAL ELCHIM . HURGADA', '0')).replace(',', '.'))
-        except: qty_hurgada = 0.0
-        if math.isnan(qty_hurgada): qty_hurgada = 0.0
-
-        # 🛒 3. المتجر والمخزن الإلكتروني (رويال الكيم اونلاين)
-        try:
-            qty_online = float(str(row.get('رويال الكيم اونلاين', '0')).replace(',', '.'))
-        except: qty_online = 0.0
-        if math.isnan(qty_online): qty_online = 0.0
+        # استخدام الدالة الذكية والمطورة للتنظيف والحساب الفوري لمنع خطأ الـ text-bias
+        qty_luxor = clean_qty_value(row.get('رويال الكيم / سنتر اللوتس التجاري'))
+        qty_hurgada = clean_qty_value(row.get('ROYAL ELCHIM . HURGADA'))
+        qty_online = clean_qty_value(row.get('رويال الكيم اونلاين'))
 
         link_match = db[db['Product_Name'].astype(str).str.contains(str(row.get('الصنف', '')), na=False, case=False)] if not db.empty else pd.DataFrame()
         link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
@@ -194,7 +192,6 @@ async def search(query: str):
             "barcode": sanitize_value(row.get('الباركود'), "---"),
             "link": sanitize_value(link, "https://www.royalelchim.app"),
             
-            # جرد فروع المعارض لفرز وحظر التداخل
             "luxor_qty": int(qty_luxor),
             "hurgada_qty": int(qty_hurgada),
             "online_qty": int(qty_online)
