@@ -22,7 +22,7 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-app = FastAPI(title="Royal Elchim - Complete Omni-Channel Enterprise Architecture with B2B Adaptive Pricing")
+app = FastAPI(title="Royal Elchim - Omni-Conscious Enterprise")
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,20 +32,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =========================================================
-# [1] التحميل الذاتي لنموذج الذكاء الاصطناعي (Auto-Download)
-# =========================================================
 TASK_FILE = 'face_landmarker.task'
 TASK_URL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
 
 if not os.path.exists(TASK_FILE):
     print("رويال مايند: جاري تحميل خريطة الوعي البصري (Face Landmarker)...")
     urllib.request.urlretrieve(TASK_URL, TASK_FILE)
-    print("رويال مايند: تم التحميل بنجاح. العقل البصري جاهز.")
 
-# =========================================================
-# [2] تهيئة محرك المستقبل (Tasks API)
-# =========================================================
 base_options = python.BaseOptions(model_asset_path=TASK_FILE)
 options = vision.FaceLandmarkerOptions(
     base_options=base_options,
@@ -64,18 +57,13 @@ SYSTEM_API_KEYS = [key.strip() for key in keys_string.split(",") if key.strip()]
 VISION_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
-# =========================================================
-# [3] دوال الاتصال بقواعد بيانات الجرد والمعرض
-# =========================================================
 def get_inventory():
     try:
         file_path = "last.xls - Sheet1.csv"
         if os.path.exists(file_path):
-            df = pd.read_csv(file_path)
-            return df.fillna("")
+            return pd.read_csv(file_path).fillna("")
         return pd.DataFrame()
     except Exception as e:
-        print(f"Error reading inventory file: {e}")
         return pd.DataFrame()
 
 def get_links_db():
@@ -85,7 +73,6 @@ def get_links_db():
             return pd.read_csv(file_path).fillna("")
         return pd.DataFrame()
     except Exception as e:
-        print(f"Error reading links database: {e}")
         return pd.DataFrame()
 
 def robust_generate(client_api_key, contents, models_list):
@@ -116,9 +103,6 @@ def robust_generate(client_api_key, contents, models_list):
                         break
     raise HTTPException(status_code=503, detail="قنوات رويال مايند ممتلئة حالياً، يرجى إعادة المحاولة بعد ثوانٍ.")
 
-# =========================================================
-# [4] نماذج وهياكل البيانات
-# =========================================================
 class DiagnosisPayload(BaseModel):
     client_message: Optional[str] = None
     history_context: Optional[str] = None
@@ -137,6 +121,7 @@ class SimulationPayload(BaseModel):
     makeup_type: str = "lips"
     hex_color: Optional[str] = "#8B0000"
     client_api_key: Optional[str] = None
+    history_context: Optional[str] = None # <-- دمج الذاكرة التراكمية هنا أيضاً
 
 class InvoiceItem(BaseModel):
     barcode: str
@@ -146,22 +131,16 @@ class InvoiceItem(BaseModel):
     price_card_2: float
     price_card_3: float
     price_card_4: float
-    is_fixed_price: bool  # لتحديد ما إذا كان السعر محمياً بلا خصومات
+    is_fixed_price: bool
 
 class InvoicePayload(BaseModel):
     items: List[InvoiceItem]
 
-# =========================================================
-# [5] محرك النحت اللوني المتطور (MediaPipe)
-# =========================================================
 def hex_to_rgb(hex_color: str):
-    if not hex_color:
-        return (139, 0, 0)
+    if not hex_color: return (139, 0, 0)
     hex_color = hex_color.lstrip('#')
-    try:
-        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    except:
-        return (139, 0, 0)
+    try: return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    except: return (139, 0, 0)
 
 def apply_royal_makeup(image_cv: np.ndarray, color_rgb: tuple, makeup_type: str):
     try:
@@ -192,9 +171,7 @@ def apply_royal_makeup(image_cv: np.ndarray, color_rgb: tuple, makeup_type: str)
             "foundation": [[10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109]]
         }
 
-        if makeup_type == "powder":
-            makeup_type = "foundation"
-            
+        if makeup_type == "powder": makeup_type = "foundation"
         target_zones = ZONES.get(makeup_type, ZONES["lips"])
         mask = np.zeros((height, width), dtype=np.uint8)
         
@@ -204,18 +181,10 @@ def apply_royal_makeup(image_cv: np.ndarray, color_rgb: tuple, makeup_type: str)
 
         blur_radius = (15, 15)
         opacity = 0.6
-        if makeup_type == "blush":
-            blur_radius = (45, 45)
-            opacity = 0.4
-        elif makeup_type == "eyeshadow":
-            blur_radius = (21, 21)
-            opacity = 0.5
-        elif makeup_type == "foundation":
-            blur_radius = (55, 55)
-            opacity = 0.15 
-        elif makeup_type == "concealer":
-            blur_radius = (25, 25)
-            opacity = 0.7 
+        if makeup_type == "blush": blur_radius = (45, 45); opacity = 0.4
+        elif makeup_type == "eyeshadow": blur_radius = (21, 21); opacity = 0.5
+        elif makeup_type == "foundation": blur_radius = (55, 55); opacity = 0.15 
+        elif makeup_type == "concealer": blur_radius = (25, 25); opacity = 0.7 
 
         mask = cv2.GaussianBlur(mask, blur_radius, 0)
         color_layer = np.zeros_like(image_cv)
@@ -228,12 +197,8 @@ def apply_royal_makeup(image_cv: np.ndarray, color_rgb: tuple, makeup_type: str)
 
         return final_image.astype(np.uint8), True
     except Exception as e:
-        print(f"AR Engine Error: {str(e)}")
         return image_cv, False
 
-# =========================================================
-# [6] الفلسفة والتهيئة العامة
-# =========================================================
 BASE_PHILOSOPHY = "أنتِ رويال مايند، العقل البرمجي والوجداني لبراند Royal Elchim الجمالي المتكامل."
 
 def sanitize_value(val, default_text="---"):
@@ -256,16 +221,12 @@ def get_qty_by_keyword(row, keywords):
                 return clean_qty_value(row[col])
     return 0.0
 
-# =========================================================
-# [7] واجهات المعالجة والأكواد الذكية للأسعار والبحث
-# =========================================================
 @app.get("/api/search")
 async def search(query: str):
     try:
         inv = get_inventory()
         db = get_links_db()
-        if inv.empty: 
-            return {"status": "error", "message": "قاعدة بيانات المعرض غير متوفرة."}
+        if inv.empty: return {"status": "error", "message": "قاعدة بيانات المعرض غير متوفرة."}
 
         results = inv[
             inv['الصنف'].astype(str).str.contains(query, na=False, case=False, regex=False) | 
@@ -276,19 +237,16 @@ async def search(query: str):
         for _, row in results.iterrows():
             item_name = str(row.get('الصنف', '')).strip()
             is_oil = any(kw in item_name.lower() for kw in ["زيت", "جرام", "تركيب", "كحول", "مثبت"])
-
             qty_luxor_lotus = get_qty_by_keyword(row, ['اللوتس'])
             qty_marrowa = get_qty_by_keyword(row, ['المروة'])
             qty_hurgada = get_qty_by_keyword(row, ['HURGADA', 'الغردقة'])
             qty_online = get_qty_by_keyword(row, ['اونلاين', 'online'])
 
-            # سحب الفئات الأربعة للتسعير الحقيقي
             price_1 = clean_qty_value(row.get('سعر1 كارت', 0))
-            price_2 = clean_qty_value(row.get('سعر2 كارت', price_1 * 0.9)) # افتراضي إن لم يوجد
+            price_2 = clean_qty_value(row.get('سعر2 كارت', price_1 * 0.9))
             price_3 = clean_qty_value(row.get('سعر3 كارت', price_1 * 0.85))
-            price_4 = clean_qty_value(row.get('سعر4 كارت', price_1 * 0.8)) # السعر الرابع لكبار العملاء
+            price_4 = clean_qty_value(row.get('سعر4 كارت', price_1 * 0.8))
 
-            # فحص استثناء "سعر بلا خصومات" - إذا تم كتابة كلمة "ثابت" أو حماية بالملف
             is_fixed = any(kw in item_name for kw in ["ثابت", "محمي", "صافي"])
 
             link = "https://www.royalelchim.app"
@@ -330,15 +288,13 @@ async def search(query: str):
 @app.post("/api/invoice/calculate")
 async def calculate_invoice(payload: InvoicePayload):
     try:
-        # حساب القيمة المبدئية للفاتورة على أساس السعر 1 (القطاعي) لتحديد الفئة المكتسبة
         initial_total = 0
         for item in payload.items:
             initial_total += item.price_card_1 * item.qty
             
-        # تحديد الفئة المستحقة تلقائياً نتيجة ازدياد قيمة الفاتورة
         target_tier = 1
         tier_name = "قطاعي"
-        if initial_total >= 30000: # حد كبار العملاء الملكي
+        if initial_total >= 30000:
             target_tier = 4
             tier_name = "جملة كبار العملاء الملكي (السعر الرابع)"
         elif initial_total >= 15000:
@@ -352,7 +308,6 @@ async def calculate_invoice(payload: InvoicePayload):
         final_invoice_total = 0
 
         for item in payload.items:
-            # تطبيق شرط حماية السعر (سعر بلا خصومات)
             if item.is_fixed_price:
                 actual_price = item.price_card_1
                 is_protected = True
@@ -386,15 +341,19 @@ async def calculate_invoice(payload: InvoicePayload):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+# --- تفعيل الذاكرة التراكمية في كافة المحادثات والتشخيص ---
 @app.post("/api/diagnose")
 async def diagnose(payload: DiagnosisPayload):
-    prompt = f"{BASE_PHILOSOPHY}\nجلسة حوار الصداقة والتحليل النفسي: '{payload.client_message}'"
+    # دمج الـ 5 سجلات في وعي الذكاء الاصطناعي
+    context_str = f"\n[الذاكرة التراكمية للعميل - آخر 5 سجلات]: {payload.history_context}" if payload.history_context else ""
+    prompt = f"{BASE_PHILOSOPHY}{context_str}\nجلسة حوار الصداقة والتحليل النفسي: '{payload.client_message}'"
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "diagnosis": res}
 
 @app.post("/api/chat")
 async def chat(payload: ChatPayload):
-    prompt = f"{BASE_PHILOSOPHY}\nطلب العميل: '{payload.text}'"
+    context_str = f"\n[الذاكرة التراكمية للعميل - آخر 5 سجلات]: {payload.history_context}" if payload.history_context else ""
+    prompt = f"{BASE_PHILOSOPHY}{context_str}\nطلب العميل: '{payload.text}'"
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "answer": res}
 
@@ -415,7 +374,9 @@ async def simulate_makeup(payload: SimulationPayload):
         else:
             result_base64 = payload.user_selfie
 
-        contents = [Image.open(io.BytesIO(base64.b64decode(result_base64.split(",")[1]))), f"{BASE_PHILOSOPHY}\nصفي تناغم المكياج."]
+        # إدراج الذاكرة هنا أيضاً لربط التخيل البصري بحالة العميل النفسية
+        context_str = f"\n[الذاكرة التراكمية للعميل]: {payload.history_context}" if payload.history_context else ""
+        contents = [Image.open(io.BytesIO(base64.b64decode(result_base64.split(",")[1]))), f"{BASE_PHILOSOPHY}{context_str}\nصفي تناغم المكياج."]
         res = robust_generate(payload.client_api_key, contents, VISION_MODELS)
         
         return {
