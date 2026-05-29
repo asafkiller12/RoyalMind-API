@@ -11,7 +11,6 @@ import pandas as pd
 from PIL import Image
 from typing import Optional, Dict
 import time
-import math
 import numpy as np
 import cv2
 import urllib.request
@@ -122,15 +121,12 @@ def robust_generate(client_api_key, contents, models_list):
 # =========================================================
 class DiagnosisPayload(BaseModel):
     client_message: Optional[str] = None
-    mood_answers: Optional[Dict[str, str]] = None
-    image: Optional[str] = None
     history_context: Optional[str] = None
     client_api_key: Optional[str] = None
 
 class ChatPayload(BaseModel):
     text: str
     category: str  
-    image: Optional[str] = None
     history_context: Optional[str] = None
     client_api_key: Optional[str] = None
 
@@ -243,7 +239,7 @@ ROYAL_MASTER_FORMULAS = """
 """
 
 BASE_PHILOSOPHY = f"""
-أنتِ 'رويال مايند'، الصوت الشاعري لبراند Royal Elchim.
+أنتِ 'رويال مايند'، الصوت الشاعري الذكي اللبق لبراند Royal Elchim.
 تطبيقين القواعد السلعية الحالية للفروع:
 1. جميع الفروع تحتوي على المكياج والكوافير.
 2. تركيب البرفانات حصري في الأقصر والغردقة.
@@ -263,6 +259,13 @@ def clean_qty_value(val):
     if s == '' or s.lower() == 'nan': return 0.0
     try: return float(s)
     except: return 0.0
+
+def get_qty_by_keyword(row, keywords):
+    for col in row.keys():
+        for kw in keywords:
+            if kw in str(col):
+                return clean_qty_value(row[col])
+    return 0.0
 
 # =========================================================
 # [7] واجهات المعالجة البرمجية و الـ Endpoints
@@ -285,20 +288,21 @@ async def search(query: str):
             item_name = str(row.get('الصنف', '')).strip()
             is_oil = any(kw in item_name.lower() for kw in ["زيت", "جرام", "تركيب", "كحول", "مثبت"])
 
-            qty_luxor_lotus = clean_qty_value(row.get('رويال الكيم / سنتر اللوتس التجاري'))
-            qty_hurgada = clean_qty_value(row.get('ROYAL ELCHIM . HURGADA'))
-            qty_online = clean_qty_value(row.get('رويال الكيم اونلاين'))
+            qty_luxor_lotus = get_qty_by_keyword(row, ['اللوتس'])
+            qty_marrowa = get_qty_by_keyword(row, ['المروة'])
+            qty_hurgada = get_qty_by_keyword(row, ['HURGADA', 'الغردقة'])
+            qty_online = get_qty_by_keyword(row, ['اونلاين', 'online'])
 
             link = "https://www.royalelchim.app"
             show_link_trigger = False
 
             if is_oil:
                 luxor_lotus_final = 0
-                marrowa_final = int(qty_luxor_lotus)
+                marrowa_final = int(qty_marrowa)
                 hurgada_final = int(qty_hurgada)
             else:
                 luxor_lotus_final = int(qty_luxor_lotus)
-                marrowa_final = int(qty_luxor_lotus)
+                marrowa_final = int(qty_marrowa)
                 hurgada_final = int(qty_hurgada)
                 link_match = db[db['Product_Name'].astype(str).str.contains(item_name, na=False, case=False, regex=False)] if not db.empty else pd.DataFrame()
                 link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
