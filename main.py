@@ -12,7 +12,13 @@ from PIL import Image
 from typing import Optional, Dict
 import time
 import math
+import numpy as np
+import cv2
+import mediapipe as mp
 
+# =========================================================
+# [1] تهيئة المنظومة المعمارية والواقع المعزز
+# =========================================================
 app = FastAPI(title="Royal Elchim - Complete Omni-Channel Enterprise Architecture")
 
 app.add_middleware(
@@ -23,12 +29,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# تهيئة خوارزمية تتبع ملامح الوجه بدقة فائقة
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(
+    static_image_mode=True,
+    max_num_faces=1,
+    refine_landmarks=True,
+    min_detection_confidence=0.5
+)
+
 keys_string = os.environ.get("GOOGLE_API_KEY", os.environ.get("GOOGLE_API_KEYS", ""))
 SYSTEM_API_KEYS = [key.strip() for key in keys_string.split(",") if key.strip()]
 
 VISION_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
+# =========================================================
+# [2] دوال الاتصال بقواعد بيانات الجرد والمعرض
+# =========================================================
 def get_inventory():
     try:
         file_path = "last.xls - Sheet1.csv"
@@ -79,6 +97,9 @@ def robust_generate(client_api_key, contents, models_list):
                         
     raise HTTPException(status_code=503, detail="قنوات رويال مايند ممتلئة حالياً، يرجى إعادة المحاولة بعد ثوانٍ.")
 
+# =========================================================
+# [3] نماذج وهياكل البيانات المدخلة والمستقبلة
+# =========================================================
 class DiagnosisPayload(BaseModel):
     client_message: Optional[str] = None
     mood_answers: Optional[Dict[str, str]] = None
@@ -97,8 +118,12 @@ class SimulationPayload(BaseModel):
     user_selfie: str
     product_image: Optional[str] = None
     product_name_desc: Optional[str] = None
+    hex_color: Optional[str] = "#8B0000"  # لون افتراضي للمنتج المختار (مثل أحمر شفاه/بلاشر ملكي)
     client_api_key: Optional[str] = None
 
+# =========================================================
+# [4] الأدوات ومحركات النحت اللوني والمكياج الافتراضي
+# =========================================================
 def parse_image(base64_string):
     if base64_string and "," in base64_string:
         try:
@@ -121,6 +146,61 @@ def clean_qty_value(val):
     try: return float(s)
     except: return 0.0
 
+def hex_to_rgb(hex_color: str):
+    if not hex_color:
+        return (139, 0, 0)
+    hex_color = hex_color.lstrip('#')
+    try:
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    except:
+        return (139, 0, 0)
+
+def apply_royal_lipstick(image_cv: np.ndarray, color_rgb: tuple):
+    """خوارزمية الواقع المعزز لتطبيق دمج الألوان والمنتجات بدقة ميكرو-مترية على الخلايا والوجه"""
+    try:
+        image_rgb = cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB)
+        results = face_mesh.process(image_rgb)
+
+        if not results.multi_face_landmarks:
+            return image_cv, False
+
+        height, width, _ = image_cv.shape
+        face_landmarks = results.multi_face_landmarks[0]
+
+        # نقاط حدود الشفاه لتجربة النحت التجميلي الفوري
+        LIPS_OUTER = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 185]
+        
+        lip_points = []
+        for idx in LIPS_OUTER:
+            pt = face_landmarks.landmark[idx]
+            x = int(pt.x * width)
+            y = int(pt.y * height)
+            lip_points.append([x, y])
+        
+        lip_points = np.array(lip_points, dtype=np.int32)
+
+        # صناعة قناع وتنعيم الحواف ليكون الدمج طبيعياً متطابقاً مع المسام واهتزازات البشرة
+        mask = np.zeros((height, width), dtype=np.uint8)
+        cv2.fillPoly(mask, [lip_points], 255)
+        mask = cv2.GaussianBlur(mask, (15, 15), 0)
+        
+        color_layer = np.zeros_like(image_cv)
+        color_layer[:] = color_rgb[::-1]
+
+        alpha = mask / 255.0
+        alpha = np.expand_dims(alpha, axis=-1)
+
+        # تطبيق توازن الضوء والظلال (40% شفافية للبشرة والمسام و 60% للدرجة المنتجة)
+        blended_lips = cv2.addWeighted(image_cv, 0.4, color_layer, 0.6, 0)
+        final_image = (1.0 - alpha) * image_cv + alpha * blended_lips
+
+        return final_image.astype(np.uint8), True
+    except:
+        return image_cv, False
+
+# =========================================================
+# [5] المانيفستو والفلسفة الكبرى والرموز الفلكية
+# =========================================================
 ROYAL_MANIFESTO_DATA = """
 - رسالة البراند: 'العطر فكرة تُشم، لا تُقال. رويال إلكيم... فلسفة تُقطّر، لا تُنتَج.'
 - الرموز الفلكية الحية لقوة الصمت والجاذبية:
@@ -152,11 +232,13 @@ BASE_PHILOSOPHY = f"""
 الصيغ الكبرى: {ROYAL_MASTER_FORMULAS}
 """
 
+# =========================================================
+# [6] واجهات المعالجة البرمجية و الـ Endpoints
+# =========================================================
 @app.get("/debug/routes")
 async def get_routes():
     return [{"path": route.path, "methods": list(route.methods)} for route in app.routes]
 
-# === 🛒 دالة الاستعلام المحصنة بالكامل ضد الأخطاء ونصوص الجداول المعقدة ===
 @app.get("/api/search")
 async def search(query: str):
     try:
@@ -165,7 +247,6 @@ async def search(query: str):
         if inv.empty: 
             return {"status": "error", "message": "قاعدة بيانات المعرض غير متوفرة حالياً."}
 
-        # حقن تعطيل الـ regex لحظر الانهيار بسبب الرموز الخاصة في مربع البحث
         results = inv[
             inv['الصنف'].astype(str).str.contains(query, na=False, case=False, regex=False) | 
             inv['الباركود'].astype(str).str.contains(query, na=False, regex=False)
@@ -175,7 +256,6 @@ async def search(query: str):
         for _, row in results.iterrows():
             item_name = str(row.get('الصنف', '')).strip()
             
-            # فرز ذكي ونظيف لنوع الصنف
             is_oil_or_perfume_material = any(kw in item_name.lower() for kw in ["زيت", "زيت عطر", "جرام", "تركيب", "raw", "oil", "formula", "كحول", "مثبت", "أفغانو", "أصفهان", "فانيلا"])
 
             qty_luxor_lotus = clean_qty_value(row.get('رويال الكيم / سنتر اللوتس التجاري'))
@@ -193,7 +273,6 @@ async def search(query: str):
                 marrowa_final = int(qty_luxor_lotus)
                 hurgada_final = int(qty_hurgada)
                 
-                # استخدام regex=False لمنع الانهيار البرمجي عند مطابقة روابط الأسماء التي تحتوي على أقواس
                 link_match = db[db['Product_Name'].astype(str).str.contains(item_name, na=False, case=False, regex=False)] if not db.empty else pd.DataFrame()
                 link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
                 show_link_trigger = True if qty_online > 0 else False
@@ -212,7 +291,6 @@ async def search(query: str):
             })
         return {"status": "success", "data": data}
     except Exception as e:
-        # إذا حدث أي خطأ غير متوقع، يعود السيرفر برسالة واضحة بدلاً من الانهيار التام
         return {"status": "error", "message": f"حدث خطأ داخلي في معالجة الجرد: {str(e)}"}
 
 @app.post("/api/diagnose")
@@ -245,12 +323,76 @@ async def chat(payload: ChatPayload):
 
 @app.post("/api/simulate_makeup")
 async def simulate_makeup(payload: SimulationPayload):
-    img_selfie = parse_image(payload.user_selfie)
-    contents = [img_selfie] if img_selfie else []
-    prompt = f"""
-    {BASE_PHILOSOPHY}
-    تحليل سيلفي منفرد وقراءة المظهر والألوان (فاونديشن، آيشادو، وستايل يومي). اربط التحليل بالفرع المناسب لطلبها، واذكر مسميات فروعنا الرسمية بدقة اجتماعية وموضة واعية.
     """
-    contents.append(prompt)
-    res = robust_generate(payload.client_api_key, contents, VISION_MODELS)
-    return {"status": "success", "simulation_result": res}
+    تحديث معمارية التخيل: تطبيق المكياج والمنتج مباشرة على بيكسلات البشرة، 
+    ثم تمرير النتيجة البصرية الحية إلى جينيريتور (Gemini Vision) لإصدار تحليل مدى التطابق الفوري.
+    """
+    try:
+        # 1. فك تشفير الصورة السيلفي والتحضير لمحرك OpenCV
+        if "," in payload.user_selfie:
+            header, encoded = payload.user_selfie.split(",", 1)
+        else:
+            encoded = payload.user_selfie
+
+        img_data = base64.b64decode(encoded)
+        np_arr = np.frombuffer(img_data, np.uint8)
+        img_cv = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+        # استخراج درجة اللون الملكية للمنتج المختار
+        hex_color = payload.hex_color if payload.hex_color else "#8B0000"
+        rgb_color = hex_to_rgb(hex_color)
+
+        # تطبيق النحت الافتراضي للمكياج على الوجه برمجياً
+        processed_img, face_found = apply_royal_lipstick(img_cv, rgb_color)
+        
+        # تحويل الصورة لتغذية ذكاء الرويال مايند التحليلي (PIL Image) وإرسالها للفرونت إند
+        if face_found:
+            color_converted = cv2.cvtColor(processed_img, cv2.COLOR_BGR2RGB)
+            pil_img = Image.fromarray(color_converted)
+            
+            _, buffer = cv2.imencode('.jpg', processed_img)
+            result_base64 = f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}"
+        else:
+            # مسار أمان (Fallback) في حال عدم ثبات الصورة أو ضعف الإضاءة
+            if "," in payload.user_selfie:
+                img_data_pure = base64.b64decode(payload.user_selfie.split(",", 1)[1])
+            else:
+                img_data_pure = base64.b64decode(payload.user_selfie)
+            pil_img = Image.open(io.BytesIO(img_data_pure))
+            result_base64 = payload.user_selfie
+
+        # 2. حقن الصورة المطبق عليها التأثير داخل ذكاء جينيريتور (Gemini) لتحليل انسجام المنتجات والدرجات
+        contents = [pil_img]
+        product_info = payload.product_name_desc if payload.product_name_desc else "مستحضرات تجميل ملكية متطابقة"
+        
+        prompt = f"""
+        {BASE_PHILOSOPHY}
+        أنتِ الآن في وضع 'التجربة الافتراضية الشاملة وتحليل مطابقة البشرة' (Omni-Channel AR Simulation).
+        لقد قام النظام بتطبيق المنتج المطلوب ({product_info}) برمجياً على ملامح العميل في الصورة المرفقة ليرى تأثيره المباشر دون الحاجة للتجربة الفعلية.
+        
+        المطلوب منكِ كـ 'رويال مايند':
+        1. تحليل دقيق للون ودرجة بشرة العميل الحالية وملامحه الظاهرة في الصورة (Undertones) ومدى تطابق درجات الآيشادو، الفاونديشن، أو الهايلايتر المضافة معها.
+        2. التخيل والوصف البصري والجمالي الدقيق: كيف يبدو التناغم والدمج المباشر لهذه المواد على البشرة لمنح العميل الثقة الكاملة في التطابق.
+        3. صياغة النتيجة بأسلوب شاعري راقٍ وكأن العميل ينظر في مرآة ذكية تعوضه تماماً عن التجربة الفيزيائية.
+        4. توجيه العميل بوضوح للفرع المناسب بناءً على النطاق السلعي (سنتر اللوتس التجاري للأجهزة والمكياج، أو فروع التراكيب الأخرى).
+        """
+        contents.append(prompt)
+        
+        # توليد الرد الإدراكي الشاعري للمنتج على البشرة
+        res = robust_generate(payload.client_api_key, contents, VISION_MODELS)
+        
+        return {
+            "status": "success",
+            "result_image": result_base64,
+            "simulation_result": res,
+            "face_detected": face_found
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"خطأ في منظومة التخيل والواقع المعزز: {str(e)}")
+
+# =========================================================
+# [7] إطلاق المنظومة الملكية في الفضاء السحابي
+# =========================================================
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
