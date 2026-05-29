@@ -1,545 +1,277 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Royal Elchim - القصر الجمالي المتكامل</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* أنيميشن حركة أورورا قوس قزح الساحرة */
-        @keyframes aurora { 
-            0% { background-position: 0% 50%; } 
-            50% { background-position: 100% 50%; } 
-            100% { background-position: 0% 50%; } 
-        }
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from google import genai
+from google.genai import types
+import os
+import random
+import io
+import base64
+import pandas as pd
+from PIL import Image
+from typing import Optional, Dict
+import time
+import math
 
-        body { 
-            /* خلفية قوس قزح بأفتح وأزهى درجات الباستيل المضيئة والمشرقة */
-            background: linear-gradient(135deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb, #d4fc79, #96e6a1, #fff1eb, #f1eefc); 
-            background-size: 300% 300%; 
-            animation: aurora 12s ease infinite; 
-            color: #1a1a2e; /* تباين حاد وداكن للنصوص ليناسب الخلفية الفاتحة */
-            font-family: 'Times New Roman', serif; 
-            padding-bottom: 90px; 
-            min-height: 100vh; 
-        }
+app = FastAPI(title="Royal Elchim - Ultimate Luxury Fragrance Engine")
 
-        .gold-text { 
-            color: #b58900; /* ذهبي ملكي دافئ وظاهر تماماً على الخلفيات المضيئة */
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); 
-            font-weight: bold;
-        }
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-        .glass-card { 
-            /* بلوري أبيض ناصع وشفاف يعكس ألوان قوس قزح الخلفية بنقاء مذهل */
-            background: rgba(255, 255, 255, 0.8); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(181, 137, 0, 0.3); 
-            border-radius: 16px; 
-            padding: 25px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06); 
-        }
+keys_string = os.environ.get("GOOGLE_API_KEY", os.environ.get("GOOGLE_API_KEYS", ""))
+SYSTEM_API_KEYS = [key.strip() for key in keys_string.split(",") if key.strip()]
 
-        .gold-btn { 
-            background: linear-gradient(45deg, #b58900, #e5b82c, #b58900); 
-            color: #fff; 
-            font-weight: bold; 
-            border: none; 
-            border-radius: 8px; 
-            padding: 12px; 
-            transition: 0.3s; 
-            width: 100%; 
-            box-shadow: 0 4px 15px rgba(181,137,0,0.2); 
-            text-decoration: none; 
-            display: block; 
-            text-align: center; 
-        }
+VISION_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
+TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
-        .gold-btn:hover { 
-            background: linear-gradient(45deg, #e5b82c, #f3e5ab, #e5b82c); 
-            transform: scale(1.02); 
-            color: #1a1a2e; 
-        }
+def get_inventory():
+    try:
+        file_path = "last.xls - Sheet1.csv"
+        if os.path.exists(file_path):
+            df = pd.read_csv(file_path)
+            return df.fillna("")
+        return pd.DataFrame()
+    except Exception as e:
+        print(f"Error reading inventory file: {e}")
+        return pd.DataFrame()
 
-        .bottom-nav { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            background: rgba(255, 255, 255, 0.94); 
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-top: 1px solid rgba(181, 137, 0, 0.4); 
-            display: flex; 
-            justify-content: space-around; 
-            padding: 10px 0; 
-            z-index: 1000; 
-        }
+def get_links_db():
+    try:
+        file_path = "Royal_Elchim_Final_Database.csv"
+        if os.path.exists(file_path):
+            return pd.read_csv(file_path).fillna("")
+        return pd.DataFrame()
+    except Exception as e:
+        print(f"Error reading links database: {e}")
+        return pd.DataFrame()
 
-        .nav-item { 
-            text-align: center; 
-            color: #555577; 
-            cursor: pointer; 
-            flex: 1; 
-            font-size: 0.72rem; 
-            transition: 0.3s; 
-        }
+def robust_generate(client_api_key, contents, models_list):
+    if client_api_key and client_api_key.strip():
+        keys_to_use = [client_api_key.strip()]
+    else:
+        if not SYSTEM_API_KEYS:
+            raise HTTPException(status_code=500, detail="مفاتيح الخادم السحابي غير مهيأة بعد.")
+        keys_to_use = SYSTEM_API_KEYS.copy()
+        random.shuffle(keys_to_use)
 
-        .nav-item i { 
-            font-size: 1.25rem; 
-            display: block; 
-            margin-bottom: 3px; 
-        }
+    for model_name in models_list:
+        for key in keys_to_use:
+            max_retries = 2
+            for attempt in range(max_retries):
+                try:
+                    client = genai.Client(api_key=key)
+                    config = types.GenerateContentConfig(temperature=0.8, top_p=0.95)
+                    response = client.models.generate_content(model=model_name, contents=contents, config=config)
+                    if response and response.text:
+                        return response.text
+                except Exception as e:
+                    error_str = str(e)
+                    if "503" in error_str or "ResourceExhausted" in error_str or "429" in error_str:
+                        time.sleep(1.5)
+                        continue
+                    else:
+                        break
+                        
+    raise HTTPException(status_code=503, detail="قنوات رويال مايند ممتلئة حالياً، يرجى إعادة المحاولة بعد ثوانٍ.")
 
-        .nav-item.active { 
-            color: #b58900; 
-            transform: translateY(-2px); 
-            text-shadow: 0 0 8px rgba(181, 137, 0, 0.3); 
-            font-weight: bold;
-        }
+class DiagnosisPayload(BaseModel):
+    client_message: Optional[str] = None
+    mood_answers: Optional[Dict[str, str]] = None
+    image: Optional[str] = None
+    history_context: Optional[str] = None
+    client_api_key: Optional[str] = None
 
-        .app-screen { 
-            display: none; 
-            animation: fadeIn 0.4s ease-out; 
-        }
+class ChatPayload(BaseModel):
+    text: str
+    category: str  
+    image: Optional[str] = None
+    history_context: Optional[str] = None
+    client_api_key: Optional[str] = None
 
-        .app-screen.active { 
-            display: block; 
-        }
+class SimulationPayload(BaseModel):
+    user_selfie: str
+    product_image: Optional[str] = None
+    product_name_desc: Optional[str] = None
+    client_api_key: Optional[str] = None
 
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(8px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
+def parse_image(base64_string):
+    if base64_string and "," in base64_string:
+        try:
+            img_data = base64.b64decode(base64_string.split(",")[1])
+            return Image.open(io.BytesIO(img_data))
+        except:
+            return None
+    return None
 
-        .royal-response { 
-            background: rgba(181, 137, 0, 0.04); 
-            border-top: 2px solid #b58900; 
-            border-bottom: 2px solid #b58900; 
-            border-radius: 8px;
-            padding: 18px; 
-            margin-top: 20px; 
-            white-space: pre-line; 
-            text-align: right; 
-            line-height: 1.8; 
-            color: #1a1a2e;
-        }
+def sanitize_value(val, default_text="---"):
+    if val is None: return default_text
+    s = str(val).strip()
+    if s.lower() == 'nan' or s == '': return default_text
+    return s
 
-        .preview-img { 
-            max-width: 100%; 
-            max-height: 130px; 
-            object-fit: contain; 
-            border-radius: 8px; 
-            border: 2px solid #b58900; 
-            margin-top: 10px; 
-        }
+ROYAL_MANIFESTO_DATA = """
+- رسالة البراند: 'العطر فكرة تُشم، لا تُقال. رويال إلكيم... فلسفة تُقطّر، لا تُنتَج.'
+- الرموز الفلكية الحية لقوة الصمت والجاذبية:
+  1. بلاك رويال (Black Royal) / برج الأسد - النسر الأسود: يمثل قوة الإرادة والسيطرة المطلقة. حين تتصالح القوة مع الظل. رائحة من يملك زمام رغباته.
+  2. رويال شادو (Royal Shadow) / برج العقرب - الذئب: الغموض المطلق، السيطرة على المجهول، وقوة الانجذاب النقي في الصمت.
+  3. رويال شاين (Royal Shine) / برج القوس - الطاووس: الجماهير الاستعراضي النادر، الثقة الطاغية، والحضور المشع.
+  4. رويال إكليبس (Royal Eclipse) / برج الجدي - الفهد الأسود: ملك الليل، التمرد الفاخر والسيادة الهادئة.
+  5. روز نوار (Rose Noir): الوردة التي قررت أن لا تبتسم بعد الآن. تعبر عن تناقض الجمال والظلام الفاتن.
+  6. هورايزون (Horizon): فتح حدود الكون وتحرير الروح.
+"""
 
-        .vault-img { 
-            max-width: 80px; 
-            max-height: 80px; 
-            object-fit: contain; 
-            border-radius: 4px; 
-            border: 1px solid #b58900; 
-            margin-top: 5px; 
-            display: block; 
-        }
+ROYAL_MASTER_FORMULAS = """
+1. Royal Purpose (الهدف الملكي): عود أصفهان، عنبر وايت، سوفاج، روز فانيلا، بلاك أفغانو، سيجار أكورد.
+2. Royal Azzurro: فريش إيطالي نظيف ويومي للرجال. كريد أفينتوس، أزارو، ميسميرايز.
+3. Royal Moon: عطر القمر الناعم والمائي لبرج السرطان. أكوا دي جيو، عنبر وايت، عود أبيض.
+4. Royal Veil (رويال فيل): أنوثة راقية صامتة لبرج الميزان (الغزال الأبيض). لافيستا بيل، سوفاج، أكوا دي جيو.
+5. Royal Velvet Rose: دلال القطة السوداء لبرج الثور. روز فانيلا، فانيليا، سترونجر ويذ يو.
+6. Earth Rose: ناضج ترابي كقطة تمشي على تراب مبلول. Velvet Rose + أوليمبيا.
+7. Royal Voyager Fresh: الانتعاش الساحر لبرج الجوزاء (الدلفين الملكي). فيدج، لاكوست وايت، هوجو مان.
+"""
 
-        .token-alert { 
-            border: 2px solid #ff4d4d; 
-            background: rgba(255, 77, 77, 0.08); 
-            border-radius: 12px; 
-            padding: 15px; 
-            color: #8b0000; 
-            margin-bottom: 20px; 
-            font-size: 0.9rem; 
-            text-align: center; 
-            font-weight: bold;
-        }
+BASE_PHILOSOPHY = f"""
+أنتِ 'رويال مايند'، الصوت الشاعري والمستشارة الاجتماعية لبراند Royal Elchim.
+تتحدثين بلغة 'شاعر في معمل' يمزج الرقي والفكر والعاطفة. شعاركِ الثابت: 'كل رائحة عندنا... لها ذاكرة تفتّح باباً في النفس. العطر مش بيخليك مختلف، هو بيفكرك إنت مين.'
+أنتِ تتنفسين المانيفستو الرسمي:
+{ROYAL_MANIFESTO_DATA}
+وتمتلكين كتاب الصيغ الماستر بالجرام:
+{ROYAL_MASTER_FORMULAS}
 
-        .manifesto-badge { 
-            border-right: 4px solid #b58900; 
-            border-left: none;
-            padding-right: 15px; 
-            margin-bottom: 15px; 
-            background: rgba(0, 0, 0, 0.03); 
-            padding: 14px; 
-            border-radius: 6px; 
-        }
+قواعد التوجيه للفروع الحية:
+- فرع الأقصر: ش فندق المروة (متفرع من ش التليفزيون).
+- فرع الغردقة: خلف فندق الجولف.
+"""
 
-        .text-muted {
-            color: #4a4a6a !important;
-        }
+@app.get("/debug/routes")
+async def get_routes():
+    return [{"path": route.path, "methods": list(route.methods)} for route in app.routes]
 
-        .form-control {
-            background-color: rgba(255, 255, 255, 0.9) !important;
-            color: #1a1a2e !important;
-            border: 1px solid rgba(181, 137, 0, 0.3) !important;
-        }
+# === 🛒 دالة الاستعلام الجوهري للفصل الكامل بين الفروع والمخزن الإلكتروني ===
+@app.get("/api/search")
+async def search(query: str):
+    inv = get_inventory()
+    db = get_links_db()
+    if inv.empty: return {"status": "error", "message": "قاعدة بيانات المعرض غير متوفرة حالياً."}
 
-        .form-control::placeholder {
-            color: #75759a !important;
-        }
+    results = inv[
+        inv['الصنف'].astype(str).str.contains(query, na=False, case=False) | 
+        inv['الباركود'].astype(str).str.contains(query, na=False)
+    ].head(10)
 
-        .play-voice-btn { 
-            background: #b58900; 
-            color: #fff; 
-            border: none; 
-            border-radius: 5px; 
-            padding: 8px 16px; 
-            font-weight: bold; 
-            margin-top: 15px; 
-            font-size: 0.9rem; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 8px; 
-            box-shadow: 0 3px 10px rgba(181,137,0,0.2);
-        }
-
-        .play-voice-btn:hover {
-            background: #e5b82c;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="container pt-4 text-center">
-        <!-- لوجو البراند الموحد للظهور بهيبة ملوكية وسط ألوان قوس قزح المضيئة -->
-        <img src="Untitled-2_2.jpg" alt="Royal Elchim" style="max-width: 150px; filter: drop-shadow(0px 2px 5px rgba(0,0,0,0.1));">
-        <p class="small text-muted mt-2 fw-bold" style="letter-spacing: 1px;">نظام الإدارة والذكاء الجمالي الشامل</p>
-    </div>
-
-    <div class="container mt-2">
+    data = []
+    for _, row in results.iterrows():
         
-        <!-- 1. شاشة الاستعلام والمخزون -->
-        <div id="screen-search" class="app-screen active">
-            <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-barcode"></i> الاستعلام والمخزون الحقيقي</h4>
-                <div class="input-group mb-3">
-                    <input type="text" id="royalSearchInput" class="form-control text-center py-2" placeholder="ادخلي اسم صنف... أو امسحي الباركود الفعلي..." oninput="debounceSearch(this.value)">
-                </div>
-                <div id="searchResultsContainer"></div>
-            </div>
-        </div>
+        # 📍 1. فرع الأقصر (رويال الكيم / سنتر اللوتس التجاري)
+        try:
+            qty_luxor = float(str(row.get('رويال الكيم / سنتر اللوتس التجاري', '0')).replace(',', '.'))
+        except: qty_luxor = 0.0
+        if math.isnan(qty_luxor): qty_luxor = 0.0
 
-        <!-- 2. شاشة رويال مايند معاك للأبد -->
-        <div id="screen-diagnosis" class="app-screen">
-            <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-heart"></i> رويال مايند معاكِ للأبد</h4>
-                <p class="text-muted small text-center mb-3">تحدثي مع رويال مايند كصديقة مخلصة تفهم تفاصيلكِ... بوحي لها ببرجكِ الفلكي، طاقة روحكِ، أو أي نصيحة تبحثين عنها.</p>
-                <textarea id="diagnosisInput" class="form-control mb-4" rows="4" placeholder="اكتبي ما يجول بخاطركِ هنا بكل حرية..."></textarea>
-                <button class="btn gold-btn w-100 py-2" onclick="runDiagnosis()">إطلاق حديث الصداقة الملكي <i class="fa-solid fa-sparkles"></i></button>
-                <div id="diagResponse" class="royal-response" style="display:none;"></div>
-            </div>
-        </div>
+        # 📍 2. فرع الغردقة (ROYAL ELCHIM . HURGADA)
+        try:
+            qty_hurgada = float(str(row.get('ROYAL ELCHIM . HURGADA', '0')).replace(',', '.'))
+        except: qty_hurgada = 0.0
+        if math.isnan(qty_hurgada): qty_hurgada = 0.0
 
-        <!-- 3. شاشة العطور (الأثر العطري بالجرام) -->
-        <div id="screen-perfume" class="app-screen">
-            <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> الأثر العطري (تركيب الزيوت)</h4>
-                <p class="text-muted small text-center mb-3">ادخلي مزاجكِ أو برجكِ لتقوم رويال مايند بنحت صيغتكِ العطرية الخاصة بالجرام من زيوت معارضنا الحية، وتوجيهكِ لأقرب فرع.</p>
-                <textarea id="perfumeInput" class="form-control mb-4" rows="3" placeholder="صفي طابعكِ العطري لتركيب زجاجتكِ بالجرامات الفعالة..."></textarea>
-                <button class="btn gold-btn w-100 py-2" onclick="runChat('perfume', 'perfumeInput', 'perfumeResponse')">ابتكار التوقيع العطري</button>
-                <div id="perfumeResponse" class="royal-response" style="display:none;"></div>
-            </div>
-        </div>
+        # 🛒 3. المتجر والمخزن الإلكتروني (رويال الكيم اونلاين)
+        try:
+            qty_online = float(str(row.get('رويال الكيم اونلاين', '0')).replace(',', '.'))
+        except: qty_online = 0.0
+        if math.isnan(qty_online): qty_online = 0.0
 
-        <!-- 4. شاشة المكياج (النحت الجمالي) -->
-        <div id="screen-makeup" class="app-screen">
-            <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-paintbrush"></i> النحت الجمالي والموضة</h4>
-                <textarea id="makeupInput" class="form-control mb-4" rows="3" placeholder="صفي لنا الإطلالة والمظهر اللذين تطمحين إليهما..."></textarea>
-                <button class="btn gold-btn w-100 py-2" onclick="runChat('makeup', 'makeupInput', 'makeupResponse')">استشارة النحت والجمال</button>
-                <div id="makeupResponse" class="royal-response" style="display:none;"></div>
-            </div>
-        </div>
+        link_match = db[db['Product_Name'].astype(str).str.contains(str(row.get('الصنف', '')), na=False, case=False)] if not db.empty else pd.DataFrame()
+        link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
 
-        <!-- 5. شاشة التخيل البصري والتحليل الوجداني والموضة (بوابات التوكين المحمية) -->
-        <div id="screen-simulation" class="app-screen">
-            <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> التخيل والتحليل الوجداني</h4>
-                <p class="text-muted small text-center mb-3">ارفعي صورتكِ السيلفي بمفردها لتقرأ رويال مايند ألوان بشرتكِ ودرجات الفاونديشن والآيشادو والستايل الوجداني، أو ارفعي معها منتجاً للمحاكاة الكاملة.</p>
-                
-                <!-- بوابة القفل التلقائي الملوكي لحماية التوكينز بعد الصورة السادسة -->
-                <div id="tokenGateAlert" class="token-alert" style="display:none;">
-                    <i class="fa-solid fa-key mb-2 d-block" style="font-size:1.3rem;"></i>
-                    لقد استمتعتِ بـ 6 جلسات تحليل بصري مجانية! للمتابعة وحماية المنظومة، يرجى إدخال مفتاح الـ API الخاص بكِ:
-                    <input type="text" id="clientGeminiKeyInput" class="form-control text-warning border-danger text-center mt-2" placeholder="AIzaSy..." oninput="saveClientKey(this.value)">
-                </div>
+        data.append({
+            "name": sanitize_value(row.get('الصنف'), "منتج غير مسمى"),
+            "price": sanitize_value(row.get('سعر1 كارت'), "اتصلي بنا"),
+            "barcode": sanitize_value(row.get('الباركود'), "---"),
+            "link": sanitize_value(link, "https://www.royalelchim.app"),
+            
+            # جرد فروع المعارض لفرز وحظر التداخل
+            "luxor_qty": int(qty_luxor),
+            "hurgada_qty": int(qty_hurgada),
+            "online_qty": int(qty_online)
+        })
+    return {"status": "success", "data": data}
 
-                <div class="row text-center mb-3">
-                    <div class="col-6">
-                        <label class="btn btn-outline-warning w-100 p-2" style="border-color:#b58900; color:#b58900; font-weight:bold;"><i class="fa-solid fa-user"></i> وجهكِ السيلفي<input type="file" hidden accept="image/*" onchange="processAndPreviewImage(event, 'simSelfiePreview', 'selfieBase64')"></label>
-                        <div id="simSelfiePreview"></div>
-                    </div>
-                    <div class="col-6">
-                        <label class="btn btn-outline-warning w-100 p-2" style="border-color:#b58900; color:#b58900; font-weight:bold;"><i class="fa-solid fa-box-open"></i> المنتج (اختياري)<input type="file" hidden accept="image/*" onchange="processAndPreviewImage(event, 'simProductPreview', 'productBase64')"></label>
-                        <div id="simProductPreview"></div>
-                    </div>
-                </div>
-                <input type="text" id="simProductName" class="form-control mb-3 text-center" placeholder="اسم منتج التجميل إذا تم رفعه">
-                <button id="submitSimulationBtn" class="btn gold-btn w-100 py-2" onclick="runSimulation()">بدء التحليل البصري والوجداني <i class="fa-solid fa-wand-magic-sparkles"></i></button>
-                <div id="simResponse" class="royal-response" style="display:none;"></div>
-            </div>
-        </div>
+@app.post("/api/diagnose")
+async def diagnose(payload: DiagnosisPayload):
+    inv = get_inventory()
+    sampled_items = ""
+    if not inv.empty and 'كمية' in inv.columns:
+        qty_series = pd.to_numeric(inv['كمية'].astype(str).str.replace(',', '.'), errors='coerce').fillna(0)
+        available = inv[qty_series > 0]
+        if not available.empty:
+            sampled = available.sample(n=min(3, len(available)))
+            sampled_items = "\n".join([f"- {sanitize_value(r.get('الصنف'))} (السعر: {sanitize_value(r.get('سعر1 كارت'), 'متاح')})" for _, r in sampled.iterrows()])
+    
+    final_message = payload.client_message if payload.client_message else "مرحباً رويال مايند"
+    prompt = f"""
+    {BASE_PHILOSOPHY}
+    جلسة حوار الصداقة 'رويال مايند معاكِ للأبد': "{final_message}"
+    المطلب: الرد بلغة شاعرية ممتلئة بالحب والرقي الفكري، اربطي طاقة العميل بـ المانيفستو والرموز الحيوانية والفلكية الخاصة بنا، وقدمي ترشيحاً عطرياً بالجرامات، ووجهيه لفروعنا.
+    """
+    res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
+    return {"status": "success", "diagnosis": res}
 
-        <!-- 6. شاشة المانيفستو (الدستور الفكري الفاخر) -->
-        <div id="screen-manifesto" class="app-screen">
-            <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book"></i> مانيفستو رويال إلكيم</h4>
-                <p class="text-center small text-warning mb-4" style="font-style: italic; font-weight: bold;">"العطر فكرة تُشم، لا تُقال. فلسفة تُقطّر، لا تُنتَج."</p>
-                
-                <div class="manifesto-badge">
-                    <h5 class="gold-text"><i class="fa-solid fa-crown"></i> بلاك رويال – الأسد / النسر الأسود</h5>
-                    <p class="small text-muted m-0">حين تتصالح القوة مع الظل. رائحة من يملك زمام رغباته، وتجسيد لقوة الإرادة والسيطرة المطلقة.</p>
-                </div>
-                <div class="manifesto-badge">
-                    <h5 class="gold-text"><i class="fa-solid fa-wolf"></i> رويال شادو – العقرب / الذئب</h5>
-                    <p class="small text-muted m-0">الغموض المحيط بالمجهول، القوة الكامنة في الصمت المطبق، والانجذاب الصافي النقي ونفوذ الأثر.</p>
-                </div>
-                <div class="manifesto-badge">
-                    <h5 class="gold-text"><i class="fa-solid fa-feather"></i> رويال شاين – القوس / الطاووس</h5>
-                    <p class="small text-muted m-0">الجمال الاستعراضي النادر، الثقة الطاغية المزلزلة، وهالة الحضور الفاتنة التي تشع في كل مكان.</p>
-                </div>
-                <div class="manifesto-badge">
-                    <h5 class="gold-text"><i class="fa-solid fa-moon"></i> روز نوار – الجمال والظلام</h5>
-                    <p class="small text-muted m-0">الوردة المخملية الفخمة التي قررت أن لا تبتسم بعد الآن، لتعيش التناقض الأبدي الساحر في سكون الليل.</p>
-                </div>
-            </div>
-        </div>
+@app.post("/api/chat")
+async def chat(payload: ChatPayload):
+    inv = get_inventory()
+    catalog = ""
+    if not inv.empty and 'كمية' in inv.columns:
+        qty_series = pd.to_numeric(inv['كمية'].astype(str).str.replace(',', '.'), errors='coerce').fillna(0)
+        available = inv[qty_series > 0]
+        if not available.empty:
+            sampled = available.sample(n=min(5, len(available)))
+            catalog = "\n".join([f"- {sanitize_value(r.get('الصنف'))}" for _, r in sampled.iterrows()])
 
-        <!-- 7. شاشة السجلات الملكية (عرض متكامل للحديث والصور المحفوظة محلياً) -->
-        <div id="screen-vault" class="app-screen">
-            <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book-journal-whills"></i> السجلات الملكية الذاتية</h4>
-                <div class="text-center mb-3 small text-muted">التحليل البصري المستخدم: <span id="savedImagesCountText" class="gold-text fw-bold">0</span> / 6 صور</div>
-                <button class="btn btn-sm btn-outline-danger d-block mx-auto mb-3 fw-bold" onclick="clearAllVault()"><i class="fa-solid fa-trash-can"></i> مسح كافة السجلات</button>
-                <div id="vaultContainer" style="max-height: 400px; overflow-y: auto;"></div>
-            </div>
-        </div>
+    if payload.category == "perfume":
+        prompt = f"""
+        {BASE_PHILOSOPHY}
+        أنتِ في قسم 'الأثر العطري' لتركيب الزيوت العطرية بالجرام. طلب العميل: "{payload.text}"
+        المطلوب: طابقي رغبته مع المانيفستو والرموز الفلكية (النسر، الذئب، الطاووس، الفهد) وصيغ عطورنا الماستر. لا تكتبي روابط إنترنت للشراء، واختمي بدعوة ملكية دافئة لزيارة فرع الأقصر (ش فندق المروة) أو فرع الغردقة (خلف فندق الجولف) لتركيب الزيت بالجرام.
+        """
+    else:
+        prompt = f"""
+        {BASE_PHILOSOPHY}
+        المسار الحالي: النحت الجمالي والمكياج. رسالة العميل: "{payload.text}"
+        المطلوب: صياغة رد اجتماعي ذكي ينم عن خبرة بالموضة والألوان مع ترشيح الصنف ورابطه بـ https.
+        """
+    res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
+    return {"status": "success", "answer": res}
 
-        <!-- 8. شاشة الإدارة والربط الحسابي للفروع -->
-        <div id="screen-admin" class="app-screen">
-            <div class="glass-card text-center py-5">
-                <h4 class="gold-text mb-4"><i class="fa-solid fa-user-gear"></i> بوابة الإدارة والربط الحسابي</h4>
-                <p class="text-muted small mb-4">لتحديث جرد المخازن وتعديل الفواتير الحية، اضغط على الزر أدناه للانتقال المباشر للوحة المعرض الحسابية.</p>
-                <a href="https://www.royalelchim.app/acc" target="_blank" class="btn gold-btn py-3 px-5 mx-auto" style="max-width: 320px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> دخول نظام الحسابات</a>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- شريط التنقل السفلي الفاخر والمضاء بالمكياج والعطور والمانيفستو -->
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('search', this)"><i class="fa-solid fa-barcode"></i><span>استعلام</span></div>
-        <div class="nav-item" onclick="switchTab('diagnosis', this)"><i class="fa-solid fa-heart"></i><span>معاكِ للأبد</span></div>
-        <div class="nav-item" onclick="switchTab('perfume', this)"><i class="fa-solid fa-spray-can"></i><span>عطور</span></div>
-        <div class="nav-item" onclick="switchTab('makeup', this)"><i class="fa-solid fa-paintbrush"></i><span>مكياج</span></div>
-        <div class="nav-item" onclick="switchTab('simulation', this)"><i class="fa-solid fa-camera-retro"></i><span>تخيل</span></div>
-        <div class="nav-item" onclick="switchTab('manifesto', this)"><i class="fa-solid fa-book"></i><span>المانيفستو</span></div>
-        <div class="nav-item" onclick="switchTab('vault', this)"><i class="fa-solid fa-folder-open"></i><span>سجلات</span></div>
-        <div class="nav-item" onclick="switchTab('admin', this)"><i class="fa-solid fa-user-gear"></i><span>الإدارة</span></div>
-    </div>
-
-    <script>
-        const BACKEND_URL = "https://royalmind-api-production-2448.up.railway.app";
-        let searchTimer;
-        let imagesData = { selfieBase64: null, productBase64: null };
-
-        window.onload = () => { checkTokenGate(); renderVault(); };
-
-        function switchTab(id, el) {
-            document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('screen-' + id).classList.add('active');
-            el.classList.add('active');
-            if(id === 'simulation' || id === 'vault') { checkTokenGate(); }
-        }
-
-        function processAndPreviewImage(event, previewId, dataKey) {
-            const file = event.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const maxCoord = 300;
-                    let width = img.width, height = img.height;
-                    if (width > height) { if (width > maxCoord) { height *= maxCoord / width; width = maxCoord; } }
-                    else { if (height > maxCoord) { width *= maxCoord / height; height = maxCoord; } }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                    imagesData[dataKey] = compressedBase64;
-                    document.getElementById(previewId).innerHTML = `<img src="${compressedBase64}" class="preview-img">`;
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function getSavedImagesCount() {
-            let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
-            return vault.filter(item => item.selfie).length;
-        }
-
-        function checkTokenGate() {
-            const count = getSavedImagesCount();
-            document.getElementById('savedImagesCountText').innerText = count;
-            const clientKey = localStorage.getItem('royal_client_gemini_key') || "";
-            if (count >= 6 && clientKey.trim() === "") {
-                document.getElementById('tokenGateAlert').style.display = 'block';
-                return false;
-            } else {
-                document.getElementById('tokenGateAlert').style.display = count >= 6 ? 'block' : 'none';
-                if(count >= 6) document.getElementById('clientGeminiKeyInput').value = clientKey;
-                return true;
-            }
-        }
-
-        function saveClientKey(val) {
-            localStorage.setItem('royal_client_gemini_key', val.trim());
-            checkTokenGate();
-        }
-
-        function playVoice(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                let cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[\*#]/g, '');
-                let utterance = new SpeechSynthesisUtterance(cleanText);
-                utterance.lang = 'ar-SA'; utterance.rate = 0.85;
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        function formatResponse(text) {
-            let encoded = encodeURIComponent(text);
-            return `<div>${text}</div><button class="play-voice-btn" onclick="playVoice(decodeURIComponent('${encoded}'))"><i class="fa-solid fa-volume-high"></i> استمع للرد الملكي</button>`;
-        }
-
-        function getLocalHistoryContext() {
-            try {
-                let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
-                return vault.slice(0, 3).map(i => `[تاريخ ${i.date}]: ${i.text}`).join(" | ");
-            } catch(e) { return ""; }
-        }
-
-        function debounceSearch(val) {
-            clearTimeout(searchTimer);
-            if(val.length < 2) return;
-            searchTimer = setTimeout(() => performRoyalSearch(val), 500);
-        }
-
-        async function performRoyalSearch(query) {
-            const container = document.getElementById('searchResultsContainer');
-            container.innerHTML = "<p class='text-center gold-text'><i class='fa-solid fa-spinner fa-spin'></i> جاري فحص المخازن الملكية...</p>";
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/search?query=${encodeURIComponent(query)}`);
-                const result = await res.json();
-                if(result.status === 'success' && result.data.length > 0) {
-                    container.innerHTML = result.data.map(item => `
-                        <div class="glass-card mb-2 p-3" style="border-right: 4px solid var(--bs-${item.color}); text-align: right;">
-                            <div class="d-flex justify-content-between"><span class="gold-text fw-bold" style="font-size:1.1rem;">${item.name}</span><span class="badge bg-${item.color} status-badge">${item.status}</span></div>
-                            <div class="d-flex justify-content-between mt-3 align-items-center">
-                                <div><small class="text-muted d-block">باركود: ${item.barcode}</small><span class="h5 gold-text font-weight-bold">${item.price} ج.م</span></div>
-                                ${item.link !== "https://www.royalelchim.app" ? `<a href="${item.link}" target="_blank" class="btn btn-sm gold-btn py-2 px-3" style="max-width:90px;"><i class="fa-solid fa-bag-shopping"></i> اقتناء</a>` : ''}
-                            </div>
-                        </div>
-                    `).join('');
-                } else { container.innerHTML = "<p class='text-center text-muted p-3'>هذا الصنف غير متوفر حالياً بالمخزن.</p>"; }
-            } catch { container.innerHTML = "<p class='text-center text-danger'>اضطراب اتصال بالسيرفر.</p>"; }
-        }
-
-        async function runDiagnosis() {
-            let msg = document.getElementById('diagnosisInput').value;
-            let out = document.getElementById('diagResponse');
-            if(!msg) return;
-            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'><i class='fa-solid fa-spinner fa-spin'></i> رويال مايند تتناغم مع روحكِ...</span>";
-            try {
-                let res = await fetch(`${BACKEND_URL}/api/diagnose`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ client_message: msg, history_context: getLocalHistoryContext() })
-                });
-                let data = await res.json();
-                if(data.status === 'success') { out.innerHTML = formatResponse(data.diagnosis); saveToVault('صداقة رويال مايند للأبد', data.diagnosis); }
-            } catch { out.innerHTML = "<span class='text-danger'>خطأ في الاتصال بالخادم.</span>"; }
-        }
-
-        async function runChat(category, inputId, outId) {
-            let text = document.getElementById(inputId).value;
-            let out = document.getElementById(outId);
-            if(!text) return;
-            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'><i class='fa-solid fa-spinner fa-spin'></i> يتم استخلاص الأثر الجمالي...</span>";
-            try {
-                let res = await fetch(`${BACKEND_URL}/api/chat`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ text: text, category: category, history_context: getLocalHistoryContext() })
-                });
-                let data = await res.json();
-                if(data.status === 'success') { out.innerHTML = formatResponse(data.answer); saveToVault(category === 'perfume' ? 'استشارة عطور بالجرام' : 'استشارة مكياج', data.answer); }
-            } catch { out.innerHTML = "<span class='text-danger'>خطأ اتصال بالسيرفر.</span>"; }
-        }
-
-        async function runSimulation() {
-            if(!imagesData.selfieBase64) return alert("يجب رفع صورة وجهكِ السيلفي أولاً لبدء التحليل البصري والوجداني.");
-            const count = getSavedImagesCount();
-            const clientKey = localStorage.getItem('royal_client_gemini_key') || "";
-            if(count >= 6 && clientKey.trim() === "") {
-                alert("يرجى إدخل مفتاح الـ API الخاص بكِ في المربع المضاء بالأعلى لحماية قنوات رويال مايند والمتابعة.");
-                return;
-            }
-            let name = document.getElementById('simProductName').value || "";
-            let out = document.getElementById('simResponse');
-            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'><i class='fa-solid fa-spinner fa-spin'></i> رويال مايند تدرس الألوان وتفاصيل المظهر والملامح...</span>";
-            try {
-                let res = await fetch(`${BACKEND_URL}/api/simulate_makeup`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_selfie: imagesData.selfieBase64, product_image: imagesData.productBase64, product_name_desc: name, client_api_key: clientKey.trim() !== "" ? clientKey : null })
-                });
-                let data = await res.json();
-                if(data.status === 'success') { 
-                    out.innerHTML = formatResponse(data.simulation_result); 
-                    saveToVault(imagesData.productBase64 ? 'محاكاة جمالية بالألوان' : 'تحليل تعبيري للملامح والموضة', data.simulation_result, imagesData.selfieBase64, imagesData.productBase64); 
-                    checkTokenGate();
-                }
-            } catch { out.innerHTML = "<span class='text-danger'>فشل الاتصال بالسيرفر السحابي.</span>"; }
-        }
-
-        function saveToVault(type, text, selfie = null, product = null) {
-            let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
-            vault.unshift({ date: new Date().toLocaleString('ar-EG'), type, text, selfie, product });
-            localStorage.setItem('royal_vault_data', JSON.stringify(vault));
-            renderVault();
-        }
-
-        function clearAllVault() {
-            if(confirm("هل أنتِ متأكدة من رغبتكِ في مسح كافة السجلات الملكية والصور المحفوظة لتصفير العداد التخزيني؟")) {
-                localStorage.removeItem('royal_vault_data'); localStorage.removeItem('royal_client_gemini_key');
-                window.location.reload();
-            }
-        }
-
-        function renderVault() {
-            let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
-            let cont = document.getElementById('vaultContainer');
-            if(!vault.length) return cont.innerHTML = "<p class='text-center text-muted p-3'>السجلات الملكية فارغة حالياً.</p>";
-            cont.innerHTML = vault.map(i => `
-                <div class="p-3 mb-3" style="background:rgba(255,255,255,0.5); border-right:4px solid #b58900; border-radius:8px; text-align:right; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-                    <div class="d-flex justify-content-between gold-text small mb-2"><span class="fw-bold">${i.type}</span><span>${i.date}</span></div>
-                    ${i.selfie || i.product ? `
-                        <div class="d-flex gap-2 mb-2">
-                            ${i.selfie ? `<div><small class="text-muted d-block font-weight-bold">السيلفي الشخصي</small><img src="${i.selfie}" class="vault-img"></div>` : ''}
-                            ${i.product ? `<div><small class="text-muted d-block font-weight-bold">صورة المنتج</small><img src="${i.product}" class="vault-img"></div>` : ''}
-                        </div>
-                    ` : ''}
-                    <div class="small fw-bold" style="white-space:pre-line; color:#1a1a2e;">${i.text}</div>
-                </div>
-            `).join('');
-        }
-    </script>
-</body>
-</html>
+@app.post("/api/simulate_makeup")
+async def simulate_makeup(payload: SimulationPayload):
+    img_selfie = parse_image(payload.user_selfie)
+    img_product = parse_image(payload.product_image) if payload.product_image else None
+    
+    contents = []
+    if img_selfie: contents.append(img_selfie)
+        
+    if img_selfie and img_product:
+        prod_name = payload.product_name_desc if payload.product_name_desc else "منتج تجميلي فاخر"
+        prompt = f"""
+        {BASE_PHILOSOPHY}
+        أمامكِ صورة وجه العميلة وصورة المنتج المستهدف: {prod_name}.
+        صفي بأسلوب خبيرة موضة واجتماعية راقية كيف يمتزج هذا المنتج مع ملامحها، وحددي هل يناسب اللوك الصباحي أم سهرات الليل الفخمة مع لمسة مدح ذكية.
+        """
+    else:
+        prompt = f"""
+        {BASE_PHILOSOPHY}
+        أمامكِ صورة شخصية (سيلفي) للعميل/العميلة فقط. المطلوب تحليل موضة وألوان واجتماعي متباين لقطع التكرار:
+        1. اذكري ثناء لبق اجتماعي عن هالة الملامح ونظرة العين.
+        2. إذا كانت فتاة: حللي نغمة بشرتها، رشحي درجات فاونديشن وآيشادو، وفصلي بين ستايل الصباح الهادئ والمساء الجريء.
+        3. إذا كان شاباً: حللي ستايل ملامحه وقدمي نصائح مظهر (Grooming) وتناسق ألوان الملابس.
+        4. اربطي هالتها البصرية في الختام بأحد عطورنا وعناصر المانيفستو (مثل النسر، الذئب، الطاووس، الفهد، الوردة السوداء) كلفتة ختامية ناعمة، واختمي بدعوة لزيارة فروع الأقصر أو الغردقة لتركيب الأثر بالجرام.
+        """
+        
+    contents.append(prompt)
+    res = robust_generate(payload.client_api_key, contents, VISION_MODELS)
+    return {"status": "success", "simulation_result": res}
