@@ -65,7 +65,7 @@ def robust_generate(client_api_key, contents, models_list):
             for attempt in range(max_retries):
                 try:
                     client = genai.Client(api_key=key)
-                    config = types.GenerateContentConfig(temperature=0.85, top_p=0.95)
+                    config = types.GenerateContentConfig(temperature=0.8, top_p=0.95)
                     response = client.models.generate_content(model=model_name, contents=contents, config=config)
                     if response and response.text:
                         return response.text
@@ -114,13 +114,12 @@ def sanitize_value(val, default_text="---"):
     if s.lower() == 'nan' or s == '': return default_text
     return s
 
-# === 🌌 المانيفستو الفكري المعتمد والدستور الفلسفي لـ Royal Elchim ===
 ROYAL_MANIFESTO_DATA = """
 - رسالة البراند: 'العطر فكرة تُشم، لا تُقال. رويال إلكيم... فلسفة تُقطّر، لا تُنتَج.'
 - الرموز الفلكية الحية لقوة الصمت والجاذبية:
   1. بلاك رويال (Black Royal) / برج الأسد - النسر الأسود: يمثل قوة الإرادة والسيطرة المطلقة. حين تتصالح القوة مع الظل. رائحة من يملك زمام رغباته.
   2. رويال شادو (Royal Shadow) / برج العقرب - الذئب: الغموض المطلق، السيطرة على المجهول، وقوة الانجذاب النقي في الصمت.
-  3. رويال شاين (Royal Shine) / برج القوس - الطاووس: الجمال الاستعراضي النادر، الثقة الطاغية، والحضور المشع.
+  3. رويال شاين (Royal Shine) / برج القوس - الطاووس: الجماهير الاستعراضي النادر، الثقة الطاغية، والحضور المشع.
   4. رويال إكليبس (Royal Eclipse) / برج الجدي - الفهد الأسود: ملك الليل، التمرد الفاخر والسيادة الهادئة.
   5. روز نوار (Rose Noir): الوردة التي قررت أن لا تبتسم بعد الآن. تعبر عن تناقض الجمال والظلام الفاتن.
   6. هورايزون (Horizon): فتح حدود الكون وتحرير الروح.
@@ -153,6 +152,7 @@ BASE_PHILOSOPHY = f"""
 async def get_routes():
     return [{"path": route.path, "methods": list(route.methods)} for route in app.routes]
 
+# === 🛒 دالة الاستعلام الجوهري للفصل الكامل بين الفروع والمخزن الإلكتروني ===
 @app.get("/api/search")
 async def search(query: str):
     inv = get_inventory()
@@ -166,16 +166,24 @@ async def search(query: str):
 
     data = []
     for _, row in results.iterrows():
+        
+        # 📍 1. فرع الأقصر (رويال الكيم / سنتر اللوتس التجاري)
         try:
-            raw_qty = str(row.get('كمية', '0')).replace(',', '.')
-            qty = float(raw_qty) if (raw_qty and raw_qty.strip() != '' and raw_qty.lower() != 'nan') else 0.0
-        except:
-            qty = 0.0
-        if math.isnan(qty): qty = 0.0
+            qty_luxor = float(str(row.get('رويال الكيم / سنتر اللوتس التجاري', '0')).replace(',', '.'))
+        except: qty_luxor = 0.0
+        if math.isnan(qty_luxor): qty_luxor = 0.0
 
-        if qty > 5: status, color = "متوفر حالياً", "success"
-        elif 0 < qty <= 5: status, color = f"قطع أخيرة ({int(qty)})", "warning"
-        else: status, color = "نفذت الكمية", "danger"
+        # 📍 2. فرع الغردقة (ROYAL ELCHIM . HURGADA)
+        try:
+            qty_hurgada = float(str(row.get('ROYAL ELCHIM . HURGADA', '0')).replace(',', '.'))
+        except: qty_hurgada = 0.0
+        if math.isnan(qty_hurgada): qty_hurgada = 0.0
+
+        # 🛒 3. المتجر والمخزن الإلكتروني (رويال الكيم اونلاين)
+        try:
+            qty_online = float(str(row.get('رويال الكيم اونلاين', '0')).replace(',', '.'))
+        except: qty_online = 0.0
+        if math.isnan(qty_online): qty_online = 0.0
 
         link_match = db[db['Product_Name'].astype(str).str.contains(str(row.get('الصنف', '')), na=False, case=False)] if not db.empty else pd.DataFrame()
         link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
@@ -183,10 +191,13 @@ async def search(query: str):
         data.append({
             "name": sanitize_value(row.get('الصنف'), "منتج غير مسمى"),
             "price": sanitize_value(row.get('سعر1 كارت'), "اتصلي بنا"),
-            "status": status,
-            "color": color,
             "barcode": sanitize_value(row.get('الباركود'), "---"),
-            "link": sanitize_value(link, "https://www.royalelchim.app")
+            "link": sanitize_value(link, "https://www.royalelchim.app"),
+            
+            # جرد فروع المعارض لفرز وحظر التداخل
+            "luxor_qty": int(qty_luxor),
+            "hurgada_qty": int(qty_hurgada),
+            "online_qty": int(qty_online)
         })
     return {"status": "success", "data": data}
 
