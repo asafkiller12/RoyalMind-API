@@ -7,139 +7,331 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @keyframes aurora { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        body { background: linear-gradient(135deg, #0b0914, #2a113b, #0f2027, #3a1c2a, #0b0914); background-size: 400% 400%; animation: aurora 15s ease infinite; color: #e6e6e6; font-family: 'Times New Roman', serif; padding-bottom: 90px; min-height: 100vh; }
-        .gold-text { color: #d4af37; text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
-        .glass-card { background: rgba(15, 10, 25, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
-        .gold-btn { background: linear-gradient(45deg, #d4af37, #f3e5ab, #d4af37); color: #0b0914; font-weight: bold; border: none; border-radius: 8px; padding: 10px; transition: 0.3s; width: 100%; box-shadow: 0 0 10px rgba(212,175,55,0.3); text-decoration: none; display: block; text-align: center; }
-        .gold-btn:hover { background: #f3e5ab; transform: scale(1.02); color: #0b0914; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(10, 5, 15, 0.95); border-top: 1px solid #d4af37; display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000; }
-        .nav-item { text-align: center; color: #888; cursor: pointer; flex: 1; font-size: 0.72rem; transition: 0.3s; }
-        .nav-item i { font-size: 1.2rem; display: block; margin-bottom: 3px; }
-        .nav-item.active { color: #d4af37; transform: translateY(-3px); text-shadow: 0 0 10px rgba(212, 175, 55, 0.8); }
-        .app-screen { display: none; animation: fadeIn 0.5s; }
-        .app-screen.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .royal-response { background: rgba(212, 175, 55, 0.05); border-top: 1px solid #d4af37; border-bottom: 1px solid #d4af37; padding: 15px; margin-top: 15px; white-space: pre-line; text-align: right; line-height: 1.8; }
-        .preview-img { max-width: 100%; max-height: 120px; object-fit: contain; border-radius: 8px; border: 1px solid #d4af37; margin-top: 10px; }
-        .vault-img { max-width: 80px; max-height: 80px; object-fit: contain; border-radius: 4px; border: 1px solid #d4af37; margin-top: 5px; display: block; }
-        .token-alert { border: 1px solid #ff4d4d; background: rgba(255, 77, 77, 0.1); border-radius: 8px; padding: 12px; color: #ff9999; margin-bottom: 15px; font-size: 0.85rem; text-align: center; }
-        /* ستايل كروت المانيفستو الفاخرة */
-        .manifesto-badge { border-left: 3px solid #d4af37; padding-right: 10px; margin-bottom: 15px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 4px; }
+        /* أنيميشن حركة أورورا قوس قزح الساحرة */
+        @keyframes aurora { 
+            0% { background-position: 0% 50%; } 
+            50% { background-position: 100% 50%; } 
+            100% { background-position: 0% 50%; } 
+        }
+
+        body { 
+            /* خلفية قوس قزح بأفتح وأزهى درجات الباستيل المضيئة والمشرقة */
+            background: linear-gradient(135deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb, #d4fc79, #96e6a1, #fff1eb, #f1eefc); 
+            background-size: 300% 300%; 
+            animation: aurora 12s ease infinite; 
+            color: #1a1a2e; /* تباين حاد وداكن للنصوص ليناسب الخلفية الفاتحة */
+            font-family: 'Times New Roman', serif; 
+            padding-bottom: 90px; 
+            min-height: 100vh; 
+        }
+
+        .gold-text { 
+            color: #b58900; /* ذهبي ملكي دافئ وظاهر تماماً على الخلفيات المضيئة */
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); 
+            font-weight: bold;
+        }
+
+        .glass-card { 
+            /* بلوري أبيض ناصع وشفاف يعكس ألوان قوس قزح الخلفية بنقاء مذهل */
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(181, 137, 0, 0.3); 
+            border-radius: 16px; 
+            padding: 25px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06); 
+        }
+
+        .gold-btn { 
+            background: linear-gradient(45deg, #b58900, #e5b82c, #b58900); 
+            color: #fff; 
+            font-weight: bold; 
+            border: none; 
+            border-radius: 8px; 
+            padding: 12px; 
+            transition: 0.3s; 
+            width: 100%; 
+            box-shadow: 0 4px 15px rgba(181,137,0,0.2); 
+            text-decoration: none; 
+            display: block; 
+            text-align: center; 
+        }
+
+        .gold-btn:hover { 
+            background: linear-gradient(45deg, #e5b82c, #f3e5ab, #e5b82c); 
+            transform: scale(1.02); 
+            color: #1a1a2e; 
+        }
+
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            background: rgba(255, 255, 255, 0.94); 
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-top: 1px solid rgba(181, 137, 0, 0.4); 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 10px 0; 
+            z-index: 1000; 
+        }
+
+        .nav-item { 
+            text-align: center; 
+            color: #555577; 
+            cursor: pointer; 
+            flex: 1; 
+            font-size: 0.72rem; 
+            transition: 0.3s; 
+        }
+
+        .nav-item i { 
+            font-size: 1.25rem; 
+            display: block; 
+            margin-bottom: 3px; 
+        }
+
+        .nav-item.active { 
+            color: #b58900; 
+            transform: translateY(-2px); 
+            text-shadow: 0 0 8px rgba(181, 137, 0, 0.3); 
+            font-weight: bold;
+        }
+
+        .app-screen { 
+            display: none; 
+            animation: fadeIn 0.4s ease-out; 
+        }
+
+        .app-screen.active { 
+            display: block; 
+        }
+
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(8px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .royal-response { 
+            background: rgba(181, 137, 0, 0.04); 
+            border-top: 2px solid #b58900; 
+            border-bottom: 2px solid #b58900; 
+            border-radius: 8px;
+            padding: 18px; 
+            margin-top: 20px; 
+            white-space: pre-line; 
+            text-align: right; 
+            line-height: 1.8; 
+            color: #1a1a2e;
+        }
+
+        .preview-img { 
+            max-width: 100%; 
+            max-height: 130px; 
+            object-fit: contain; 
+            border-radius: 8px; 
+            border: 2px solid #b58900; 
+            margin-top: 10px; 
+        }
+
+        .vault-img { 
+            max-width: 80px; 
+            max-height: 80px; 
+            object-fit: contain; 
+            border-radius: 4px; 
+            border: 1px solid #b58900; 
+            margin-top: 5px; 
+            display: block; 
+        }
+
+        .token-alert { 
+            border: 2px solid #ff4d4d; 
+            background: rgba(255, 77, 77, 0.08); 
+            border-radius: 12px; 
+            padding: 15px; 
+            color: #8b0000; 
+            margin-bottom: 20px; 
+            font-size: 0.9rem; 
+            text-align: center; 
+            font-weight: bold;
+        }
+
+        .manifesto-badge { 
+            border-right: 4px solid #b58900; 
+            border-left: none;
+            padding-right: 15px; 
+            margin-bottom: 15px; 
+            background: rgba(0, 0, 0, 0.03); 
+            padding: 14px; 
+            border-radius: 6px; 
+        }
+
+        .text-muted {
+            color: #4a4a6a !important;
+        }
+
+        .form-control {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            color: #1a1a2e !important;
+            border: 1px solid rgba(181, 137, 0, 0.3) !important;
+        }
+
+        .form-control::placeholder {
+            color: #75759a !important;
+        }
+
+        .play-voice-btn { 
+            background: #b58900; 
+            color: #fff; 
+            border: none; 
+            border-radius: 5px; 
+            padding: 8px 16px; 
+            font-weight: bold; 
+            margin-top: 15px; 
+            font-size: 0.9rem; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            box-shadow: 0 3px 10px rgba(181,137,0,0.2);
+        }
+
+        .play-voice-btn:hover {
+            background: #e5b82c;
+        }
     </style>
 </head>
 <body>
 
     <div class="container pt-4 text-center">
-        <img src="Untitled-2_2.jpg" alt="Royal Elchim" style="max-width: 140px; mix-blend-mode: screen;">
-        <p class="small text-muted mt-2">نظام الإدارة والذكاء الجمالي الشامل</p>
+        <!-- لوجو البراند الموحد للظهور بهيبة ملوكية وسط ألوان قوس قزح المضيئة -->
+        <img src="Untitled-2_2.jpg" alt="Royal Elchim" style="max-width: 150px; filter: drop-shadow(0px 2px 5px rgba(0,0,0,0.1));">
+        <p class="small text-muted mt-2 fw-bold" style="letter-spacing: 1px;">نظام الإدارة والذكاء الجمالي الشامل</p>
     </div>
 
     <div class="container mt-2">
         
+        <!-- 1. شاشة الاستعلام والمخزون -->
         <div id="screen-search" class="app-screen active">
             <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-barcode"></i> 1. الاستعلام والمخزون</h4>
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-barcode"></i> الاستعلام والمخزون الحقيقي</h4>
                 <div class="input-group mb-3">
-                    <input type="text" id="royalSearchInput" class="form-control bg-dark text-light border-secondary text-center" placeholder="ادخلي اسم... أو امسحي الباركود..." oninput="debounceSearch(this.value)">
+                    <input type="text" id="royalSearchInput" class="form-control text-center py-2" placeholder="ادخلي اسم صنف... أو امسحي الباركود الفعلي..." oninput="debounceSearch(this.value)">
                 </div>
                 <div id="searchResultsContainer"></div>
             </div>
         </div>
 
+        <!-- 2. شاشة رويال مايند معاك للأبد -->
         <div id="screen-diagnosis" class="app-screen">
             <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-heart"></i> 2. رويال مايند معاكِ للأبد</h4>
-                <textarea id="diagnosisInput" class="form-control bg-dark text-light border-secondary mb-4" rows="4" placeholder="اكتبي ما يجول بخاطركِ أو برجكِ لندخل في حديث الصداقة..."></textarea>
-                <button class="btn gold-btn w-100 py-2" onclick="runDiagnosis()">إطلاق حديث الصداقة <i class="fa-solid fa-sparkles"></i></button>
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-heart"></i> رويال مايند معاكِ للأبد</h4>
+                <p class="text-muted small text-center mb-3">تحدثي مع رويال مايند كصديقة مخلصة تفهم تفاصيلكِ... بوحي لها ببرجكِ الفلكي، طاقة روحكِ، أو أي نصيحة تبحثين عنها.</p>
+                <textarea id="diagnosisInput" class="form-control mb-4" rows="4" placeholder="اكتبي ما يجول بخاطركِ هنا بكل حرية..."></textarea>
+                <button class="btn gold-btn w-100 py-2" onclick="runDiagnosis()">إطلاق حديث الصداقة الملكي <i class="fa-solid fa-sparkles"></i></button>
                 <div id="diagResponse" class="royal-response" style="display:none;"></div>
             </div>
         </div>
 
+        <!-- 3. شاشة العطور (الأثر العطري بالجرام) -->
         <div id="screen-perfume" class="app-screen">
             <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> 3. الأثر العطري (الزيوت بالجرام)</h4>
-                <textarea id="perfumeInput" class="form-control bg-dark text-light border-secondary mb-4" rows="3" placeholder="صفي طابعكِ العطري لتركيب ونحت زجاجتكِ بالجرامات الفعالة..."></textarea>
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> الأثر العطري (تركيب الزيوت)</h4>
+                <p class="text-muted small text-center mb-3">ادخلي مزاجكِ أو برجكِ لتقوم رويال مايند بنحت صيغتكِ العطرية الخاصة بالجرام من زيوت معارضنا الحية، وتوجيهكِ لأقرب فرع.</p>
+                <textarea id="perfumeInput" class="form-control mb-4" rows="3" placeholder="صفي طابعكِ العطري لتركيب زجاجتكِ بالجرامات الفعالة..."></textarea>
                 <button class="btn gold-btn w-100 py-2" onclick="runChat('perfume', 'perfumeInput', 'perfumeResponse')">ابتكار التوقيع العطري</button>
                 <div id="perfumeResponse" class="royal-response" style="display:none;"></div>
             </div>
         </div>
 
+        <!-- 4. شاشة المكياج (النحت الجمالي) -->
         <div id="screen-makeup" class="app-screen">
             <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-paintbrush"></i> 4. النحت الجمالي</h4>
-                <textarea id="makeupInput" class="form-control bg-dark text-light border-secondary mb-4" rows="3" placeholder="صفي لنا الإطلالة التي تطمحين إليها..."></textarea>
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-paintbrush"></i> النحت الجمالي والموضة</h4>
+                <textarea id="makeupInput" class="form-control mb-4" rows="3" placeholder="صفي لنا الإطلالة والمظهر اللذين تطمحين إليهما..."></textarea>
                 <button class="btn gold-btn w-100 py-2" onclick="runChat('makeup', 'makeupInput', 'makeupResponse')">استشارة النحت والجمال</button>
                 <div id="makeupResponse" class="royal-response" style="display:none;"></div>
             </div>
         </div>
 
+        <!-- 5. شاشة التخيل البصري والتحليل الوجداني والموضة (بوابات التوكين المحمية) -->
         <div id="screen-simulation" class="app-screen">
             <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> 5. التخيل والتحليل الوجداني</h4>
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> التخيل والتحليل الوجداني</h4>
+                <p class="text-muted small text-center mb-3">ارفعي صورتكِ السيلفي بمفردها لتقرأ رويال مايند ألوان بشرتكِ ودرجات الفاونديشن والآيشادو والستايل الوجداني، أو ارفعي معها منتجاً للمحاكاة الكاملة.</p>
+                
+                <!-- بوابة القفل التلقائي الملوكي لحماية التوكينز بعد الصورة السادسة -->
                 <div id="tokenGateAlert" class="token-alert" style="display:none;">
-                    <i class="fa-solid fa-lock-open mb-2 d-block" style="font-size:1.2rem;"></i>
-                    لقد استمتعتِ بـ 6 جلسات تحليل بصري مجانية! للمتابعة وحماية المنظومة، يرجى إدخال مفتاح Gemini API الخاص بكِ:
-                    <input type="text" id="clientGeminiKeyInput" class="form-control bg-dark text-warning border-warning text-center mt-2" placeholder="AIzaSy..." oninput="saveClientKey(this.value)">
+                    <i class="fa-solid fa-key mb-2 d-block" style="font-size:1.3rem;"></i>
+                    لقد استمتعتِ بـ 6 جلسات تحليل بصري مجانية! للمتابعة وحماية المنظومة، يرجى إدخال مفتاح الـ API الخاص بكِ:
+                    <input type="text" id="clientGeminiKeyInput" class="form-control text-warning border-danger text-center mt-2" placeholder="AIzaSy..." oninput="saveClientKey(this.value)">
                 </div>
+
                 <div class="row text-center mb-3">
                     <div class="col-6">
-                        <label class="btn btn-outline-warning w-100 p-2" style="border-color:#d4af37; color:#d4af37;"><i class="fa-solid fa-user"></i> وجهكِ السيلفي<input type="file" hidden accept="image/*" onchange="processAndPreviewImage(event, 'simSelfiePreview', 'selfieBase64')"></label>
+                        <label class="btn btn-outline-warning w-100 p-2" style="border-color:#b58900; color:#b58900; font-weight:bold;"><i class="fa-solid fa-user"></i> وجهكِ السيلفي<input type="file" hidden accept="image/*" onchange="processAndPreviewImage(event, 'simSelfiePreview', 'selfieBase64')"></label>
                         <div id="simSelfiePreview"></div>
                     </div>
                     <div class="col-6">
-                        <label class="btn btn-outline-warning w-100 p-2" style="border-color:#d4af37; color:#d4af37;"><i class="fa-solid fa-box-open"></i> المنتج (اختياري)<input type="file" hidden accept="image/*" onchange="processAndPreviewImage(event, 'simProductPreview', 'productBase64')"></label>
+                        <label class="btn btn-outline-warning w-100 p-2" style="border-color:#b58900; color:#b58900; font-weight:bold;"><i class="fa-solid fa-box-open"></i> المنتج (اختياري)<input type="file" hidden accept="image/*" onchange="processAndPreviewImage(event, 'simProductPreview', 'productBase64')"></label>
                         <div id="simProductPreview"></div>
                     </div>
                 </div>
-                <input type="text" id="simProductName" class="form-control bg-dark text-light border-secondary mb-3 text-center" placeholder="اسم المنتج (اختياري)">
+                <input type="text" id="simProductName" class="form-control mb-3 text-center" placeholder="اسم منتج التجميل إذا تم رفعه">
                 <button id="submitSimulationBtn" class="btn gold-btn w-100 py-2" onclick="runSimulation()">بدء التحليل البصري والوجداني <i class="fa-solid fa-wand-magic-sparkles"></i></button>
                 <div id="simResponse" class="royal-response" style="display:none;"></div>
             </div>
         </div>
 
+        <!-- 6. شاشة المانيفستو (الدستور الفكري الفاخر) -->
         <div id="screen-manifesto" class="app-screen">
             <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book"></i> 6. مانيفستو رويال إلكيم</h4>
-                <p class="text-center small text-warning mb-4" style="font-style: italic;">"العطر فكرة تُشم، لا تُقال. فلسفة تُقطّر، لا تُنتَج."</p>
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book"></i> مانيفستو رويال إلكيم</h4>
+                <p class="text-center small text-warning mb-4" style="font-style: italic; font-weight: bold;">"العطر فكرة تُشم، لا تُقال. فلسفة تُقطّر، لا تُنتَج."</p>
                 
                 <div class="manifesto-badge">
                     <h5 class="gold-text"><i class="fa-solid fa-crown"></i> بلاك رويال – الأسد / النسر الأسود</h5>
-                    <p class="small text-muted">حين تتصالح القوة مع الظل. رائحة من يملك زمام رغباته، وتجسيد لقوة الإرادة والسيطرة المطلقة.</p>
+                    <p class="small text-muted m-0">حين تتصالح القوة مع الظل. رائحة من يملك زمام رغباته، وتجسيد لقوة الإرادة والسيطرة المطلقة.</p>
                 </div>
                 <div class="manifesto-badge">
-                    <h5 class="gold-text"><i class="fa-solid fa-wolf-pack-battalion"></i> رويال شادو – العقرب / الذئب</h5>
-                    <p class="small text-muted">الغموض المحيط بالمجهول، القوة الكامنة في الصمت المطبق، والانجذاب الصافي النقي.</p>
+                    <h5 class="gold-text"><i class="fa-solid fa-wolf"></i> رويال شادو – العقرب / الذئب</h5>
+                    <p class="small text-muted m-0">الغموض المحيط بالمجهول، القوة الكامنة في الصمت المطبق، والانجذاب الصافي النقي ونفوذ الأثر.</p>
                 </div>
                 <div class="manifesto-badge">
                     <h5 class="gold-text"><i class="fa-solid fa-feather"></i> رويال شاين – القوس / الطاووس</h5>
-                    <p class="small text-muted">الجمال الاستعراضي النادر، الثقة الطاغية المزلزلة، وهالة الحضور التي تشع في كل مكان.</p>
+                    <p class="small text-muted m-0">الجمال الاستعراضي النادر، الثقة الطاغية المزلزلة، وهالة الحضور الفاتنة التي تشع في كل مكان.</p>
                 </div>
                 <div class="manifesto-badge">
                     <h5 class="gold-text"><i class="fa-solid fa-moon"></i> روز نوار – الجمال والظلام</h5>
-                    <p class="small text-muted">الوردة المخملية الفاتنة التي قررت أن لا تبتسم بعد الآن، لتعيش التناقض الأبدي الساحر.</p>
+                    <p class="small text-muted m-0">الوردة المخملية الفخمة التي قررت أن لا تبتسم بعد الآن، لتعيش التناقض الأبدي الساحر في سكون الليل.</p>
                 </div>
             </div>
         </div>
 
+        <!-- 7. شاشة السجلات الملكية (عرض متكامل للحديث والصور المحفوظة محلياً) -->
         <div id="screen-vault" class="app-screen">
             <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book-journal-whills"></i> 7. السجلات الملكية</h4>
-                <div class="text-center mb-3 small text-muted">التحليل البصري المجاني المستخدم: <span id="savedImagesCountText" class="gold-text fw-bold">0</span> / 6 صور</div>
-                <button class="btn btn-sm btn-outline-danger d-block mx-auto mb-3" onclick="clearAllVault()"><i class="fa-solid fa-trash-can"></i> مسح السجلات</button>
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book-journal-whills"></i> السجلات الملكية الذاتية</h4>
+                <div class="text-center mb-3 small text-muted">التحليل البصري المستخدم: <span id="savedImagesCountText" class="gold-text fw-bold">0</span> / 6 صور</div>
+                <button class="btn btn-sm btn-outline-danger d-block mx-auto mb-3 fw-bold" onclick="clearAllVault()"><i class="fa-solid fa-trash-can"></i> مسح كافة السجلات</button>
                 <div id="vaultContainer" style="max-height: 400px; overflow-y: auto;"></div>
             </div>
         </div>
 
+        <!-- 8. شاشة الإدارة والربط الحسابي للفروع -->
         <div id="screen-admin" class="app-screen">
             <div class="glass-card text-center py-5">
                 <h4 class="gold-text mb-4"><i class="fa-solid fa-user-gear"></i> بوابة الإدارة والربط الحسابي</h4>
-                <a href="https://www.royalelchim.app/acc" target="_blank" class="btn gold-btn py-3 px-5 mx-auto" style="max-width: 320px;">دخول نظام الحسابات</a>
+                <p class="text-muted small mb-4">لتحديث جرد المخازن وتعديل الفواتير الحية، اضغط على الزر أدناه للانتقال المباشر للوحة المعرض الحسابية.</p>
+                <a href="https://www.royalelchim.app/acc" target="_blank" class="btn gold-btn py-3 px-5 mx-auto" style="max-width: 320px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> دخول نظام الحسابات</a>
             </div>
         </div>
 
     </div>
 
+    <!-- شريط التنقل السفلي الفاخر والمضاء بالمكياج والعطور والمانيفستو -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('search', this)"><i class="fa-solid fa-barcode"></i><span>استعلام</span></div>
         <div class="nav-item" onclick="switchTab('diagnosis', this)"><i class="fa-solid fa-heart"></i><span>معاكِ للأبد</span></div>
@@ -244,7 +436,7 @@
 
         async function performRoyalSearch(query) {
             const container = document.getElementById('searchResultsContainer');
-            container.innerHTML = "<p class='text-center gold-text'><i class='fa-solid fa-spinner fa-spin'></i> جاري فحص السجلات الملكية...</p>";
+            container.innerHTML = "<p class='text-center gold-text'><i class='fa-solid fa-spinner fa-spin'></i> جاري فحص المخازن الملكية...</p>";
             try {
                 const res = await fetch(`${BACKEND_URL}/api/search?query=${encodeURIComponent(query)}`);
                 const result = await res.json();
@@ -253,12 +445,12 @@
                         <div class="glass-card mb-2 p-3" style="border-right: 4px solid var(--bs-${item.color}); text-align: right;">
                             <div class="d-flex justify-content-between"><span class="gold-text fw-bold" style="font-size:1.1rem;">${item.name}</span><span class="badge bg-${item.color} status-badge">${item.status}</span></div>
                             <div class="d-flex justify-content-between mt-3 align-items-center">
-                                <div><small class="text-muted d-block">باركود: ${item.barcode}</small><span class="h5 gold-text">${item.price} ج.م</span></div>
-                                ${item.link !== "https://www.royalelchim.app" ? `<a href="${item.link}" target="_blank" class="btn btn-sm gold-btn py-2 px-3"><i class="fa-solid fa-bag-shopping"></i> اقتناء</a>` : ''}
+                                <div><small class="text-muted d-block">باركود: ${item.barcode}</small><span class="h5 gold-text font-weight-bold">${item.price} ج.م</span></div>
+                                ${item.link !== "https://www.royalelchim.app" ? `<a href="${item.link}" target="_blank" class="btn btn-sm gold-btn py-2 px-3" style="max-width:90px;"><i class="fa-solid fa-bag-shopping"></i> اقتناء</a>` : ''}
                             </div>
                         </div>
                     `).join('');
-                } else { container.innerHTML = "<p class='text-center text-muted p-3'>هذا الأثر غير متوفر حالياً.</p>"; }
+                } else { container.innerHTML = "<p class='text-center text-muted p-3'>هذا الصنف غير متوفر حالياً بالمخزن.</p>"; }
             } catch { container.innerHTML = "<p class='text-center text-danger'>اضطراب اتصال بالسيرفر.</p>"; }
         }
 
@@ -266,7 +458,7 @@
             let msg = document.getElementById('diagnosisInput').value;
             let out = document.getElementById('diagResponse');
             if(!msg) return;
-            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'>رويال مايند تتناغم مع روحكِ...</span>";
+            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'><i class='fa-solid fa-spinner fa-spin'></i> رويال مايند تتناغم مع روحكِ...</span>";
             try {
                 let res = await fetch(`${BACKEND_URL}/api/diagnose`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -274,14 +466,14 @@
                 });
                 let data = await res.json();
                 if(data.status === 'success') { out.innerHTML = formatResponse(data.diagnosis); saveToVault('صداقة رويال مايند للأبد', data.diagnosis); }
-            } catch { out.innerHTML = "<span class='text-danger'>خطأ اتصال.</span>"; }
+            } catch { out.innerHTML = "<span class='text-danger'>خطأ في الاتصال بالخادم.</span>"; }
         }
 
         async function runChat(category, inputId, outId) {
             let text = document.getElementById(inputId).value;
             let out = document.getElementById(outId);
             if(!text) return;
-            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'>يتم استخلاص الأثر الجمالي...</span>";
+            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'><i class='fa-solid fa-spinner fa-spin'></i> يتم استخلاص الأثر الجمالي...</span>";
             try {
                 let res = await fetch(`${BACKEND_URL}/api/chat`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -289,7 +481,7 @@
                 });
                 let data = await res.json();
                 if(data.status === 'success') { out.innerHTML = formatResponse(data.answer); saveToVault(category === 'perfume' ? 'استشارة عطور بالجرام' : 'استشارة مكياج', data.answer); }
-            } catch { out.innerHTML = "<span class='text-danger'>خطأ اتصال.</span>"; }
+            } catch { out.innerHTML = "<span class='text-danger'>خطأ اتصال بالسيرفر.</span>"; }
         }
 
         async function runSimulation() {
@@ -297,12 +489,12 @@
             const count = getSavedImagesCount();
             const clientKey = localStorage.getItem('royal_client_gemini_key') || "";
             if(count >= 6 && clientKey.trim() === "") {
-                alert("يرجى إدخال مفتاح الـ API الخاص بكِ في المربع الأعلى للمتابعة وحماية السيرفر.");
+                alert("يرجى إدخل مفتاح الـ API الخاص بكِ في المربع المضاء بالأعلى لحماية قنوات رويال مايند والمتابعة.");
                 return;
             }
             let name = document.getElementById('simProductName').value || "";
             let out = document.getElementById('simResponse');
-            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'>رويال مايند تدرس هالتكِ الوجدانية وتدرجات الألوان...</span>";
+            out.style.display = 'block'; out.innerHTML = "<span class='gold-text'><i class='fa-solid fa-spinner fa-spin'></i> رويال مايند تدرس الألوان وتفاصيل المظهر والملامح...</span>";
             try {
                 let res = await fetch(`${BACKEND_URL}/api/simulate_makeup`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -314,7 +506,7 @@
                     saveToVault(imagesData.productBase64 ? 'محاكاة جمالية بالألوان' : 'تحليل تعبيري للملامح والموضة', data.simulation_result, imagesData.selfieBase64, imagesData.productBase64); 
                     checkTokenGate();
                 }
-            } catch { out.innerHTML = "<span class='text-danger'>فشل الاتصال بالسيرفر.</span>"; }
+            } catch { out.innerHTML = "<span class='text-danger'>فشل الاتصال بالسيرفر السحابي.</span>"; }
         }
 
         function saveToVault(type, text, selfie = null, product = null) {
@@ -325,7 +517,7 @@
         }
 
         function clearAllVault() {
-            if(confirm("مسح كافة السجلات الملكية والصور المحفوظة؟")) {
+            if(confirm("هل أنتِ متأكدة من رغبتكِ في مسح كافة السجلات الملكية والصور المحفوظة لتصفير العداد التخزيني؟")) {
                 localStorage.removeItem('royal_vault_data'); localStorage.removeItem('royal_client_gemini_key');
                 window.location.reload();
             }
@@ -334,17 +526,17 @@
         function renderVault() {
             let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
             let cont = document.getElementById('vaultContainer');
-            if(!vault.length) return cont.innerHTML = "<p class='text-center text-muted p-3'>السجلات الملكية فارغة.</p>";
+            if(!vault.length) return cont.innerHTML = "<p class='text-center text-muted p-3'>السجلات الملكية فارغة حالياً.</p>";
             cont.innerHTML = vault.map(i => `
-                <div class="p-3 mb-3" style="background:rgba(0,0,0,0.4); border-right:3px solid #d4af37; border-radius:5px; text-align:right;">
-                    <div class="d-flex justify-content-between gold-text small mb-2"><span>${i.type}</span><span>${i.date}</span></div>
+                <div class="p-3 mb-3" style="background:rgba(255,255,255,0.5); border-right:4px solid #b58900; border-radius:8px; text-align:right; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                    <div class="d-flex justify-content-between gold-text small mb-2"><span class="fw-bold">${i.type}</span><span>${i.date}</span></div>
                     ${i.selfie || i.product ? `
                         <div class="d-flex gap-2 mb-2">
-                            ${i.selfie ? `<div><small class="text-muted d-block">السيلفي</small><img src="${i.selfie}" class="vault-img"></div>` : ''}
-                            ${i.product ? `<div><small class="text-muted d-block">المنتج</small><img src="${i.product}" class="vault-img"></div>` : ''}
+                            ${i.selfie ? `<div><small class="text-muted d-block font-weight-bold">السيلفي الشخصي</small><img src="${i.selfie}" class="vault-img"></div>` : ''}
+                            ${i.product ? `<div><small class="text-muted d-block font-weight-bold">صورة المنتج</small><img src="${i.product}" class="vault-img"></div>` : ''}
                         </div>
                     ` : ''}
-                    <div class="text-light small" style="white-space:pre-line;">${i.text}</div>
+                    <div class="small fw-bold" style="white-space:pre-line; color:#1a1a2e;">${i.text}</div>
                 </div>
             `).join('');
         }
