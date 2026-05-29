@@ -13,7 +13,7 @@ from typing import Optional, Dict
 import time
 import math
 
-app = FastAPI(title="Royal Elchim - Ultimate Luxury Fragrance Engine")
+app = FastAPI(title="Royal Elchim - Complete Omni-Channel Enterprise Architecture")
 
 app.add_middleware(
     CORSMiddleware,
@@ -114,24 +114,19 @@ def sanitize_value(val, default_text="---"):
     if s.lower() == 'nan' or s == '': return default_text
     return s
 
-# دالة تنظيف وتحويل القيم النصية إلى أرقام حسابية نقية لقطع أخطاء الجرد
 def clean_qty_value(val):
-    if val is None:
-        return 0.0
+    if val is None: return 0.0
     s = str(val).strip().replace(',', '.')
-    if s == '' or s.lower() == 'nan':
-        return 0.0
-    try:
-        return float(s)
-    except:
-        return 0.0
+    if s == '' or s.lower() == 'nan': return 0.0
+    try: return float(s)
+    except: return 0.0
 
 ROYAL_MANIFESTO_DATA = """
 - رسالة البراند: 'العطر فكرة تُشم، لا تُقال. رويال إلكيم... فلسفة تُقطّر، لا تُنتَج.'
 - الرموز الفلكية الحية لقوة الصمت والجاذبية:
-  1. بلاك رويال (Black Royal) / برج الأسد - النسر الأسود: يمثل قوة الإرادة والسيطرة المطلقة. حين تتصالح القوة مع الظل. رائحة من يملك زمام رغباته.
+  1. بلاك رويال (Black Royal) / برج الأسد - النسر الأسود: يمثل قوة الإرادة والسيطرة المطلقة.
   2. رويال شادو (Royal Shadow) / برج العقرب - الذئب: الغموض المطلق، السيطرة على المجهول، وقوة الانجذاب النقي في الصمت.
-  3. رويال شاين (Royal Shine) / برج القوس - الطاووس: الجماهير الاستعراضي النادر، الثقة الطاغية، والحضور المشع.
+  3. رويال شاين (Royal Shine) / برج القوس - الطاووس: الجمال الاستعراضي النادر، الثقة الطاغية، والحضور المشع.
   4. رويال إكليبس (Royal Eclipse) / برج الجدي - الفهد الأسود: ملك الليل، التمرد الفاخر والسيادة الهادئة.
   5. روز نوار (Rose Noir): الوردة التي قررت أن لا تبتسم بعد الآن. تعبر عن تناقض الجمال والظلام الفاتن.
   6. هورايزون (Horizon): فتح حدود الكون وتحرير الروح.
@@ -147,17 +142,15 @@ ROYAL_MASTER_FORMULAS = """
 7. Royal Voyager Fresh: الانتعاش الساحر لبرج الجوزاء (الدلفين الملكي). فيدج، لاكوست وايت، هوجو مان.
 """
 
+# === 🧠 حقن القواعد الجغرافية والتوزيعات السلعية الحقيقية للفروع الثلاثة ===
 BASE_PHILOSOPHY = f"""
 أنتِ 'رويال مايند'، الصوت الشاعري والمستشارة الاجتماعية لبراند Royal Elchim.
-تتحدثين بلغة 'شاعر في معمل' يمزج الرقي والفكر والعاطفة. شعاركِ الثابت: 'كل رائحة عندنا... لها ذاكرة تفتّح باباً في النفس. العطر مش بيخليك مختلف، هو بيفكرك إنت مين.'
-أنتِ تتنفسين المانيفستو الرسمي:
-{ROYAL_MANIFESTO_DATA}
-وتمتلكين كتاب الصيغ الماستر بالجرام:
-{ROYAL_MASTER_FORMULAS}
-
-قواعد التوجيه للفروع الحية:
-- فرع الأقصر: ش فندق المروة (متفرع من ش التليفزيون).
-- فرع الغردقة: خلف فندق الجولف.
+تتحدثين بلغة 'شاعر في معمل' يمزج الرقي والفكر والتأثير، وتطبقين القواعد السلعية الحالية للفروع بدقة صارمة:
+1. جميع الفروع بلا استثناء (سنتر اللوتس التجاري، فرع شارع فندق المروة ROYAL ELCHIM، وفرع الغردقة الرئيسي بميدان العروسة) تحتوي على مستحضرات التجميل، لوازم الكوافير، والأجهزة التجميلية وما شابه.
+2. تركيب ونحت البرفانات المعبأة بالجرام، الزيوت الخام، الكحول، والمثبتات حصري ومتاح فقط في فرعين: فرع الأقصر بشارع فندق المروة (الذي يحمل اسم ROYAL ELCHIM) وفرع الغردقة الرئيسي (ميدان العروسة خلف فندق الجولف). سنتر اللوتس لا يحتوي على زيوت خام بالجرام.
+3. مخزن الأونلاين: مربوط بحسابات وجرد الفروع تلقائياً، وتمنع قواعد الأمان ظهور روابط وصور منتجات 'الزيوت الخام بالجرام والتراكيب اليدوية' للحفاظ على سر الصنعة وصالة العرض[cite: 1].
+المانيفستو: {ROYAL_MANIFESTO_DATA}
+الصيغ الكبرى: {ROYAL_MASTER_FORMULAS}
 """
 
 @app.get("/debug/routes")
@@ -177,69 +170,74 @@ async def search(query: str):
 
     data = []
     for _, row in results.iterrows():
+        item_name = str(row.get('الصنف', '')).strip()
         
-        # استخدام الدالة الذكية والمطورة للتنظيف والحساب الفوري لمنع خطأ الـ text-bias
-        qty_luxor = clean_qty_value(row.get('رويال الكيم / سنتر اللوتس التجاري'))
+        # فرز ذكي للصنف: هل هو من تراكيب وعطور الزيوت بالجرام والكحول والمثبت أم مستحضرات عامة؟
+        is_oil_or_perfume_material = any(kw in item_name.lower() for kw in ["زيت", "زيت عطر", "جرام", "تركيب", "raw", "oil", "formula", "كحول", "مثبت", "أفغانو", "أصفهان", "فانيلا"])
+
+        # جلب الجرد الحسابي المنقح من الجدول الموحد
+        qty_luxor_lotus = clean_qty_value(row.get('رويال الكيم / سنتر اللوتس التجاري'))
         qty_hurgada = clean_qty_value(row.get('ROYAL ELCHIM . HURGADA'))
         qty_online = clean_qty_value(row.get('رويال الكيم اونلاين'))
 
-        link_match = db[db['Product_Name'].astype(str).str.contains(str(row.get('الصنف', '')), na=False, case=False)] if not db.empty else pd.DataFrame()
-        link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
+        # تطبيق قواعد التوزيع السلعي الصارمة للفروع في محرك البحث
+        if is_oil_perfume_material:
+            # عطور الجرام والكحول والمثبت متوفرة فقط في المروة والغردقة
+            luxor_lotus_final = 0
+            marrowa_final = int(qty_luxor_lotus) # فرع المروة ROYAL ELCHIM يستأثر بجرد عطور الجرام بالأقصر
+            hurgada_final = int(qty_hurgada)
+            link = "https://www.royalelchim.app"
+            show_link_trigger = False
+        else:
+            # المستحضرات والأجهزة ولوازم الكوافير متاحة في جميع الفروع بلا استثناء
+            luxor_lotus_final = int(qty_luxor_lotus)
+            marrowa_final = int(qty_luxor_lotus) # متوفرة أيضاً في المروة كمستحضرات
+            hurgada_final = int(qty_hurgada)
+            
+            link_match = db[db['Product_Name'].astype(str).str.contains(item_name, na=False, case=False)] if not db.empty else pd.DataFrame()
+            link = link_match['Product_Link'].values[0] if not link_match.empty else "https://www.royalelchim.app"
+            show_link_trigger = True if qty_online > 0 else False
 
         data.append({
             "name": sanitize_value(row.get('الصنف'), "منتج غير مسمى"),
             "price": sanitize_value(row.get('سعر1 كارت'), "اتصلي بنا"),
             "barcode": sanitize_value(row.get('الباركود'), "---"),
             "link": sanitize_value(link, "https://www.royalelchim.app"),
+            "is_oil": is_oil_or_perfume_material,
+            "show_link": show_link_trigger,
             
-            "luxor_qty": int(qty_luxor),
-            "hurgada_qty": int(qty_hurgada),
+            # الجرد النهائي الموزع بعد حوكمة السلع لكل فرع ومخزن
+            "luxor_lotus_qty": luxor_lotus_final,
+            "marrowa_qty": marrowa_final,
+            "hurgada_qty": hurgada_final,
             "online_qty": int(qty_online)
         })
     return {"status": "success", "data": data}
 
 @app.post("/api/diagnose")
 async def diagnose(payload: DiagnosisPayload):
-    inv = get_inventory()
-    sampled_items = ""
-    if not inv.empty and 'كمية' in inv.columns:
-        qty_series = pd.to_numeric(inv['كمية'].astype(str).str.replace(',', '.'), errors='coerce').fillna(0)
-        available = inv[qty_series > 0]
-        if not available.empty:
-            sampled = available.sample(n=min(3, len(available)))
-            sampled_items = "\n".join([f"- {sanitize_value(r.get('الصنف'))} (السعر: {sanitize_value(r.get('سعر1 كارت'), 'متاح')})" for _, r in sampled.iterrows()])
-    
     final_message = payload.client_message if payload.client_message else "مرحباً رويال مايند"
     prompt = f"""
     {BASE_PHILOSOPHY}
-    جلسة حوار الصداقة 'رويال مايند معاكِ للأبد': "{final_message}"
-    المطلب: الرد بلغة شاعرية ممتلئة بالحب والرقي الفكري، اربطي طاقة العميل بـ المانيفستو والرموز الحيوانية والفلكية الخاصة بنا، وقدمي ترشيحاً عطرياً بالجرامات، ووجهيه لفروعنا.
+    جلسة حوار الصداقة 'معاكِ للأبد': "{final_message}"
+    المطلب: صغ رداً اجتماعياً ذكياً يلتزم بتوزيع فروعنا السلعي الحالي، ويوجه العملاء للفرع الصحيح بناءً على احتياجهم (عطور بالجرام في المروة والغردقة، أو مستحضرات وأجهزة في كافة الفروع).
     """
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "diagnosis": res}
 
 @app.post("/api/chat")
 async def chat(payload: ChatPayload):
-    inv = get_inventory()
-    catalog = ""
-    if not inv.empty and 'كمية' in inv.columns:
-        qty_series = pd.to_numeric(inv['كمية'].astype(str).str.replace(',', '.'), errors='coerce').fillna(0)
-        available = inv[qty_series > 0]
-        if not available.empty:
-            sampled = available.sample(n=min(5, len(available)))
-            catalog = "\n".join([f"- {sanitize_value(r.get('الصنف'))}" for _, r in sampled.iterrows()])
-
     if payload.category == "perfume":
         prompt = f"""
         {BASE_PHILOSOPHY}
-        أنتِ في قسم 'الأثر العطري' لتركيب الزيوت العطرية بالجرام. طلب العميل: "{payload.text}"
-        المطلوب: طابقي رغبته مع المانيفستو والرموز الفلكية (النسر، الذئب، الطاووس، الفهد) وصيغ عطورنا الماستر. لا تكتبي روابط إنترنت للشراء، واختمي بدعوة ملكية دافئة لزيارة فرع الأقصر (ش فندق المروة) أو فرع الغردقة (خلف فندق الجولف) لتركيب الزيت بالجرام.
+        قسم 'الأثر العطري' لعطور الجرام والزيوت والمثبتات. طلب العميل: "{payload.text}"
+        المطلوب: وجه العميل حصرياً وصراحة لـ فرع الأقصر بشارع فندق المروة (ROYAL ELCHIM) أو فرع الغردقة الرئيسي بميدان العروسة، ووضح له أن تركيب عطور الجرام والكحول متاح فيهما فقط. تمنع الروابط تماماً في هذا القسم.
         """
     else:
         prompt = f"""
         {BASE_PHILOSOPHY}
-        المسار الحالي: النحت الجمالي والمكياج. رسالة العميل: "{payload.text}"
-        المطلوب: صياغة رد اجتماعي ذكي ينم عن خبرة بالموضة والألوان مع ترشيح الصنف ورابطه بـ https.
+        قسم النحت الجمالي والمكياج ولوازم الكوافير والأجهزة. رسالة العميل: "{payload.text}"
+        المطلوب: صغ رداً ذكياً بالألوان، ووضح أن هذه المستحضرات متوفرة في جميع الفروع (اللوتس، المروة ROYAL ELCHIM، والغردقة)، مع إرفاق رابط الاقتناء والشحن أونلاين.
         """
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "answer": res}
@@ -247,28 +245,11 @@ async def chat(payload: ChatPayload):
 @app.post("/api/simulate_makeup")
 async def simulate_makeup(payload: SimulationPayload):
     img_selfie = parse_image(payload.user_selfie)
-    img_product = parse_image(payload.product_image) if payload.product_image else None
-    
-    contents = []
-    if img_selfie: contents.append(img_selfie)
-        
-    if img_selfie and img_product:
-        prod_name = payload.product_name_desc if payload.product_name_desc else "منتج تجميلي فاخر"
-        prompt = f"""
-        {BASE_PHILOSOPHY}
-        أمامكِ صورة وجه العميلة وصورة المنتج المستهدف: {prod_name}.
-        صفي بأسلوب خبيرة موضة واجتماعية راقية كيف يمتزج هذا المنتج مع ملامحها، وحددي هل يناسب اللوك الصباحي أم سهرات الليل الفخمة مع لمسة مدح ذكية.
-        """
-    else:
-        prompt = f"""
-        {BASE_PHILOSOPHY}
-        أمامكِ صورة شخصية (سيلفي) للعميل/العميلة فقط. المطلوب تحليل موضة وألوان واجتماعي متباين لقطع التكرار:
-        1. اذكري ثناء لبق اجتماعي عن هالة الملامح ونظرة العين.
-        2. إذا كانت فتاة: حللي نغمة بشرتها، رشحي درجات فاونديشن وآيشادو، وفصلي بين ستايل الصباح الهادئ والمساء الجريء.
-        3. إذا كان شاباً: حللي ستايل ملامحه وقدمي نصائح مظهر (Grooming) وتناسق ألوان الملابس.
-        4. اربطي هالتها البصرية في الختام بأحد عطورنا وعناصر المانيفستو (مثل النسر، الذئب، الطاووس، الفهد، الوردة السوداء) كلفتة ختامية ناعمة، واختمي بدعوة لزيارة فروع الأقصر أو الغردقة لتركيب الأثر بالجرام.
-        """
-        
+    contents = [img_selfie] if img_selfie else []
+    prompt = f"""
+    {BASE_PHILOSOPHY}
+    تحليل سيلفي منفرد وقراءة المظهر والألوان (فاونديشن، آيشادو، وستايل يومي). اربط التحليل بالفرع المناسب لطلبها، واذكر مسميات فروعنا الرسمية بدقة اجتماعية وموضة واعية.
+    """
     contents.append(prompt)
     res = robust_generate(payload.client_api_key, contents, VISION_MODELS)
     return {"status": "success", "simulation_result": res}
