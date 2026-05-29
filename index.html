@@ -149,9 +149,8 @@
             background: #b58900; color: #fff; border: none; border-radius: 5px; padding: 8px 16px; font-weight: bold; margin-top: 15px; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; 
         }
 
-        /* ستايل مؤشرات الفروع والمخازن الجديد والمميز جداً */
         .branch-badge-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-        .branch-status-box { flex: 1; min-width: 120px; padding: 8px; border-radius: 6px; text-align: center; font-size: 0.8rem; font-weight: bold; box-shadow: inset 0 0 5px rgba(0,0,0,0.02); }
+        .branch-status-box { flex: 1; min-width: 125px; padding: 8px; border-radius: 6px; text-align: center; font-size: 0.8rem; font-weight: bold; box-shadow: inset 0 0 5px rgba(0,0,0,0.02); }
         .box-available { background-color: rgba(40, 167, 69, 0.12); color: #1e7e34; border: 1px solid rgba(40, 167, 69, 0.3); }
         .box-empty { background-color: rgba(220, 53, 69, 0.1); color: #bd2130; border: 1px solid rgba(220, 53, 69, 0.2); }
     </style>
@@ -187,7 +186,7 @@
             </div>
         </div>
 
-        <!-- 3. شاشة العطور (الأثر العطري بالجرام) -->
+        <!-- 3. شاشة العطور -->
         <div id="screen-perfume" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> الأثر العطري (تركيب الزيوت)</h4>
@@ -213,7 +212,7 @@
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> التخيل والتحليل الوجداني</h4>
                 <div id="tokenGateAlert" class="token-alert" style="display:none;">
                     <i class="fa-solid fa-key mb-2 d-block" style="font-size:1.3rem;"></i>
-                    لقد استمتعتِ بـ 6 جلسات تحليل بصري مجانية! للمتابعة وحماية المنظومة، يرجى إدخال مفتاح الـ API الخاص بكِ:
+                    ...لقد استمتعتِ بـ 6 جلسات تحليل بصري مجانية! للمتابعة يرجى إدخال مفتاح الـ API الخاص بكِ:
                     <input type="text" id="clientGeminiKeyInput" class="form-control text-warning border-danger text-center mt-2" placeholder="AIzaSy..." oninput="saveClientKey(this.value)">
                 </div>
                 <div class="row text-center mb-3">
@@ -374,13 +373,19 @@
             searchTimer = setTimeout(() => performRoyalSearch(val), 500);
         }
 
-        // === 📍 معالجة ورسم بطاقات جرد وفصل الفروع الأربعة التلقائي والذكي ===
+        // === 📍 المحرك المطور لقراءة الفروع بذكاء وحماية أمن البيانات الكاملة ===
         async function performRoyalSearch(query) {
             const container = document.getElementById('searchResultsContainer');
             container.innerHTML = "<p class='text-center gold-text'><i class='fa-solid fa-spinner fa-spin'></i> جاري فحص المخازن الملكية...</p>";
             try {
                 const res = await fetch(`${BACKEND_URL}/api/search?query=${encodeURIComponent(query)}`);
                 const result = await res.json();
+                
+                if (result.status === 'error') {
+                    container.innerHTML = `<p class='text-center text-danger p-3 fw-bold'>${result.message}</p>`;
+                    return;
+                }
+
                 if(result.status === 'success' && result.data.length > 0) {
                     container.innerHTML = result.data.map(item => `
                         <div class="glass-card mb-3 p-3" style="text-align: right; background: rgba(255,255,255,0.9);">
@@ -390,7 +395,6 @@
                             </div>
                             <small class="text-muted d-block mt-1">باركود العالمي: ${item.barcode}</small>
                             
-                            <!-- فرز توزيع جرد الفروع الأربعة الاحترافي المنعزل تماماً على الواجهة -->
                             <div class="branch-badge-row">
                                 <div class="branch-status-box ${item.luxor_lotus_qty > 0 ? 'box-available' : 'box-empty'}">
                                     📍 الأقصر (سنتر اللوتس): ${item.luxor_lotus_qty > 0 ? `متوفر (${item.luxor_lotus_qty})` : 'غير متاح'}
@@ -406,7 +410,6 @@
                                 </div>
                             </div>
                             
-                            <!-- شروط أمان إظهار اللنك إذا سمح الباك إند بذلك -->
                             ${item.show_link ? `
                                 <div class="text-center mt-3">
                                     <a href="${item.link}" target="_blank" class="btn btn-sm gold-btn py-2 w-100 fw-bold"><i class="fa-solid fa-bag-shopping"></i> اقتناء وشحن فوري من المتجر الإلكتروني</a>
@@ -415,7 +418,9 @@
                         </div>
                     `).join('');
                 } else { container.innerHTML = "<p class='text-center text-muted p-3'>هذا الصنف غير متوفر حالياً في أي فرع.</p>"; }
-            } catch { container.innerHTML = "<p class='text-center text-danger'>اضطراب اتصال بالسيرفر.</p>"; }
+            } catch (err) { 
+                container.innerHTML = `<p class='text-center text-danger fw-bold'><i class='fa-solid fa-triangle-exclamation'></i> اضطراب اتصال بالسيرفر أو جاري إعادة التشغيل الفوري.</p>`; 
+            }
         }
 
         async function runDiagnosis() {
