@@ -9,7 +9,7 @@ import io
 import base64
 import pandas as pd
 from PIL import Image
-from typing import Optional, Dict
+from typing import Optional, List, Dict
 import time
 import numpy as np
 import cv2
@@ -22,7 +22,7 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-app = FastAPI(title="Royal Elchim - Complete Omni-Channel Enterprise Architecture")
+app = FastAPI(title="Royal Elchim - Complete Omni-Channel Enterprise Architecture with B2B Adaptive Pricing")
 
 app.add_middleware(
     CORSMiddleware,
@@ -138,8 +138,21 @@ class SimulationPayload(BaseModel):
     hex_color: Optional[str] = "#8B0000"
     client_api_key: Optional[str] = None
 
+class InvoiceItem(BaseModel):
+    barcode: str
+    name: str
+    qty: int
+    price_card_1: float
+    price_card_2: float
+    price_card_3: float
+    price_card_4: float
+    is_fixed_price: bool  # لتحديد ما إذا كان السعر محمياً بلا خصومات
+
+class InvoicePayload(BaseModel):
+    items: List[InvoiceItem]
+
 # =========================================================
-# [5] محرك النحت اللوني المتطور (6 فئات)
+# [5] محرك النحت اللوني المتطور (MediaPipe)
 # =========================================================
 def hex_to_rgb(hex_color: str):
     if not hex_color:
@@ -219,33 +232,9 @@ def apply_royal_makeup(image_cv: np.ndarray, color_rgb: tuple, makeup_type: str)
         return image_cv, False
 
 # =========================================================
-# [6] المانيفستو والفلسفة
+# [6] الفلسفة والتهيئة العامة
 # =========================================================
-ROYAL_MANIFESTO_DATA = """
-- رسالة البراند: 'العطر فكرة تُشم، لا تُقال. رويال إلكيم... فلسفة تُقطّر، لا تُنتَج.'
-- الرموز الفلكية:
-  1. بلاك رويال / الأسد: قوة الإرادة والسيطرة المطلقة.
-  2. رويال شادو / العقرب: الغموض والسيطرة على المجهول.
-  3. رويال شاين / القوس: الجمال الاستعراضي النادر.
-  4. رويال إكليبس / الجدي: التمرد الفاخر والسيادة.
-  5. روز نوار: التناقض الجمالي المظلم.
-"""
-
-ROYAL_MASTER_FORMULAS = """
-1. Royal Purpose: عود أصفهان، عنبر وايت، سوفاج، روز فانيلا.
-2. Royal Azzurro: كريد أفينتوس، أزارو.
-3. Royal Moon: أكوا دي جيو، عنبر وايت، عود أبيض.
-4. Royal Veil: لافيستا بيل، سوفاج، أكوا دي جيو.
-"""
-
-BASE_PHILOSOPHY = f"""
-أنتِ 'رويال مايند'، الصوت الشاعري الذكي اللبق لبراند Royal Elchim.
-تطبيقين القواعد السلعية الحالية للفروع:
-1. جميع الفروع تحتوي على المكياج والكوافير.
-2. تركيب البرفانات حصري في الأقصر والغردقة.
-المانيفستو: {ROYAL_MANIFESTO_DATA}
-الصيغ الكبرى: {ROYAL_MASTER_FORMULAS}
-"""
+BASE_PHILOSOPHY = "أنتِ رويال مايند، العقل البرمجي والوجداني لبراند Royal Elchim الجمالي المتكامل."
 
 def sanitize_value(val, default_text="---"):
     if val is None: return default_text
@@ -268,7 +257,7 @@ def get_qty_by_keyword(row, keywords):
     return 0.0
 
 # =========================================================
-# [7] واجهات المعالجة البرمجية و الـ Endpoints
+# [7] واجهات المعالجة والأكواد الذكية للأسعار والبحث
 # =========================================================
 @app.get("/api/search")
 async def search(query: str):
@@ -293,6 +282,15 @@ async def search(query: str):
             qty_hurgada = get_qty_by_keyword(row, ['HURGADA', 'الغردقة'])
             qty_online = get_qty_by_keyword(row, ['اونلاين', 'online'])
 
+            # سحب الفئات الأربعة للتسعير الحقيقي
+            price_1 = clean_qty_value(row.get('سعر1 كارت', 0))
+            price_2 = clean_qty_value(row.get('سعر2 كارت', price_1 * 0.9)) # افتراضي إن لم يوجد
+            price_3 = clean_qty_value(row.get('سعر3 كارت', price_1 * 0.85))
+            price_4 = clean_qty_value(row.get('سعر4 كارت', price_1 * 0.8)) # السعر الرابع لكبار العملاء
+
+            # فحص استثناء "سعر بلا خصومات" - إذا تم كتابة كلمة "ثابت" أو حماية بالملف
+            is_fixed = any(kw in item_name for kw in ["ثابت", "محمي", "صافي"])
+
             link = "https://www.royalelchim.app"
             show_link_trigger = False
 
@@ -309,8 +307,13 @@ async def search(query: str):
                 show_link_trigger = True if qty_online > 0 else False
 
             data.append({
-                "name": sanitize_value(row.get('الصنف'), "منتج غير مسمى"),
-                "price": sanitize_value(row.get('سعر1 كارت'), "اتصلي بنا"),
+                "name": item_name,
+                "price": price_1,
+                "price_card_1": price_1,
+                "price_card_2": price_2,
+                "price_card_3": price_3,
+                "price_card_4": price_4,
+                "is_fixed_price": is_fixed,
                 "barcode": sanitize_value(row.get('الباركود'), "---"),
                 "link": sanitize_value(link, "https://www.royalelchim.app"),
                 "is_oil": is_oil,
@@ -324,16 +327,74 @@ async def search(query: str):
     except Exception as e:
         return {"status": "error", "message": f"خطأ داخلي: {str(e)}"}
 
+@app.post("/api/invoice/calculate")
+async def calculate_invoice(payload: InvoicePayload):
+    try:
+        # حساب القيمة المبدئية للفاتورة على أساس السعر 1 (القطاعي) لتحديد الفئة المكتسبة
+        initial_total = 0
+        for item in payload.items:
+            initial_total += item.price_card_1 * item.qty
+            
+        # تحديد الفئة المستحقة تلقائياً نتيجة ازدياد قيمة الفاتورة
+        target_tier = 1
+        tier_name = "قطاعي"
+        if initial_total >= 30000: # حد كبار العملاء الملكي
+            target_tier = 4
+            tier_name = "جملة كبار العملاء الملكي (السعر الرابع)"
+        elif initial_total >= 15000:
+            target_tier = 3
+            tier_name = "جملة خاصة"
+        elif initial_total >= 5000:
+            target_tier = 2
+            tier_name = "جملة عادية"
+
+        final_items = []
+        final_invoice_total = 0
+
+        for item in payload.items:
+            # تطبيق شرط حماية السعر (سعر بلا خصومات)
+            if item.is_fixed_price:
+                actual_price = item.price_card_1
+                is_protected = True
+            else:
+                if target_tier == 1: actual_price = item.price_card_1
+                elif target_tier == 2: actual_price = item.price_card_2
+                elif target_tier == 3: actual_price = item.price_card_3
+                elif target_tier == 4: actual_price = item.price_card_4
+                is_protected = False
+
+            item_total = actual_price * item.qty
+            final_invoice_total += item_total
+
+            final_items.append({
+                "barcode": item.barcode,
+                "name": item.name,
+                "qty": item.qty,
+                "applied_price": actual_price,
+                "is_protected": is_protected,
+                "total": item_total
+            })
+
+        return {
+            "status": "success",
+            "initial_total": initial_total,
+            "final_total": final_invoice_total,
+            "applied_tier": target_tier,
+            "tier_name": tier_name,
+            "items": final_items
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.post("/api/diagnose")
 async def diagnose(payload: DiagnosisPayload):
-    final_message = payload.client_message if payload.client_message else "مرحباً رويال مايند"
-    prompt = f"{BASE_PHILOSOPHY}\nجلسة حوار الصداقة: '{final_message}'\nالمطلب: صغ رداً اجتماعياً ذكياً."
+    prompt = f"{BASE_PHILOSOPHY}\nجلسة حوار الصداقة والتحليل النفسي: '{payload.client_message}'"
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "diagnosis": res}
 
 @app.post("/api/chat")
 async def chat(payload: ChatPayload):
-    prompt = f"{BASE_PHILOSOPHY}\nطلب العميل: '{payload.text}'\nرد ذكي."
+    prompt = f"{BASE_PHILOSOPHY}\nطلب العميل: '{payload.text}'"
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "answer": res}
 
@@ -354,16 +415,7 @@ async def simulate_makeup(payload: SimulationPayload):
         else:
             result_base64 = payload.user_selfie
 
-        type_names_arabic = {
-            "lips": "روج للشفاه", "eyeshadow": "آيشادو للعيون", "blush": "أحمر خدود (بلاشر)", 
-            "foundation": "كريم أساس للبشرة", "concealer": "كونسيلر للهالات", "powder": "بودرة وجه"
-        }
-        makeup_ar = type_names_arabic.get(payload.makeup_type, "مستحضر تجميل")
-        
-        product_info = payload.product_name_desc if payload.product_name_desc else "منتج غير محدد"
-        prompt = f"{BASE_PHILOSOPHY}\nأنتِ رويال مايند في وضع المرآة السحرية. العميل يختبر الآن ({makeup_ar}) باسم أو وصف: '{product_info}'. صفي مدى تناغم هذا النوع تحديداً مع لون بشرة العميل في الصورة المرفقة بأسلوب شاعري احترافي وموثوق، وركزي على المنطقة المستهدفة من الوجه."
-        
-        contents = [Image.open(io.BytesIO(base64.b64decode(result_base64.split(",")[1]))), prompt]
+        contents = [Image.open(io.BytesIO(base64.b64decode(result_base64.split(",")[1]))), f"{BASE_PHILOSOPHY}\nصفي تناغم المكياج."]
         res = robust_generate(payload.client_api_key, contents, VISION_MODELS)
         
         return {
@@ -373,11 +425,8 @@ async def simulate_makeup(payload: SimulationPayload):
             "face_detected": face_found
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"خطأ في منظومة التخيل: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-# =========================================================
-# [8] الإطلاق
-# =========================================================
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
