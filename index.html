@@ -3,157 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Royal Elchim - القصر الجمالي المتكامل</title>
+    <title>Royal Elchim - نظام الإدارة والذكاء الجمالي الشامل</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @keyframes aurora { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         body { 
-            background: linear-gradient(135deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb, #d4fc79, #96e6a1, #fff1eb, #f1eefc); 
-            background-size: 300% 300%; animation: aurora 12s ease infinite; 
-            color: #1a1a2e; font-family: 'Times New Roman', serif; 
+            background: linear-gradient(135deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb, #d4fc79, #96e6a1); 
+            background-size: 300% 300%; animation: aurora 12s ease infinite; font-family: 'Times New Roman', serif;
         }
-        .gold-text { color: #b58900; font-weight: bold; }
-        .gold-border { border: 2px solid #b58900; border-radius: 15px; }
-        .vault-img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
-        .result-ar-img { max-width: 100%; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .royal-nav { background: rgba(0,0,0,0.8); border-radius: 50px; margin: 20px auto; padding: 10px; max-width: 95%; }
+        .nav-link { color: #b58900 !important; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .nav-link:hover { color: gold !important; transform: scale(1.1); }
+        .royal-section { display: none; padding: 20px; animation: fadeIn 0.5s; }
+        .active-section { display: block; }
+        .gold-border { border: 2px solid #b58900; border-radius: 20px; background: rgba(255,255,255,0.9); }
+        .chat-box { height: 400px; overflow-y: auto; background: #fff; border-radius: 15px; padding: 15px; }
+        .vault-item { border-right: 5px solid #b58900; background: #fff; margin-bottom: 10px; border-radius: 8px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body class="container py-4">
+<body>
 
-    <header class="text-center mb-5">
-        <h1 class="display-4 gold-text">ROYAL ELCHIM</h1>
-        <p class="lead">محرك الفخامة والذكاء الجمالي</p>
-    </header>
+    <nav class="royal-nav d-flex justify-content-around align-items-center shadow-lg sticky-top">
+        <span class="nav-link" onclick="showSection('manifesto')">المانيفستو</span>
+        <span class="nav-link" onclick="showSection('query')">استعلام</span>
+        <span class="nav-link" onclick="showSection('perfume')">عطور</span>
+        <span class="nav-link" onclick="showSection('makeup')">مكياج</span>
+        <span class="nav-link" onclick="showSection('ar_imaging')">تخيل</span>
+        <span class="nav-link" onclick="showSection('vault')">سجلات</span>
+        <span class="nav-link" onclick="showSection('admin')">الإدارة</span>
+    </nav>
 
-    <div class="row">
-        <div class="col-md-7">
-            <div class="card p-4 shadow-sm gold-border mb-4">
-                <h3 class="gold-text mb-3"><i class="fas fa-magic"></i> قسم التخيل الملكي (AR)</h3>
-                <div class="mb-3">
-                    <label class="form-label">صورة السيلفي الشخصية:</label>
-                    <input type="file" id="selfieInput" class="form-control" accept="image/*">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">صورة المنتج (اختياري):</label>
-                    <input type="file" id="productInput" class="form-control" accept="image/*">
-                </div>
-                <button class="btn btn-dark w-100 py-2" onclick="runRoyalSimulation()">تطبيق التأثير الجمالي</button>
-                <div id="simulationResult" class="mt-4"></div>
+    <div class="container mt-4">
+        
+        <section id="manifesto" class="royal-section active-section">
+            <div class="gold-border p-5 text-center">
+                <h1 class="display-3 gold-text">المانيفستو الملكي</h1>
+                <p class="lead">"نحن لا نبيع منتجات، نحن نصيغ الوجود الجمالي."</p>
+                <blockquote class="blockquote mt-4 italic">"الجمال هو الحقيقة التي تشرق من الداخل لتنير العالم."</blockquote>
             </div>
+        </section>
 
-            <div class="card p-4 shadow-sm mb-4">
-                <h4 class="gold-text"><i class="fas fa-comments"></i> المستشار الملكي الذكي</h4>
-                <div id="chatBox" class="mb-3 border p-2" style="height: 300px; overflow-y: auto; background: rgba(255,255,255,0.7);"></div>
+        <section id="query" class="royal-section">
+            <div class="gold-border p-4">
+                <h3 class="gold-text"><i class="fas fa-brain"></i> التحليل الوجداني ومعاكِ للأبد</h3>
+                <div id="queryChat" class="chat-box border mb-3"></div>
                 <div class="input-group">
-                    <input type="text" id="chatInput" class="form-control" placeholder="اسأل عن أي منتج أو نصيحة جمالية...">
-                    <button class="btn btn-gold" onclick="sendRoyalChat()">إرسال</button>
+                    <input type="text" id="queryInput" class="form-control" placeholder="أخبريني عن حالتك المزاجية اليوم...">
+                    <button class="btn btn-dark" onclick="sendChat('query')">استشيري المحرك</button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="col-md-5">
-            <div class="card p-4 shadow-sm" style="background: rgba(255,255,255,0.8);">
-                <h4 class="gold-text border-bottom pb-2">السجلات الملكية (آخر 5 تجارب)</h4>
-                <div id="vaultContainer"></div>
-                
-                <div id="keySection" class="mt-4 p-3 border rounded bg-light" style="display: none;">
-                    <p class="small text-danger fw-bold">لقد وصلت للحد الأقصى للتجارب المجانية!</p>
-                    <input type="text" id="geminiKey" class="form-control mb-2" placeholder="أدخل مفتاح API الخاص بك">
-                    <button class="btn btn-success btn-sm w-100" onclick="activateKey()">تفعيل المفتاح الخاص</button>
-                </div>
+        <section id="perfume" class="royal-section">
+            <div class="gold-border p-4 text-center">
+                <h3 class="gold-text">أثر العطور الملكية</h3>
+                <div id="perfumeChat" class="chat-box border mb-3"></div>
+                <input type="text" id="perfumeInput" class="form-control mb-2" placeholder="ابحثي عن رائحة تليق بكِ...">
+                <button class="btn btn-warning w-100" onclick="sendChat('perfume')">اكتشفي عطرك</button>
             </div>
-        </div>
+        </section>
+
+        <section id="ar_imaging" class="royal-section">
+            <div class="gold-border p-4 text-center">
+                <h3 class="gold-text"><i class="fas fa-camera"></i> التخيل والواقع المعزز</h3>
+                <div class="row">
+                    <div class="col-md-6"><input type="file" id="selfie" class="form-control mb-2"></div>
+                    <div class="col-md-6"><input type="file" id="product" class="form-control mb-2"></div>
+                </div>
+                <button class="btn btn-dark w-100" onclick="runAR()">تطبيق الأثر الجمالي</button>
+                <div id="arResult" class="mt-3"></div>
+            </div>
+        </section>
+
+        <section id="vault" class="royal-section">
+            <div class="gold-border p-4">
+                <h4 class="gold-text">سجلاتك الملكية (آخر 5 تجارب)</h4>
+                <div id="vaultContent"></div>
+                <hr>
+                <h4 class="gold-text">محادثاتكِ الدائمة (معاكِ للأبد)</h4>
+                <div id="persistentChatContent" class="small text-muted"></div>
+            </div>
+        </section>
+
+        <section id="admin" class="royal-section">
+            <div class="gold-border p-4">
+                <h3 class="gold-text">بوابة الإدارة الملكية</h3>
+                <div class="mb-3">
+                    <label>تفعيل مفتاح Gemini الشخصي:</label>
+                    <input type="password" id="adminKey" class="form-control" placeholder="AIza...">
+                    <button class="btn btn-success mt-2 w-100" onclick="saveKey()">تفعيل المفتاح</button>
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="clearVault()">تصفير السجلات</button>
+            </div>
+        </section>
+
     </div>
 
     <script>
-        const MAX_FREE = 6;
-        const MAX_VAULT = 5;
-
-        // دالة تحويل الصورة لـ Base64
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-
-        // تشغيل المحاكاة (AR)
-        async function runRoyalSimulation() {
-            const usage = parseInt(localStorage.getItem('royal_usage') || "0");
-            const hasKey = localStorage.getItem('royal_user_key');
-
-            if (usage >= MAX_FREE && !hasKey) {
-                document.getElementById('keySection').style.display = 'block';
-                alert("يرجى تفعيل مفتاحك الخاص للاستمرار بعد 6 تجارب.");
-                return;
-            }
-
-            const sFile = document.getElementById('selfieInput').files[0];
-            const pFile = document.getElementById('productInput').files[0];
-            if (!sFile) return alert("يرجى رفع صورتك الشخصية أولاً.");
-
-            const sBase = await toBase64(sFile);
-            const pBase = pFile ? await toBase64(pFile) : null;
-
-            // استدعاء الـ API
-            const resp = await fetch('/api/simulate_makeup', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    user_selfie: sBase,
-                    product_image: pBase,
-                    client_api_key: hasKey || ""
-                })
-            });
-
-            const data = await resp.json();
-            if(data.status === 'success') {
-                // حفظ في السجلات (الصور)
-                saveToVault(sBase, data.result_image);
-                // تحديث العداد
-                if(!hasKey) localStorage.setItem('royal_usage', usage + 1);
-                
-                document.getElementById('simulationResult').innerHTML = `
-                    <img src="${data.result_image}" class="result-ar-img">
-                    <p class="mt-2 text-center small text-muted">تم تطبيق تأثير الواقع المعزز بنجاح</p>`;
-            }
+        function showSection(id) {
+            document.querySelectorAll('.royal-section').forEach(s => s.classList.remove('active-section'));
+            document.getElementById(id).classList.add('active-section');
         }
 
-        function saveToVault(selfie, result) {
+        async function sendChat(type) {
+            const input = document.getElementById(type + 'Input');
+            const chatBox = document.getElementById(type + 'Chat');
+            const userKey = localStorage.getItem('royal_key');
+
+            if(!input.value) return;
+
+            // حفظ في الدردشة الدائمة (معاك للأبد)
+            saveChatHistory('user', input.value);
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ text: input.value, category: type, client_api_key: userKey || "" })
+            });
+            const data = await response.json();
+
+            saveChatHistory('bot', data.answer);
+            renderChats();
+            input.value = "";
+        }
+
+        function saveChatHistory(role, text) {
+            let history = JSON.parse(localStorage.getItem('royal_history') || "[]");
+            history.push({ role, text, date: new Date().toLocaleTimeString() });
+            localStorage.setItem('royal_history', JSON.stringify(history));
+        }
+
+        async function runAR() {
+            const usage = parseInt(localStorage.getItem('ar_usage') || "0");
+            const userKey = localStorage.getItem('royal_key');
+
+            if(usage >= 6 && !userKey) return alert("يرجى تفعيل مفتاحك من قسم الإدارة.");
+
+            const selfie = await toBase64(document.getElementById('selfie').files[0]);
+            const response = await fetch('/api/simulate_makeup', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_selfie: selfie, client_api_key: userKey || "" })
+            });
+            const data = await response.json();
+
+            // حفظ في السجلات الملكية (حد 5)
             let vault = JSON.parse(localStorage.getItem('royal_vault') || "[]");
-            const entry = { id: Date.now(), date: new Date().toLocaleString('ar-EG'), selfie, result };
-            vault.unshift(entry);
-            if (vault.length > MAX_VAULT) vault = vault.slice(0, MAX_VAULT);
+            vault.unshift({ date: new Date().toLocaleString(), img: data.result_image });
+            if(vault.length > 5) vault.pop();
             localStorage.setItem('royal_vault', JSON.stringify(vault));
+            if(!userKey) localStorage.setItem('ar_usage', usage + 1);
+            
             renderVault();
         }
 
         function renderVault() {
             const vault = JSON.parse(localStorage.getItem('royal_vault') || "[]");
-            const cont = document.getElementById('vaultContainer');
-            cont.innerHTML = vault.map(i => `
-                <div class="mb-3 p-2 border-bottom">
-                    <small class="d-block text-muted mb-1">${i.date}</small>
-                    <div class="d-flex gap-2">
-                        <img src="${i.selfie}" class="vault-img">
-                        <i class="fas fa-long-arrow-alt-left pt-3"></i>
-                        <img src="${i.result}" class="vault-img border-gold">
-                    </div>
-                </div>`).join('');
+            document.getElementById('vaultContent').innerHTML = vault.map(v => `
+                <div class="vault-item p-2 d-flex align-items-center gap-3">
+                    <img src="${v.img}" style="width:60px; height:60px; border-radius:5px;">
+                    <span>تاريخ التجربة: ${v.date}</span>
+                </div>
+            `).join('');
         }
 
-        function activateKey() {
-            const key = document.getElementById('geminiKey').value;
-            if (key.startsWith("AIza")) {
-                localStorage.setItem('royal_user_key', key);
-                alert("تم التفعيل! البرنامج يعمل الآن بمفتاحك الخاص.");
-                location.reload();
-            }
+        function renderChats() {
+            const history = JSON.parse(localStorage.getItem('royal_history') || "[]");
+            document.getElementById('persistentChatContent').innerHTML = history.map(h => `
+                <div class="mb-1 border-bottom"><strong>${h.role === 'user' ? 'أنتِ' : 'المحرك'}:</strong> ${h.text}</div>
+            `).join('');
+            // أيضاً تحديث صناديق الدردشة النشطة
+            ['query', 'perfume'].forEach(id => {
+                const box = document.getElementById(id + 'Chat');
+                if(box) box.innerHTML = history.filter(h => h.role !== 'system').map(h => `<p><b>${h.role}:</b> ${h.text}</p>`).join('');
+            });
         }
 
-        // تحميل السجلات عند البداية
-        renderVault();
+        const toBase64 = f => new Promise((r,j) => { const rd = new FileReader(); rd.readAsDataURL(f); rd.onload=()=>r(rd.result); });
+        function saveKey() { localStorage.setItem('royal_key', document.getElementById('adminKey').value); alert("تم التفعيل!"); }
+        
+        window.onload = () => { renderVault(); renderChats(); };
     </script>
 </body>
 </html>
