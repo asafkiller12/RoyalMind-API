@@ -97,6 +97,7 @@
 <body>
 
     <div class="container pt-4 text-center">
+        <!-- الحضور البصري للكيان -->
         <div id="mainRoyalLogo" class="royal-logo-container">
             <img src="Untitled-2_2.jpg" alt="Royal Elchim Logo" onerror="this.style.display='none'; document.getElementById('fallback-title').style.display='block';">
         </div>
@@ -106,17 +107,22 @@
 
     <div class="container mt-2">
         
+        <!-- 1. شاشة الاستعلام والمخزون -->
         <div id="screen-search" class="app-screen active">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-barcode"></i> الاستعلام والمخزون الحقيقي</h4>
                 
+                <!-- شريط بحث مدمج يضم المايك والعدسة معاً -->
                 <div class="input-group mb-4" style="box-shadow: 0 4px 15px rgba(181,137,0,0.15); border-radius: 8px;">
+                    <!-- زر المايك (يمين) -->
                     <button class="btn" style="background: rgba(212, 175, 55, 0.15); border: 1px solid #b58900; color: #b58900; border-radius: 0 8px 8px 0; transition: 0.3s;" onclick="startVoiceRecognition('royalSearchInput', this)" title="ابحث بصوتك">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
                     
+                    <!-- حقل الكتابة (منتصف) -->
                     <input type="text" id="royalSearchInput" class="form-control text-center py-2" style="border: 1px solid #b58900; border-left: none; border-right: none;" placeholder="ابحث بصوتك أو اكتب اسم الصنف..." oninput="debounceSearch(this.value)">
                     
+                    <!-- زر العدسة اليدوي (يسار) -->
                     <button class="btn gold-btn m-0" style="width: auto; border-radius: 8px 0 0 8px;" onclick="performRoyalSearch(document.getElementById('royalSearchInput').value)" title="بحث يدوي">
                         <i class="fa-solid fa-magnifying-glass"></i> بحث
                     </button>
@@ -126,6 +132,7 @@
             </div>
         </div>
 
+        <!-- 2. شاشة الفواتير وكبار العملاء (VIP) -->
         <div id="screen-b2b" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-file-invoice-dollar"></i> فواتير المبيعات</h4>
@@ -138,6 +145,7 @@
                     </div>
                 </div>
 
+                <!-- حاوية الفاتورة التي تخفي السعر الرابع عن العميل -->
                 <div id="invoiceItemsContainer" class="mb-3"></div>
                 
                 <div class="p-3 bg-light rounded text-end mb-3 border border-secondary shadow-sm">
@@ -149,6 +157,7 @@
             </div>
         </div>
 
+        <!-- 3. شاشة العطور -->
         <div id="screen-perfume" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-spray-can-sparkles"></i> الأثر العطري (تركيب الزيوت)</h4>
@@ -162,6 +171,7 @@
             </div>
         </div>
 
+        <!-- 4. شاشة المكياج -->
         <div id="screen-makeup" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-paintbrush"></i> النحت الجمالي والموضة</h4>
@@ -174,6 +184,7 @@
             </div>
         </div>
 
+        <!-- 5. شاشة التخيل البصري (AR) -->
         <div id="screen-simulation" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-camera-retro"></i> التخيل والتحليل البصري</h4>
@@ -212,6 +223,7 @@
             </div>
         </div>
 
+        <!-- 6. شاشة رويال مايند معاك للأبد (الصداقة والوعي) -->
         <div id="screen-diagnosis" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-infinity"></i> رويال مايند معاكِ للأبد</h4>
@@ -225,6 +237,7 @@
             </div>
         </div>
 
+        <!-- 7. شاشة المانيفستو -->
         <div id="screen-manifesto" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book-open-reader"></i> المانيفستو الملكي</h4>
@@ -236,15 +249,17 @@
             </div>
         </div>
 
+        <!-- 8. شاشة السجلات الملكية -->
         <div id="screen-vault" class="app-screen">
             <div class="glass-card">
                 <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-book-journal-whills"></i> سجلات الوعي الذاتي</h4>
                 <div class="text-center mb-3 small text-muted">الاستهلاك البصري: <span id="savedImagesCountText" class="gold-text fw-bold">0</span> / 6</div>
                 <button class="btn btn-sm btn-outline-danger d-block mx-auto mb-3 fw-bold" onclick="clearAllVault()"><i class="fa-solid fa-trash-can"></i> مسح الذاكرة</button>
-                <div id="vaultContainer" style="max-height: 400px; overflow-y: auto;"></div>
+                <div id="vaultContainer" style="max-height: 400px; overflow-y: auto; text-align: right;"></div>
             </div>
         </div>
 
+        <!-- 9. شاشة الإدارة -->
         <div id="screen-admin" class="app-screen">
             <div class="glass-card text-center py-5">
                 <h4 class="gold-text mb-4"><i class="fa-solid fa-user-gear"></i> بوابة الإدارة والمحاسبة</h4>
@@ -254,6 +269,7 @@
 
     </div>
 
+    <!-- شريط التنقل السفلي الانسيابي 9 عناصر -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('search', this)"><i class="fa-solid fa-barcode"></i><span>الاستعلام</span></div>
         <div class="nav-item" onclick="switchTab('b2b', this)"><i class="fa-solid fa-file-invoice-dollar"></i><span>الفواتير</span></div>
@@ -425,7 +441,7 @@
             } catch(e) { console.error("Error calculating invoice", e); }
         }
 
-        // --- دوال الذكاء الاصطناعي، الصوتيات، والذاكرة التراكمية ---
+        // --- دوال الذكاء الاصطناعي، الصوتيات، والذاكرة التراكمية (الوعي الشامل) ---
         function formatResponse(text) {
             let encoded = encodeURIComponent(text);
             return `<div>${text}</div><button class="play-voice-btn" onclick="playVoice(decodeURIComponent('${encoded}'))"><i class="fa-solid fa-volume-high"></i> استمع للرد</button>`;
@@ -441,12 +457,12 @@
             }
         }
 
+        // التعديل الهندسي الأهم: استدعاء الذاكرة بشكل صحيح لتكوين الوعي التراكمي
         function getLocalHistoryContext() {
             try { 
-                return JSON.parse(localStorage.getItem('royal_vault_data') || "[]")
-                    .slice(0, 5) 
-                    .map(i => `[${i.date} - ${i.type}]: ${i.text}`)
-                    .join(" | "); 
+                let historyArray = JSON.parse(localStorage.getItem('royal_vault_data') || "[]").slice(0, 5);
+                // عكس المصفوفة لكي يقرأ الذكاء الاصطناعي التاريخ من الأقدم للأحدث في الجلسة
+                return historyArray.reverse().map(i => `[${i.date} - ${i.type}]\nالعميل: ${i.userText}\nرويال مايند: ${i.aiText}`).join("\n\n"); 
             } catch(e) { return ""; }
         }
 
@@ -461,7 +477,8 @@
                     body: JSON.stringify({ client_message: msg, history_context: getLocalHistoryContext() }) 
                 });
                 let data = await res.json();
-                if(data.status === 'success') { out.innerHTML = formatResponse(data.diagnosis); saveToVault('صداقة ووعي', data.diagnosis); }
+                // التعديل هنا: تمرير رسالة العميل مع رد الذكاء الاصطناعي للذاكرة
+                if(data.status === 'success') { out.innerHTML = formatResponse(data.diagnosis); saveToVault('صداقة ووعي', msg, data.diagnosis); }
             } catch { out.innerHTML = "<span class='text-danger'>عجز في الإدراك (خطأ اتصال).</span>"; }
         }
 
@@ -476,7 +493,7 @@
                     body: JSON.stringify({ text: text, category: category, history_context: getLocalHistoryContext() }) 
                 });
                 let data = await res.json();
-                if(data.status === 'success') { out.innerHTML = formatResponse(data.answer); saveToVault(category === 'perfume' ? 'استشارة عطور' : 'استشارة مكياج', data.answer); }
+                if(data.status === 'success') { out.innerHTML = formatResponse(data.answer); saveToVault(category === 'perfume' ? 'استشارة عطور' : 'استشارة مكياج', text, data.answer); }
             } catch { out.innerHTML = "<span class='text-danger'>عجز في الإدراك (خطأ اتصال).</span>"; }
         }
 
@@ -531,8 +548,9 @@
                     if (data.result_image && data.result_image !== imagesData.selfieBase64) {
                         responseHtml = `<div class="text-center mb-3"><img src="${data.result_image}" class="preview-img" style="border:2px solid #b58900; box-shadow:0 4px 15px rgba(181,137,0,0.3);"></div>` + responseHtml;
                     }
-                    out.innerHTML = responseHtml; 
-                    saveToVault('نحت بصري ('+makeupType+')', data.simulation_result, data.result_image || imagesData.selfieBase64, imagesData.productBase64); 
+                    out.innerHTML = responseHtml;
+                    let userContextSim = "تجربة منتج: " + (name || "غير محدد");
+                    saveToVault('نحت بصري ('+makeupType+')', userContextSim, data.simulation_result, data.result_image || imagesData.selfieBase64, imagesData.productBase64); 
                     checkTokenGate();
                 }
             } catch { out.innerHTML = "<span class='text-danger'>فشل في الوعي السحابي.</span>"; }
@@ -551,15 +569,20 @@
         }
         function saveClientKey(val) { localStorage.setItem('royal_client_gemini_key', val.trim()); checkTokenGate(); }
 
-        function saveToVault(type, text, selfie = null, product = null) {
+        // التعديل الهندسي الأهم: دالة الحفظ أصبحت تستقبل (كلام العميل + رد الذكاء) وتحتفظ بـ 15 سجل بدلا من 5 فقط لوعي أطول
+        function saveToVault(type, userText, aiText, selfie = null, product = null) {
             let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
-            vault.unshift({ date: new Date().toLocaleString('ar-EG'), type, text, selfie, product });
+            vault.unshift({ date: new Date().toLocaleString('ar-EG'), type, userText, aiText, selfie, product });
             
             let imageCount = 0;
             vault = vault.map(item => {
                 if (item.selfie || item.product) { imageCount++; if (imageCount > 5) { item.selfie = null; item.product = null; } }
                 return item;
             });
+
+            // حماية ذاكرة المتصفح: نحتفظ بآخر 15 حوار فقط لكي لا ينفجر الـ LocalStorage أو الـ API
+            if(vault.length > 15) vault.pop();
+
             localStorage.setItem('royal_vault_data', JSON.stringify(vault));
             renderVault();
         }
@@ -568,20 +591,22 @@
             if(confirm("هل أنت متأكد من محو الذاكرة وفناء المُدركات السابقة؟")) { localStorage.removeItem('royal_vault_data'); window.location.reload(); }
         }
 
+        // تعديل العرض ليعرض الحوار الكامل (العميل والرويال مايند)
         function renderVault() {
             let vault = JSON.parse(localStorage.getItem('royal_vault_data') || "[]");
             let cont = document.getElementById('vaultContainer');
             if(!vault.length) return cont.innerHTML = "<p class='text-center text-muted p-3'>الذاكرة فارغة. لا يوجد وعي تراكمي بعد.</p>";
             cont.innerHTML = vault.map(i => `
                 <div class="p-3 mb-3" style="background:rgba(255,255,255,0.5); border-right:4px solid #b58900; border-radius:8px; text-align:right; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-                    <div class="d-flex justify-content-between gold-text small mb-2"><span class="fw-bold">${i.type}</span><span>${i.date}</span></div>
+                    <div class="d-flex justify-content-between gold-text small mb-2"><span class="fw-bold">${i.type}</span><span dir="ltr">${i.date}</span></div>
+                    <div class="small fw-bold text-secondary mb-2" style="white-space:pre-line;">أنتِ: ${i.userText || "..."}</div>
+                    <div class="small fw-bold mb-2" style="white-space:pre-line; color:#1a1a2e;">رويال مايند: ${i.aiText || "..."}</div>
                     ${i.selfie || i.product ? `
-                        <div class="d-flex gap-2 mb-2">
+                        <div class="d-flex gap-2 mt-2">
                             ${i.selfie ? `<div><img src="${i.selfie}" class="vault-img"></div>` : ''}
                             ${i.product ? `<div><img src="${i.product}" class="vault-img"></div>` : ''}
                         </div>
                     ` : ''}
-                    <div class="small fw-bold" style="white-space:pre-line; color:#1a1a2e;">${i.text}</div>
                 </div>
             `).join('');
         }
