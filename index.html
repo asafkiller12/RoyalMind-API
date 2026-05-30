@@ -69,7 +69,7 @@
         }
         .mic-btn:hover { background: rgba(212, 175, 55, 0.3); }
         
-        /* كلاس التوهج عند الاستماع (يعمل على كل الأزرار) */
+        /* كلاس التوهج عند الاستماع */
         .listening { 
             background-color: #ff4d4d !important; color: white !important; 
             border-color: #ff4d4d !important; animation: pulse 1s infinite; 
@@ -287,7 +287,7 @@
         function startVoiceRecognition(inputId, btnElement) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                alert("عذراً، حاسة السمع غير مدعومة في متصفحك. يرجى استخدام Google Chrome.");
+                alert("عذراً، حاسة السمع غير مدعومة في متصفحك. يرجى استخدام متصفح يدعم هذه الخاصية.");
                 return;
             }
             const recognition = new SpeechRecognition();
@@ -299,7 +299,7 @@
             recognition.onstart = function() {
                 btnElement.classList.add('listening');
                 logoContainer.classList.add('listening-pulse');
-                document.getElementById(inputId).placeholder = "رويال مايند تصغي لروحك الآن...";
+                document.getElementById(inputId).placeholder = "رويال مايند تصغي إليكِ الآن...";
             };
             
             recognition.onresult = function(event) {
@@ -350,6 +350,7 @@
                                 <div class="d-flex justify-content-between small mb-1"><span>📍 الأقصر (اللوتس):</span> <span class="fw-bold ${item.luxor_lotus_qty > 0 ? 'text-success' : 'text-danger'}">${item.luxor_lotus_qty > 0 ? 'متوفر (' + item.luxor_lotus_qty + ')' : 'نفذ'}</span></div>
                                 <div class="d-flex justify-content-between small mb-1"><span>📍 الأقصر (المروة):</span> <span class="fw-bold ${item.marrowa_qty > 0 ? 'text-success' : 'text-danger'}">${item.marrowa_qty > 0 ? 'متوفر (' + item.marrowa_qty + ')' : 'نفذ'}</span></div>
                                 <div class="d-flex justify-content-between small mb-1"><span>📍 الغردقة:</span> <span class="fw-bold ${item.hurgada_qty > 0 ? 'text-success' : 'text-danger'}">${item.hurgada_qty > 0 ? 'متوفر (' + item.hurgada_qty + ')' : 'نفذ'}</span></div>
+                                <div class="d-flex justify-content-between small mb-1"><span>🌐 الأونلاين:</span> <span class="fw-bold ${item.online_qty > 0 ? 'text-success' : 'text-danger'}">${item.online_qty > 0 ? 'متوفر (' + item.online_qty + ')' : 'نفذ'}</span></div>
                             </div>
                             <div class="d-flex justify-content-between mt-3 align-items-center">
                                 <div><small class="text-muted d-block">باركود: ${item.barcode}</small><span class="h5 gold-text font-weight-bold">${item.price_card_1} ج.م</span></div>
