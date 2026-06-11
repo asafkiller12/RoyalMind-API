@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from google import genai
 from google.genai import types
@@ -31,6 +32,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------------------------------------------------------
+# [حل مشكلة الكاش وعرض صفحة الموقع الرئيسية]
+# ---------------------------------------------------------
+@app.get("/")
+async def serve_index():
+    """
+    هذا المسار يقوم بتشغيل ملف index.html عند الدخول للرابط الرئيسي
+    مع إرسال ترويسات (Headers) تمنع المتصفح من تخزين النسخة القديمة.
+    """
+    if os.path.exists("index.html"):
+        response = FileResponse("index.html")
+        # أوامر صارمة لمنع التخزين المؤقت (Cache Busting)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+    return {"message": "ملف index.html غير موجود في مسار السيرفر"}
 
 # تحميل خريطة المعالم البصرية للوجه لضمان عمل محاكاة الميك أب
 TASK_FILE = 'face_landmarker.task'
@@ -91,13 +110,12 @@ def get_available_oils_list() -> List[Dict]:
             return []
         
         # فلترة صارمة جداً لفرز الأصناف التي تمثل زيت عطري خام أو برفان تركيب بالجرام
-        # نبحث عن الكلمات المفتاحية في عمود الصنف لتمييز الزيوت التي نبيعها فعلياً
         filtered = inv[
             inv['الصنف'].astype(str).str.contains("زيت|جرام|تركيب|دهن|برفان تركيب|عطر تركيب|خام", na=False, case=False, regex=True)
         ]
         
         oils_data = []
-        # نأخذ أهم الأصناف لضمان الحفاظ على حجم نافذة السياق (Context Window) للـ API
+        # نأخذ أهم الأصناف لضمان الحفاظ على حجم نافذة السياق
         for _, row in filtered.head(60).iterrows():
             name = str(row.get('الصنف', '')).strip()
             price_card_1 = clean_qty_value(row.get('سعر1 كارت', 0))
@@ -106,7 +124,6 @@ def get_available_oils_list() -> List[Dict]:
             price_card_4 = clean_qty_value(row.get('سعر4 كارت', price_card_1 * 0.8))
             barcode = str(row.get('الباركود', '')).strip()
             
-            # تحديد كميات مخزون كل فرع لتتمكن رويال مايند من توجيه العميل بدقة بالغة
             qty_luxor_lotus = get_qty_by_keyword(row, ['اللوتس'])
             qty_marrowa = get_qty_by_keyword(row, ['المروة'])
             qty_hurgada = get_qty_by_keyword(row, ['HURGADA', 'الغردقة'])
@@ -437,12 +454,10 @@ async def calculate_invoice(payload: InvoicePayload):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-# --- تفعيل الذاكرة التراكمية، ومطابقة الكيماء، وقراءة زيوت المعرض الفورية المتاحة للتركيب وحصرها ---
 @app.post("/api/diagnose")
 async def diagnose(payload: DiagnosisPayload):
     context_str = f"\n[الذاكرة التراكمية للعميل - آخر 5 سجلات في الجلسة]: {payload.history_context}" if payload.history_context else ""
     
-    # استخراج الزيوت الحقيقية المتوفرة بالمخازن فعلياً لدمجها بوعي كامل
     real_oils = get_available_oils_list()
     if real_oils:
         oils_bullet_points = "\n".join([
@@ -452,7 +467,6 @@ async def diagnose(payload: DiagnosisPayload):
     else:
         oils_bullet_points = "- لا توجد زيوت مسجلة حالياً كـ 'زيوت تركيب بالجرام' في ملف قاعدة البيانات (يرجى مراجعة ملف last.xls)."
 
-    # تفاصيل الحساب الكيميائي للمصنعية والتركيب الإجباري بنسبة 30% لرويال إلتشيم
     chemistry_system_info = (
         f"\n[قوانين الكيميائي الصارمة لعطور التركيب بنسبة 30%]:\n"
         f"سعر لتر الكحول النقي: {ALCOHOL_PRICE_PER_LITER} جنيه مصري (0.2 جنيه للملي).\n"
@@ -464,12 +478,12 @@ async def diagnose(payload: DiagnosisPayload):
         f"  2. بما أن العطر بتركيز 30%، فإن مجموع (الزيت + المثبت) يمثل 30% من العبوة الإجمالية. وبما أن حجم الزيت والمثبت معاً = 12 مللي، فإن الحجم الكلي الفاخر للزجاجة يبلغ 40 مللي.\n"
         f"  3. كمية الكحول المطلوبة لاستكمال العبوة = 40 - 12 = 28 مللي كحول (تكلفته = 28 * 0.2 = 5.6 جنيه).\n"
         f"  4. تكلفة مصنعية التركيب الثابتة (الكحول + المثبت) = 20 + 5.6 = 25.6 جنيه مصري.\n"
-        f"  5. التكلفة الكلية للزجاجة = تكلفة مصنعية التركيب الثابتة (25.6 جنيه) + تكلفة الزيوت الفعلية المستخدمة (مجموع جرامات الزيوت مضروبة في أسعارها من القائمة بالأسفل).\n"
+        f"  5. التكلفة الكلية للزجاجة = تكلفة مصنعية التركيب الثابتة (25.6 جنيه) + تكلفة الزيوت الفعلية المستخدمة.\n"
         f"\n[قائمة الزيوت المتوفرة فعلياً في مخازننا لتركيب العطور حالياً]:\n{oils_bullet_points}\n"
         f"\nقواعد صارمة لرويال مايند لمنع الارتجال العطري:\n"
-        f"1. يمنع منعاً باتاً اقتراح أي زيت عطر وهمي أو نوتة عطرية من خيالك (مثل: برغموت كالابريا، خشب الصندل الأسترالي، ماغنوليا بيضاء) إلا إذا كانت مذكورة صراحةً باسمها في القائمة الحقيقية أعلاه!\n"
-        f"2. العطور التي تصنعينها يجب أن تكون 'تركيبات حقيقية' بدمج نوتتين أو ثلاث من زيوتنا الحقيقية المسجلة المذكورة في القائمة السابقة، مع حساب التكلفة الكلية بدقة فائقة كصديق مقرب حنون وبأسلوب دافئ فلسفي.\n"
-        f"3. اذكري للعميل الفروع المتوفر بها الزيوت المقترحة (اللوتس، المروة، أو الغردقة) بالجرامات الفعلية المتاحة، وانهي بـ 'نحن معك' برفق."
+        f"1. يمنع منعاً باتاً اقتراح أي زيت عطر وهمي من خيالك إلا إذا كانت مذكورة صراحةً باسمها في القائمة الحقيقية أعلاه!\n"
+        f"2. العطور التي تصنعينها يجب أن تكون 'تركيبات حقيقية' بدمج نوتتين أو ثلاث من زيوتنا الحقيقية.\n"
+        f"3. اذكري للعميل الفروع المتوفر بها الزيوت المقترحة (اللوتس، المروة، أو الغردقة)."
     )
     
     prompt = f"{BASE_PHILOSOPHY}{chemistry_system_info}{context_str}\nجلسة حوار الصداقة والتحليل الوجداني لطلب العميل: '{payload.client_message}'"
@@ -491,15 +505,10 @@ async def chat(payload: ChatPayload):
 
     chemistry_system_info = (
         f"\n[منظومة كيميائي تركيب العطور بالجرام والمللي]:\n"
-        f"سعر الكحول: {ALCOHOL_PRICE_PER_LITER} جنيه للتر (0.2 جنيه للملي).\n"
+        f"سعر الكحول: {ALCOHOL_PRICE_PER_LITER} جنيه للتر.\n"
         f"سعر المثبت الملكي: {FIXATIVE_PRICE_PER_ML} جنيه لكل 1 مللي.\n"
         f"النسبة لتركيز 30%: 1 مللي مثبت لكل 5 مللي زيت عطري خام.\n"
-        f"حساب السعر لـ 5 جرام زيت عطر خام:\n"
-        f"  نحتاج 1 مللي مثبت (10 جنيه) + 14 مللي كحول (2.8 جنيه) + 5 جرام زيت عطر خام بسعر الوحدة الفعلي المأخوذ من القائمة بالأسفل.\n"
         f"\n[قائمة الزيوت المتوفرة فعلياً في مخازننا لتركيب العطور حالياً]:\n{oils_bullet_points}\n"
-        f"\nقوانين التركيب الصارمة لرويال مايند:\n"
-        f"1. يجب أن تكون تركيبات العطور المقترحة مشتقة بالكامل وبطريقة حصرية من الزيوت الفعلية المتاحة في القائمة أعلاه (بدون اختلاق أسماء زيوت غير متوفرة لدينا).\n"
-        f"2. احسبي السعر الكيميائي الإجمالي الدقيق لجرامات الزيوت والمثبت والكحول ليرى العميل الشفافية، ووجهيه للفرع الذي تتوفر فيه الكمية الكافية بدقة حنونة."
     )
     
     prompt = f"{BASE_PHILOSOPHY}{chemistry_system_info}{context_str}\nطلب العميل المباشر: '{payload.text}'"
@@ -523,7 +532,6 @@ async def simulate_makeup(payload: SimulationPayload):
         else:
             result_base64 = payload.user_selfie
 
-        # ربط التخيل البصري برؤية المستقبل والأصالة ونبرة الصداقة الحميمة
         context_str = f"\n[الذاكرة التراكمية والحالة الوجدانية للعميل]: {payload.history_context}" if payload.history_context else ""
         contents = [
             Image.open(io.BytesIO(base64.b64decode(result_base64.split(",")[1]))), 
