@@ -356,7 +356,7 @@
                 
                 <div id="tokenGateAlert" class="token-alert">
                     <i class="fa-solid fa-key mb-2 d-block" style="font-size:1.3rem;"></i>
-                    لحماية الوعي البصري، يرجى إدخال مفتاح الـ API الخاص بكِ لـ Gemini (موصى به لتشغيل التحليلات البصرية الفائقة مجاناً):
+                    لحماية الوعي البصري، يرجى إدخل مفتاح الـ API الخاص بكِ لـ Gemini (موصى به لتشغيل التحليلات البصرية الفائقة مجاناً):
                     <input type="password" id="clientGeminiKeyInput" class="form-control text-warning border-warning text-center mt-2" placeholder="AIzaSy..." oninput="saveClientKey(this.value)">
                 </div>
 
@@ -546,7 +546,7 @@
             recognition.onend = function() {
                 btnElement.classList.remove('listening');
                 logoContainer.classList.remove('listening-pulse');
-                document.getElementById(inputId).placeholder = "تحدثي أو اكتبي هنا...";
+                document.getElementById(inputId).placeholder = "تحدثي أو اكتب هنا...";
             };
             
             recognition.onerror = function(event) {
