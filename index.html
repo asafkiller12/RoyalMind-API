@@ -401,16 +401,16 @@
             </div>
         </div>
 
-        <!-- 7. شاشة المانيفستو والفلسفة الوجدانية المحدثة -->
+        <!-- 7. شاشة المانيفستو والفلسفة الوجدانية المحدثة لرويال الكيم -->
         <div id="screen-manifesto" class="app-screen">
             <div class="glass-card">
-                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-heart-pulse"></i> فلسفة رويال إلتشيم الوجدانية</h4>
+                <h4 class="gold-text mb-3 text-center"><i class="fa-solid fa-heart-pulse"></i> فلسفة رويال الكيم الوجدانية</h4>
                 <p class="text-center small text-warning mb-4" style="font-style: italic; font-weight: bold;">"العطر فكرة تُشم، لا تُقال. فلسفة تُقطّر، لا تُنتَج."</p>
                 
                 <div class="p-3 rounded-4 text-center border border-warning shadow-sm mb-4" style="background: rgba(212, 175, 55, 0.05) !important;">
                     <p class="lead gold-text fw-bold mb-2" style="font-size: 1.15rem;">رسالة صديق مقرب.. من القلب إلى القلب</p>
                     <p class="small text-muted m-0" style="line-height: 1.8; text-align: justify; direction: rtl;">
-                        أهلاً بكِ يا رفيقة دربي وجمالي. في رويال إلتشيم، لا ننظر إليكِ كعميلة عابرة، بل كصديقة مقربة نفهم نبض مشاعرها ونتحسس تفاصيل طموحاتها الجمالية. عطورنا ومستحضراتنا ليست مجرد منتجات كيميائية صامتة، بل هي رداء روحي ووجداني يُصاغ بعناية فائقة ليرافقكِ ويساند ثقتكِ في كل محطات حياتكِ.
+                        أهلاً بكِ يا رفيقة دربي وجمالي. في رويال الكيم، لا ننظر إليكِ كعميلة عابرة، بل كصديقة مقربة نفهم نبض مشاعرها ونتحسس تفاصيل طموحاتها الجمالية. عطورنا ومستحضراتنا ليست مجرد منتجات كيميائية صامتة، بل هي رداء روحي ووجداني يُصاغ بعناية فائقة ليرافقكِ ويساند ثقتكِ في كل محطات حياتكِ.
                     </p>
                 </div>
 
@@ -747,7 +747,7 @@
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 let cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[\*#]/g, '');
-                let utterance = new SpeechSynthesisUtterance(cleanText);
+                let utterance = new SynthesisUtterance(cleanText);
                 utterance.lang = 'ar-SA'; 
                 utterance.rate = 0.88;
                 window.speechSynthesis.speak(utterance);
@@ -877,7 +877,7 @@
             location.reload();
         }
 
-        // --- محرك الاستدعاء الهجين لذكاء Gemini (يتراجع إلى الردود الملكية المجدولة عند الغياب) ---
+        // --- محرك الاستدعاء الهجين لذكاء Gemini ---
         async function callGemini(prompt, systemPrompt = "", imageBase64 = null) {
             const apiKey = localStorage.getItem('client_gemini_key') || "";
             if (!apiKey) {
@@ -933,7 +933,7 @@
             out.style.display = 'block';
             out.innerHTML = "<span class='gold-text'><i class='fa-solid fa-spinner fa-spin'></i> جاري استخلاص النوتات العطرية والمفاهيم الجمالية...</span>";
 
-            const sysPrompt = "أنتِ 'رويال مايند' (Royal Mind)، الوعي الفلسفي والجمالي لشركة رويال إلتشيم (Royal Elchim). لغتكِ عربية، بليغة، تفيض بالرقي والغموض والفخامة. وجهي العميل للمزاج العطري الملائم له من تركيبات الزيوت العطرية بالجرام أو انحتي ملامحها بالمكياج المناسب.";
+            const sysPrompt = "أنتِ 'رويال مايند' (Royal Mind)، الوعي الفلسفي والجمالي لشركة رويال الكيم (Royal Elchim). لغتكِ عربية، بليغة، تفيض بالرقي والغموض والفخامة. وجهي العميل للمزاج العطري الملائم له من تركيبات الزيوت العطرية بالجرام أو انحتي ملامحها بالمكياج المناسب.";
 
             try {
                 const responseText = await callGemini(userText, sysPrompt);
@@ -980,7 +980,7 @@
             out.innerHTML = "<span class='gold-text'><i class='fa-solid fa-spinner fa-spin'></i> جاري تحليل البنية البصرية ودمج الدرجات الجمالية للمنتج...</span>";
 
             const userPrompt = `حلل هذا الوجه وقدم تقريراً جمالياً مفصلاً وعالياً الرقي عن تطبيق مستحضر التجميل من نوع (${type}) والمسمى بـ (${prodName}) بناءً على خطوط النحت والوجه الموضحة بالصورة المرفقة.`;
-            const sysPrompt = "أنتِ خبيرة تجميل ونحت بصري بملكة فلسفية من رويال إلتشيم. تفحصي ملامح العميل بدقة وقدمي استشارات تناسب طبيعته الجسدية والنفسية.";
+            const sysPrompt = "أنتِ خبيرة تجميل ونحت بصري بملكة فلسفية من رويال الكيم. تفحصي ملامح العميل بدقة وقدمي استشارات تناسب طبيعته الجسدية والنفسية.";
 
             try {
                 const responseText = await callGemini(userPrompt, sysPrompt, imagesData.selfieBase64);
@@ -994,7 +994,7 @@
             }
         }
 
-        // --- إصلاح واستكمال محرك الوعي التراكمي (رويال مايند للأبد) ---
+        // --- محرك الوعي التراكمي (رويال مايند للأبد) ---
         async function runDiagnosis() {
             let msg = document.getElementById('diagnosisInput').value;
             let out = document.getElementById('diagResponse');
@@ -1004,7 +1004,7 @@
             out.innerHTML = "<span class='gold-text'><i class='fa-solid fa-spinner fa-spin'></i> جاري استيعاب الفهم في بحر الوعي...</span>";
             
             const historyText = getLocalHistoryContext();
-            const sysPrompt = "أنت رويال مايند الرفيق الروحي والأثري الدائم لكل زائر لـ 'رويال إلتشيم'. تتذكرين تفاصيلهم، وتقدمين وعياً فلسفياً فخماً يربط الجمال بالمشاعر الحياتية اليومية للعملاء.";
+            const sysPrompt = "أنت رويال مايند الرفيق الروحي والأثري الدائم لكل زائر لـ 'رويال الكيم'. تتذكرين تفاصيلهم، وتقدمين وعياً فلسفياً فخماً يربط الجمال بالمشاعر الحياتية اليومية للعملاء.";
             const fullPromptWithHistory = `سياق التاريخ التراكمي لجلستنا السابقة:\n${historyText}\n\nالآن، العميل يقول:\n"${msg}"`;
 
             try {
