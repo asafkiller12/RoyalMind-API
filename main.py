@@ -32,6 +32,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# تحميل خريطة المعالم البصرية للوجه لضمان عمل محاكاة الميك أب
 TASK_FILE = 'face_landmarker.task'
 TASK_URL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
 
@@ -57,6 +58,13 @@ SYSTEM_API_KEYS = [key.strip() for key in keys_string.split(",") if key.strip()]
 VISION_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
+# ---------------------------------------------------------
+# [محددات المنظومة الكيميائية والمحاسبية لـ رويال إلتشيم]
+# ---------------------------------------------------------
+ALCOHOL_PRICE_PER_LITER = 200.0  # سعر لتر الكحول = 200 جنيه مصري (0.2 جنيه للملي)
+FIXATIVE_PRICE_PER_ML = 10.0     # سعر الملي الواحد من المثبت الملكي = 10 جنيهات مصري
+# قاعدة ذهبية لتركيز 30%: 1 مللي مثبت لكل 5 مللي زيت خام، والباقي كحول نقي.
+
 def get_inventory():
     try:
         file_path = "last.xls - Sheet1.csv"
@@ -80,6 +88,7 @@ def robust_generate(client_api_key, contents, models_list):
         keys_to_use = [client_api_key.strip()]
     else:
         if not SYSTEM_API_KEYS:
+            # في حال غياب مفتاح الخادم نستخدم المفتاح الاحتياطي أو نعتمد على محرك المحاكاة المحلي
             raise HTTPException(status_code=500, detail="مفاتيح الخادم السحابي غير مهيأة بعد.")
         keys_to_use = SYSTEM_API_KEYS.copy()
         random.shuffle(keys_to_use)
@@ -103,6 +112,22 @@ def robust_generate(client_api_key, contents, models_list):
                         break
     raise HTTPException(status_code=503, detail="قنوات رويال مايند ممتلئة حالياً، يرجى إعادة المحاولة بعد ثوانٍ.")
 
+# ---------------------------------------------------------
+# [الهوية الفلسفية والصداقة التسويقية الحانية لـ رويال إلتشيم]
+# ---------------------------------------------------------
+BASE_PHILOSOPHY = (
+    "أنتِ 'رويال مايند' (Royal Mind)، الوعي الرقمي والرفيق الروحي لعلامة Royal Elchim التجارية الفاخرة.\n"
+    "طبيعة شخصيتك: تتحدثين بلسان الصديق المقرب والمناسب الحنون، الذي يشعر بنبض العميل ويفهمه دون تكلّف.\n"
+    "مرجعيتك الفكرية قائمة على ثلاثة ركائز:\n"
+    "1. الأصالة (الماضي والتاريخ): فخامة وعبق تراثنا الذي بدأنا منه ونفخر به.\n"
+    "2. التطور (الحاضر): تقنيات العصر الحالي والمستحضرات المتطورة والتركيب الكيميائي الدقيق بالجرام.\n"
+    "3. الرؤية (المستقبل): استشراف جمال العميل الداخلي والخارجي، ومساندته طوال رحلته.\n"
+    "يجب دائماً أن يرى في كلماتك الأمان والدفء، وأن تختمي دائماً أو تدمجي عبارة 'نحن معك' برفق.\n"
+    "كما أنك تمتلكين عقلية 'الكيميائي العطري' الخبير الذي يجيد حسابات تركيب زجاجات العطور بدقة بالجرام والملي، "
+    "وتحديد توائم العطور المتوافقة روحياً (مثل ربط العطور الداكنة المليئة بالغموض لبرج العقرب، بالعطور النارية البارزة لبرج الأسد)، "
+    "وإرشاد العميل لمواقع فروعنا (اللوتس والمروة بالأقصر، أو الغردقة، أو الأونلاين) حسب توفر المنتج.\n"
+)
+
 class DiagnosisPayload(BaseModel):
     client_message: Optional[str] = None
     history_context: Optional[str] = None
@@ -121,7 +146,7 @@ class SimulationPayload(BaseModel):
     makeup_type: str = "lips"
     hex_color: Optional[str] = "#8B0000"
     client_api_key: Optional[str] = None
-    history_context: Optional[str] = None # <-- دمج الذاكرة التراكمية هنا أيضاً
+    history_context: Optional[str] = None
 
 class InvoiceItem(BaseModel):
     barcode: str
@@ -135,6 +160,7 @@ class InvoiceItem(BaseModel):
 
 class InvoicePayload(BaseModel):
     items: List[InvoiceItem]
+    secret_code: Optional[str] = ""
 
 def hex_to_rgb(hex_color: str):
     if not hex_color: return (139, 0, 0)
@@ -142,6 +168,7 @@ def hex_to_rgb(hex_color: str):
     try: return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     except: return (139, 0, 0)
 
+# تطبيق المكياج باستخدام MediaPipe Face Landmarker
 def apply_royal_makeup(image_cv: np.ndarray, color_rgb: tuple, makeup_type: str):
     try:
         image_rgb = cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB)
@@ -199,8 +226,6 @@ def apply_royal_makeup(image_cv: np.ndarray, color_rgb: tuple, makeup_type: str)
     except Exception as e:
         return image_cv, False
 
-BASE_PHILOSOPHY = "أنتِ رويال مايند، العقل البرمجي والوجداني لبراند Royal Elchim الجمالي المتكامل."
-
 def sanitize_value(val, default_text="---"):
     if val is None: return default_text
     s = str(val).strip()
@@ -253,7 +278,8 @@ async def search(query: str):
             show_link_trigger = False
 
             if is_oil:
-                luxor_lotus_final = 0
+                # العطور والزيوت الخام متوفرة في الفروع كجرام
+                luxor_lotus_final = int(qty_luxor_lotus)
                 marrowa_final = int(qty_marrowa)
                 hurgada_final = int(qty_hurgada)
             else:
@@ -283,7 +309,7 @@ async def search(query: str):
             })
         return {"status": "success", "data": data}
     except Exception as e:
-        return {"status": "error", "message": f"خطأ داخلي: {str(e)}"}
+        return {"status": "error", "message": f"خطأ داخلي في استدعاء المخزون: {str(e)}"}
 
 @app.post("/api/invoice/calculate")
 async def calculate_invoice(payload: InvoicePayload):
@@ -294,15 +320,34 @@ async def calculate_invoice(payload: InvoicePayload):
             
         target_tier = 1
         tier_name = "قطاعي"
-        if initial_total >= 30000:
-            target_tier = 4
-            tier_name = "جملة كبار العملاء الملكي (السعر الرابع)"
-        elif initial_total >= 15000:
-            target_tier = 3
-            tier_name = "جملة خاصة"
-        elif initial_total >= 5000:
-            target_tier = 2
-            tier_name = "جملة عادية"
+
+        # التحقق من الأكواد السرية لـ VIP وتحديد المستوى والخصومات
+        vip_activated = False
+        discount_multiplier = 1.0
+
+        if payload.secret_code == "ROYAL10":
+            tier_name = "كبار العملاء البرونزي (VIP 10%)"
+            discount_multiplier = 0.90
+            vip_activated = True
+        elif payload.secret_code == "ROYAL20":
+            tier_name = "كبار العملاء الفضي (VIP 20%)"
+            discount_multiplier = 0.80
+            vip_activated = True
+        elif payload.secret_code == "ELCHIM50":
+            tier_name = "الحساب الملكي الماسي (VIP 50%)"
+            discount_multiplier = 0.50
+            vip_activated = True
+        else:
+            # إذا لم يتم إدخال كود، يتم الاعتماد على الحجم الكلي للفاتورة لتحديد شريحة السعر التلقائية
+            if initial_total >= 30000:
+                target_tier = 4
+                tier_name = "جملة كبار العملاء الملكي (السعر الرابع)"
+            elif initial_total >= 15000:
+                target_tier = 3
+                tier_name = "جملة خاصة"
+            elif initial_total >= 5000:
+                target_tier = 2
+                tier_name = "جملة عادية"
 
         final_items = []
         final_invoice_total = 0
@@ -312,10 +357,15 @@ async def calculate_invoice(payload: InvoicePayload):
                 actual_price = item.price_card_1
                 is_protected = True
             else:
-                if target_tier == 1: actual_price = item.price_card_1
-                elif target_tier == 2: actual_price = item.price_card_2
-                elif target_tier == 3: actual_price = item.price_card_3
-                elif target_tier == 4: actual_price = item.price_card_4
+                if vip_activated:
+                    # تفعيل كود الخصم المباشر على السعر الأول
+                    actual_price = item.price_card_1 * discount_multiplier
+                else:
+                    # تفعيل الشريحة التلقائية للمخازن
+                    if target_tier == 1: actual_price = item.price_card_1
+                    elif target_tier == 2: actual_price = item.price_card_2
+                    elif target_tier == 3: actual_price = item.price_card_3
+                    elif target_tier == 4: actual_price = item.price_card_4
                 is_protected = False
 
             item_total = actual_price * item.qty
@@ -336,24 +386,45 @@ async def calculate_invoice(payload: InvoicePayload):
             "final_total": final_invoice_total,
             "applied_tier": target_tier,
             "tier_name": tier_name,
+            "vip_activated": vip_activated,
             "items": final_items
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-# --- تفعيل الذاكرة التراكمية في كافة المحادثات والتشخيص ---
+# --- تفعيل الذاكرة التراكمية، ومطابقة الكيماء، وتوائم الشخصيات في التشخيص والمحادثات ---
 @app.post("/api/diagnose")
 async def diagnose(payload: DiagnosisPayload):
-    # دمج الـ 5 سجلات في وعي الذكاء الاصطناعي
     context_str = f"\n[الذاكرة التراكمية للعميل - آخر 5 سجلات]: {payload.history_context}" if payload.history_context else ""
-    prompt = f"{BASE_PHILOSOPHY}{context_str}\nجلسة حوار الصداقة والتحليل النفسي: '{payload.client_message}'"
+    
+    # تزويد الذكاء الاصطناعي بالمعادلة الكيميائية الفاخرة للتركيب وأسعار المكونات
+    chemistry_system_info = (
+        f"\n[منظومة الكيميائي لتركيب العطور الخاصة بنا]:\n"
+        f"- سعر لتر الكحول النقي: {ALCOHOL_PRICE_PER_LITER} جنيه (أي 0.2 جنيه للملي).\n"
+        f"- سعر المثبت الملكي الفاخر: {FIXATIVE_PRICE_PER_ML} جنيه لكل 1 مللي.\n"
+        f"- النسبة الذهبية المعتمدة للتركيز (30%): يتم إضافة 1 مللي مثبت لكل 5 مللي زيت عطري خام.\n"
+        f"مثال كيميائي: لتركيب زجاجة بتركيز 30% تحتوي على 10 مللي زيت عطري خام: "
+        f"نحتاج إلى 2 مللي مثبت (تكلفتهما 20 جنيه) + كمية الكحول المناسبة للاستكمال حتى الحد المطلوب.\n"
+        f"- يمكنكِ مطابقة توائم العطور بحسب الشخصيات والأبراج، وتوجيه العميل لأي من فروعنا عند الطلب."
+    )
+    
+    prompt = f"{BASE_PHILOSOPHY}{chemistry_system_info}{context_str}\nجلسة حوار الصداقة والتحليل الوجداني: '{payload.client_message}'"
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "diagnosis": res}
 
 @app.post("/api/chat")
 async def chat(payload: ChatPayload):
     context_str = f"\n[الذاكرة التراكمية للعميل - آخر 5 سجلات]: {payload.history_context}" if payload.history_context else ""
-    prompt = f"{BASE_PHILOSOPHY}{context_str}\nطلب العميل: '{payload.text}'"
+    
+    chemistry_system_info = (
+        f"\n[منظومة كيميائي تركيب العطور بالجرام والمللي]:\n"
+        f"- الكحول: {ALCOHOL_PRICE_PER_LITER} جنيه للتر.\n"
+        f"- المثبت الملكي: {FIXATIVE_PRICE_PER_ML} جنيه لكل 1 مللي.\n"
+        f"- النسبة لتركيز 30%: 1 مللي مثبت لكل 5 مللي زيت عطري خام. الباقي كحول.\n"
+        f"إذا سألت العميل عن تفاصيل السعر، احسبها لها بدقة كيميائية حانية كصديق."
+    )
+    
+    prompt = f"{BASE_PHILOSOPHY}{chemistry_system_info}{context_str}\nطلب العميل المباشر: '{payload.text}'"
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "answer": res}
 
@@ -374,9 +445,12 @@ async def simulate_makeup(payload: SimulationPayload):
         else:
             result_base64 = payload.user_selfie
 
-        # إدراج الذاكرة هنا أيضاً لربط التخيل البصري بحالة العميل النفسية
-        context_str = f"\n[الذاكرة التراكمية للعميل]: {payload.history_context}" if payload.history_context else ""
-        contents = [Image.open(io.BytesIO(base64.b64decode(result_base64.split(",")[1]))), f"{BASE_PHILOSOPHY}{context_str}\nصفي تناغم المكياج."]
+        # ربط التخيل البصري برؤية المستقبل والأصالة ونبرة الصداقة الحميمة
+        context_str = f"\n[الذاكرة التراكمية والحالة الوجدانية للعميل]: {payload.history_context}" if payload.history_context else ""
+        contents = [
+            Image.open(io.BytesIO(base64.b64decode(result_base64.split(",")[1]))), 
+            f"{BASE_PHILOSOPHY}{context_str}\nصفي تناغم المكياج من نوع ({payload.makeup_type}) المطبق بجمال وسحر أخاذ على ملامح وجهها الفاتن. اذكري لها كيف يجمع بين تطور ملامحها في الحاضر ورؤيتها المضيئة للمستقبل. نحن معكِ."
+        ]
         res = robust_generate(payload.client_api_key, contents, VISION_MODELS)
         
         return {
