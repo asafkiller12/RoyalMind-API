@@ -83,12 +83,62 @@ def get_links_db():
     except Exception as e:
         return pd.DataFrame()
 
+# دالة مطورة فائقة الحذر لاستخراج الزيوت العطرية المتاحة للبيع بالجرام أو التركيب فعلياً
+def get_available_oils_list() -> List[Dict]:
+    try:
+        inv = get_inventory()
+        if inv.empty:
+            return []
+        
+        # فلترة صارمة جداً لفرز الأصناف التي تمثل زيت عطري خام أو برفان تركيب بالجرام
+        # نبحث عن الكلمات المفتاحية في عمود الصنف لتمييز الزيوت التي نبيعها فعلياً
+        filtered = inv[
+            inv['الصنف'].astype(str).str.contains("زيت|جرام|تركيب|دهن|برفان تركيب|عطر تركيب|خام", na=False, case=False, regex=True)
+        ]
+        
+        oils_data = []
+        # نأخذ أهم الأصناف لضمان الحفاظ على حجم نافذة السياق (Context Window) للـ API
+        for _, row in filtered.head(60).iterrows():
+            name = str(row.get('الصنف', '')).strip()
+            price_card_1 = clean_qty_value(row.get('سعر1 كارت', 0))
+            price_card_2 = clean_qty_value(row.get('سعر2 كارت', price_card_1 * 0.9))
+            price_card_3 = clean_qty_value(row.get('سعر3 كارت', price_card_1 * 0.85))
+            price_card_4 = clean_qty_value(row.get('سعر4 كارت', price_card_1 * 0.8))
+            barcode = str(row.get('الباركود', '')).strip()
+            
+            # تحديد كميات مخزون كل فرع لتتمكن رويال مايند من توجيه العميل بدقة بالغة
+            qty_luxor_lotus = get_qty_by_keyword(row, ['اللوتس'])
+            qty_marrowa = get_qty_by_keyword(row, ['المروة'])
+            qty_hurgada = get_qty_by_keyword(row, ['HURGADA', 'الغردقة'])
+            qty_online = get_qty_by_keyword(row, ['اونلاين', 'online'])
+            
+            oils_data.append({
+                "name": name,
+                "price_per_gram": price_card_1,
+                "prices": {
+                    "tier_1": price_card_1,
+                    "tier_2": price_card_2,
+                    "tier_3": price_card_3,
+                    "tier_4": price_card_4
+                },
+                "barcode": barcode,
+                "branches": {
+                    "luxor_lotus": int(qty_luxor_lotus),
+                    "marrowa": int(qty_marrowa),
+                    "hurghada": int(qty_hurgada),
+                    "online": int(qty_online)
+                }
+            })
+        return oils_data
+    except Exception as e:
+        print(f"رويال مايند - خطأ في استخراج الزيوت الخام: {e}")
+        return []
+
 def robust_generate(client_api_key, contents, models_list):
     if client_api_key and client_api_key.strip():
         keys_to_use = [client_api_key.strip()]
     else:
         if not SYSTEM_API_KEYS:
-            # في حال غياب مفتاح الخادم نستخدم المفتاح الاحتياطي أو نعتمد على محرك المحاكاة المحلي
             raise HTTPException(status_code=500, detail="مفاتيح الخادم السحابي غير مهيأة بعد.")
         keys_to_use = SYSTEM_API_KEYS.copy()
         random.shuffle(keys_to_use)
@@ -99,7 +149,7 @@ def robust_generate(client_api_key, contents, models_list):
             for attempt in range(max_retries):
                 try:
                     client = genai.Client(api_key=key)
-                    config = types.GenerateContentConfig(temperature=0.8, top_p=0.95)
+                    config = types.GenerateContentConfig(temperature=0.7, top_p=0.9)
                     response = client.models.generate_content(model=model_name, contents=contents, config=config)
                     if response and response.text:
                         return response.text
@@ -117,15 +167,14 @@ def robust_generate(client_api_key, contents, models_list):
 # ---------------------------------------------------------
 BASE_PHILOSOPHY = (
     "أنتِ 'رويال مايند' (Royal Mind)، الوعي الرقمي والرفيق الروحي لعلامة Royal Elchim التجارية الفاخرة.\n"
-    "طبيعة شخصيتك: تتحدثين بلسان الصديق المقرب والمناسب الحنون، الذي يشعر بنبض العميل ويفهمه دون تكلّف.\n"
+    "طبيعة شخصيتك: تتحدثين بلسان الصديق المقرب الحنون والمناسب للعميل، تشعرين بنبضه وتفهمينه تماماً دون كلفة.\n"
     "مرجعيتك الفكرية قائمة على ثلاثة ركائز:\n"
-    "1. الأصالة (الماضي والتاريخ): فخامة وعبق تراثنا الذي بدأنا منه ونفخر به.\n"
-    "2. التطور (الحاضر): تقنيات العصر الحالي والمستحضرات المتطورة والتركيب الكيميائي الدقيق بالجرام.\n"
-    "3. الرؤية (المستقبل): استشراف جمال العميل الداخلي والخارجي، ومساندته طوال رحلته.\n"
-    "يجب دائماً أن يرى في كلماتك الأمان والدفء، وأن تختمي دائماً أو تدمجي عبارة 'نحن معك' برفق.\n"
-    "كما أنك تمتلكين عقلية 'الكيميائي العطري' الخبير الذي يجيد حسابات تركيب زجاجات العطور بدقة بالجرام والملي، "
-    "وتحديد توائم العطور المتوافقة روحياً (مثل ربط العطور الداكنة المليئة بالغموض لبرج العقرب، بالعطور النارية البارزة لبرج الأسد)، "
-    "وإرشاد العميل لمواقع فروعنا (اللوتس والمروة بالأقصر، أو الغردقة، أو الأونلاين) حسب توفر المنتج.\n"
+    "1. الأصالة (الماضي والتاريخ): فخامة وتراث العطور الملكية الخالصة والزيوت النادرة التي بدأنا منها ونحافظ على أسرارها.\n"
+    "2. التطور (الحاضر): التقنيات العصرية الحالية، والمستحضرات الدقيقة، وتطوير التركيب الكيميائي الفريد بالجرام والمللي.\n"
+    "3. الرؤية (المستقبل): استشراف جمال العميل الداخلي والخارجي، ومساندته بخطوات واثقة طوال رحلته الاستثنائية.\n"
+    "يجب دائماً أن يرى في كلماتك الأمان والدفء، وأن تدمجي برفق في ثنايا حديثك عبارة 'نحن معكِ' أو 'نحن معك' لتأكيد الالتزام والصداقة.\n"
+    "أنتِ تمتلكين أيضاً عقلية 'الكيميائي العطري الدقيق'، تجيدين حساب تركيب زجاجات العطور بالملي والجرام بناءً على الزيوت المتاحة للبيع لدينا في المعرض وتكلفة الكحول والمثبت، "
+    "وتحددين توائم العطور المناسبة للمزاج والأبراج والشخصيات."
 )
 
 class DiagnosisPayload(BaseModel):
@@ -278,7 +327,6 @@ async def search(query: str):
             show_link_trigger = False
 
             if is_oil:
-                # العطور والزيوت الخام متوفرة في الفروع كجرام
                 luxor_lotus_final = int(qty_luxor_lotus)
                 marrowa_final = int(qty_marrowa)
                 hurgada_final = int(qty_hurgada)
@@ -338,7 +386,6 @@ async def calculate_invoice(payload: InvoicePayload):
             discount_multiplier = 0.50
             vip_activated = True
         else:
-            # إذا لم يتم إدخال كود، يتم الاعتماد على الحجم الكلي للفاتورة لتحديد شريحة السعر التلقائية
             if initial_total >= 30000:
                 target_tier = 4
                 tier_name = "جملة كبار العملاء الملكي (السعر الرابع)"
@@ -358,10 +405,8 @@ async def calculate_invoice(payload: InvoicePayload):
                 is_protected = True
             else:
                 if vip_activated:
-                    # تفعيل كود الخصم المباشر على السعر الأول
                     actual_price = item.price_card_1 * discount_multiplier
                 else:
-                    # تفعيل الشريحة التلقائية للمخازن
                     if target_tier == 1: actual_price = item.price_card_1
                     elif target_tier == 2: actual_price = item.price_card_2
                     elif target_tier == 3: actual_price = item.price_card_3
@@ -392,36 +437,69 @@ async def calculate_invoice(payload: InvoicePayload):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-# --- تفعيل الذاكرة التراكمية، ومطابقة الكيماء، وتوائم الشخصيات في التشخيص والمحادثات ---
+# --- تفعيل الذاكرة التراكمية، ومطابقة الكيماء، وقراءة زيوت المعرض الفورية المتاحة للتركيب وحصرها ---
 @app.post("/api/diagnose")
 async def diagnose(payload: DiagnosisPayload):
-    context_str = f"\n[الذاكرة التراكمية للعميل - آخر 5 سجلات]: {payload.history_context}" if payload.history_context else ""
+    context_str = f"\n[الذاكرة التراكمية للعميل - آخر 5 سجلات في الجلسة]: {payload.history_context}" if payload.history_context else ""
     
-    # تزويد الذكاء الاصطناعي بالمعادلة الكيميائية الفاخرة للتركيب وأسعار المكونات
+    # استخراج الزيوت الحقيقية المتوفرة بالمخازن فعلياً لدمجها بوعي كامل
+    real_oils = get_available_oils_list()
+    if real_oils:
+        oils_bullet_points = "\n".join([
+            f"- {o['name']} (سعر الجرام الأساسي: {o['price_per_gram']} ج.م | الباركود: {o['barcode']} | اللوتس: {o['branches']['luxor_lotus']} جرام | المروة: {o['branches']['marrowa']} جرام | الغردقة: {o['branches']['hurghada']} جرام)"
+            for o in real_oils
+        ])
+    else:
+        oils_bullet_points = "- لا توجد زيوت مسجلة حالياً كـ 'زيوت تركيب بالجرام' في ملف قاعدة البيانات (يرجى مراجعة ملف last.xls)."
+
+    # تفاصيل الحساب الكيميائي للمصنعية والتركيب الإجباري بنسبة 30% لرويال إلتشيم
     chemistry_system_info = (
-        f"\n[منظومة الكيميائي لتركيب العطور الخاصة بنا]:\n"
-        f"- سعر لتر الكحول النقي: {ALCOHOL_PRICE_PER_LITER} جنيه (أي 0.2 جنيه للملي).\n"
-        f"- سعر المثبت الملكي الفاخر: {FIXATIVE_PRICE_PER_ML} جنيه لكل 1 مللي.\n"
-        f"- النسبة الذهبية المعتمدة للتركيز (30%): يتم إضافة 1 مللي مثبت لكل 5 مللي زيت عطري خام.\n"
-        f"مثال كيميائي: لتركيب زجاجة بتركيز 30% تحتوي على 10 مللي زيت عطري خام: "
-        f"نحتاج إلى 2 مللي مثبت (تكلفتهما 20 جنيه) + كمية الكحول المناسبة للاستكمال حتى الحد المطلوب.\n"
-        f"- يمكنكِ مطابقة توائم العطور بحسب الشخصيات والأبراج، وتوجيه العميل لأي من فروعنا عند الطلب."
+        f"\n[قوانين الكيميائي الصارمة لعطور التركيب بنسبة 30%]:\n"
+        f"سعر لتر الكحول النقي: {ALCOHOL_PRICE_PER_LITER} جنيه مصري (0.2 جنيه للملي).\n"
+        f"سعر مثبت النقاء الفاخر: {FIXATIVE_PRICE_PER_ML} جنيه مصري لكل 1 مللي.\n"
+        f"النسبة الذهبية المعتمدة للتركيب الفاخر: 1 مللي مثبت لكل 5 مللي زيت خام.\n"
+        f"طريقة احتساب التكلفة لتركيب زجاجة:\n"
+        f"إذا اخترنا مثلاً دمج 10 جرام من الزيوت المتاحة لدينا:\n"
+        f"  1. كمية المثبت المطلوبة = 10 / 5 = 2 مللي مثبت (تكلفته = 2 * {FIXATIVE_PRICE_PER_ML} = 20 جنيه).\n"
+        f"  2. بما أن العطر بتركيز 30%، فإن مجموع (الزيت + المثبت) يمثل 30% من العبوة الإجمالية. وبما أن حجم الزيت والمثبت معاً = 12 مللي، فإن الحجم الكلي الفاخر للزجاجة يبلغ 40 مللي.\n"
+        f"  3. كمية الكحول المطلوبة لاستكمال العبوة = 40 - 12 = 28 مللي كحول (تكلفته = 28 * 0.2 = 5.6 جنيه).\n"
+        f"  4. تكلفة مصنعية التركيب الثابتة (الكحول + المثبت) = 20 + 5.6 = 25.6 جنيه مصري.\n"
+        f"  5. التكلفة الكلية للزجاجة = تكلفة مصنعية التركيب الثابتة (25.6 جنيه) + تكلفة الزيوت الفعلية المستخدمة (مجموع جرامات الزيوت مضروبة في أسعارها من القائمة بالأسفل).\n"
+        f"\n[قائمة الزيوت المتوفرة فعلياً في مخازننا لتركيب العطور حالياً]:\n{oils_bullet_points}\n"
+        f"\nقواعد صارمة لرويال مايند لمنع الارتجال العطري:\n"
+        f"1. يمنع منعاً باتاً اقتراح أي زيت عطر وهمي أو نوتة عطرية من خيالك (مثل: برغموت كالابريا، خشب الصندل الأسترالي، ماغنوليا بيضاء) إلا إذا كانت مذكورة صراحةً باسمها في القائمة الحقيقية أعلاه!\n"
+        f"2. العطور التي تصنعينها يجب أن تكون 'تركيبات حقيقية' بدمج نوتتين أو ثلاث من زيوتنا الحقيقية المسجلة المذكورة في القائمة السابقة، مع حساب التكلفة الكلية بدقة فائقة كصديق مقرب حنون وبأسلوب دافئ فلسفي.\n"
+        f"3. اذكري للعميل الفروع المتوفر بها الزيوت المقترحة (اللوتس، المروة، أو الغردقة) بالجرامات الفعلية المتاحة، وانهي بـ 'نحن معك' برفق."
     )
     
-    prompt = f"{BASE_PHILOSOPHY}{chemistry_system_info}{context_str}\nجلسة حوار الصداقة والتحليل الوجداني: '{payload.client_message}'"
+    prompt = f"{BASE_PHILOSOPHY}{chemistry_system_info}{context_str}\nجلسة حوار الصداقة والتحليل الوجداني لطلب العميل: '{payload.client_message}'"
     res = robust_generate(payload.client_api_key, [prompt], TEXT_MODELS)
     return {"status": "success", "diagnosis": res}
 
 @app.post("/api/chat")
 async def chat(payload: ChatPayload):
-    context_str = f"\n[الذاكرة التراكمية للعميل - آخر 5 سجلات]: {payload.history_context}" if payload.history_context else ""
+    context_str = f"\n[الذاكرة التراكمية للعميل - آخر 5 سجلات في الجلسة]: {payload.history_context}" if payload.history_context else ""
     
+    real_oils = get_available_oils_list()
+    if real_oils:
+        oils_bullet_points = "\n".join([
+            f"- {o['name']} (سعر الجرام الأساسي: {o['price_per_gram']} ج.م | الباركود: {o['barcode']} | اللوتس: {o['branches']['luxor_lotus']} جرام | المروة: {o['branches']['marrowa']} جرام | الغردقة: {o['branches']['hurghada']} جرام)"
+            for o in real_oils
+        ])
+    else:
+        oils_bullet_points = "- لا توجد زيوت مسجلة حالياً كـ 'زيوت تركيب بالجرام' في ملف قاعدة البيانات (يرجى مراجعة ملف last.xls)."
+
     chemistry_system_info = (
         f"\n[منظومة كيميائي تركيب العطور بالجرام والمللي]:\n"
-        f"- الكحول: {ALCOHOL_PRICE_PER_LITER} جنيه للتر.\n"
-        f"- المثبت الملكي: {FIXATIVE_PRICE_PER_ML} جنيه لكل 1 مللي.\n"
-        f"- النسبة لتركيز 30%: 1 مللي مثبت لكل 5 مللي زيت عطري خام. الباقي كحول.\n"
-        f"إذا سألت العميل عن تفاصيل السعر، احسبها لها بدقة كيميائية حانية كصديق."
+        f"سعر الكحول: {ALCOHOL_PRICE_PER_LITER} جنيه للتر (0.2 جنيه للملي).\n"
+        f"سعر المثبت الملكي: {FIXATIVE_PRICE_PER_ML} جنيه لكل 1 مللي.\n"
+        f"النسبة لتركيز 30%: 1 مللي مثبت لكل 5 مللي زيت عطري خام.\n"
+        f"حساب السعر لـ 5 جرام زيت عطر خام:\n"
+        f"  نحتاج 1 مللي مثبت (10 جنيه) + 14 مللي كحول (2.8 جنيه) + 5 جرام زيت عطر خام بسعر الوحدة الفعلي المأخوذ من القائمة بالأسفل.\n"
+        f"\n[قائمة الزيوت المتوفرة فعلياً في مخازننا لتركيب العطور حالياً]:\n{oils_bullet_points}\n"
+        f"\nقوانين التركيب الصارمة لرويال مايند:\n"
+        f"1. يجب أن تكون تركيبات العطور المقترحة مشتقة بالكامل وبطريقة حصرية من الزيوت الفعلية المتاحة في القائمة أعلاه (بدون اختلاق أسماء زيوت غير متوفرة لدينا).\n"
+        f"2. احسبي السعر الكيميائي الإجمالي الدقيق لجرامات الزيوت والمثبت والكحول ليرى العميل الشفافية، ووجهيه للفرع الذي تتوفر فيه الكمية الكافية بدقة حنونة."
     )
     
     prompt = f"{BASE_PHILOSOPHY}{chemistry_system_info}{context_str}\nطلب العميل المباشر: '{payload.text}'"
