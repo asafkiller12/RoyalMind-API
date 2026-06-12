@@ -76,7 +76,7 @@ VISION_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 TEXT_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
 # ---------------------------------------------------------
-# [4] محددات الكيمياء والتسعير والمخزون (مفصلة بذكاء)
+# [4] محددات الكيمياء والتسعير والمخزون
 # ---------------------------------------------------------
 ALCOHOL_PRICE_PER_LITER = 200.0  
 FIXATIVE_PRICE_PER_ML = 10.0     
@@ -104,7 +104,6 @@ def get_available_oils_list() -> List[Dict]:
         inv = get_inventory()
         if inv.empty: return []
         
-        # [التحديث الأهم]: فصل الزيوت العطرية عن زيوت العناية بالشعر والبشرة
         include_pattern = r"savvy|جرام|تركيب|دهن|اسانس|عطر|برفان"
         exclude_pattern = r"شامبو|شاور|ثوم|أرجان|ارجان|زيتون|لوز|فاتيكا|بوبانا|كريم|ماسك|بلسم|شعر|بشرة|جل|DABUR|Bobana|لوشن"
         
@@ -205,6 +204,9 @@ def hex_to_rgb(hex_color: str):
     try: return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     except: return (139, 0, 0)
 
+# ---------------------------------------------------------
+# محرك الدمج والنحت البصري الاحترافي (Overlay Engine)
+# ---------------------------------------------------------
 def apply_royal_makeup(image_cv: np.ndarray, color_rgb: tuple, makeup_type: str):
     try:
         image_rgb = cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB)
@@ -216,39 +218,102 @@ def apply_royal_makeup(image_cv: np.ndarray, color_rgb: tuple, makeup_type: str)
         height, width, _ = image_cv.shape
         face_landmarks = detection_result.face_landmarks[0]
 
-        ZONES = {
-            "lips": [[61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 185]],
-            "eyeshadow": [[33, 246, 161, 160, 159, 158, 157, 173, 133], [362, 398, 384, 385, 386, 387, 388, 466, 263]],
-            "blush": [[116, 117, 118, 119, 100, 120, 121, 147, 213, 192, 214, 210, 211, 32, 208, 199], [345, 346, 347, 348, 329, 350, 351, 376, 433, 416, 434, 430, 431, 262, 428, 420]],
-            "concealer": [[227, 137, 177, 215, 138, 135, 169, 170, 140, 171, 175, 199], [447, 366, 401, 435, 367, 364, 394, 395, 369, 396, 400, 420]],
-            "foundation": [[10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109]]
-        }
+        def get_points(indices):
+            return np.array([[int(face_landmarks[idx].x * width), int(face_landmarks[idx].y * height)] for idx in indices], dtype=np.int32)
 
-        if makeup_type == "powder": makeup_type = "foundation"
-        target_zones = ZONES.get(makeup_type, ZONES["lips"])
         mask = np.zeros((height, width), dtype=np.uint8)
-        
-        for zone in target_zones:
-            points = np.array([[int(face_landmarks[idx].x * width), int(face_landmarks[idx].y * height)] for idx in zone], dtype=np.int32)
-            cv2.fillPoly(mask, [points], 255)
-
+        opacity = 0.5
         blur_radius = (15, 15)
-        opacity = 0.6
-        if makeup_type == "blush": blur_radius = (45, 45); opacity = 0.4
-        elif makeup_type == "eyeshadow": blur_radius = (21, 21); opacity = 0.5
-        elif makeup_type == "foundation": blur_radius = (55, 55); opacity = 0.15 
-        elif makeup_type == "concealer": blur_radius = (25, 25); opacity = 0.7 
+        blend_mode = "overlay" 
+        
+        if makeup_type == "lips":
+            # الشفة العلوية منفصلة عن السفلية لتجنب تلوين الأسنان
+            upper_lip = get_points([61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 308, 415, 310, 311, 312, 13, 82, 81, 80, 191, 78])
+            lower_lip = get_points([61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 78])
+            cv2.fillPoly(mask, [upper_lip, lower_lip], 255)
+            blur_radius = (9, 9)
+            opacity = 0.65
+            blend_mode = "overlay" # Overlay يحافظ على تجاعيد الشفاه ولمعانها الطبيعي
+            
+        elif makeup_type == "eyeshadow":
+            # مسار الجفن العلوي بدقة (يتجنب البؤبؤ والعين تماماً)
+            left_eyeshadow = get_points([33, 246, 161, 160, 159, 158, 157, 173, 133, 243, 112, 26, 22, 23, 24, 110, 25, 130])
+            right_eyeshadow = get_points([362, 398, 384, 385, 386, 387, 388, 466, 263, 382, 341, 256, 252, 253, 254, 339, 255, 359])
+            cv2.fillPoly(mask, [left_eyeshadow, right_eyeshadow], 255)
+            blur_radius = (21, 21)
+            opacity = 0.55
+            blend_mode = "overlay"
 
-        mask = cv2.GaussianBlur(mask, blur_radius, 0)
+        elif makeup_type == "blush":
+            left_blush = get_points([116, 117, 118, 119, 100, 120, 121, 147, 213, 192, 214, 210, 211, 32, 208, 199])
+            right_blush = get_points([345, 346, 347, 348, 329, 350, 351, 376, 433, 416, 434, 430, 431, 262, 428, 420])
+            cv2.fillPoly(mask, [left_blush, right_blush], 255)
+            blur_radius = (51, 51)
+            opacity = 0.45
+            blend_mode = "overlay"
+
+        elif makeup_type == "concealer":
+            left_concealer = get_points([227, 137, 177, 215, 138, 135, 169, 170, 140, 171, 175, 199])
+            right_concealer = get_points([447, 366, 401, 435, 367, 364, 394, 395, 369, 396, 400, 420])
+            cv2.fillPoly(mask, [left_concealer, right_concealer], 255)
+            blur_radius = (31, 31)
+            opacity = 0.5
+            blend_mode = "normal"
+
+        elif makeup_type in ["foundation", "powder"]:
+            # مسار الوجه بالكامل مع تفريغ واستثناء العيون والشفاه والحواجب بدقة!
+            face_contour = get_points([10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109])
+            cv2.fillPoly(mask, [face_contour], 255)
+            
+            # تفريغ منطقة العيون
+            left_eye = get_points([33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7])
+            right_eye = get_points([362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382])
+            cv2.fillPoly(mask, [left_eye, right_eye], 0)
+            
+            # تفريغ الشفاه
+            lips_contour = get_points([61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146])
+            cv2.fillPoly(mask, [lips_contour], 0)
+            
+            blur_radius = (45, 45)
+            opacity = 0.25
+            blend_mode = "normal"
+            
+        else:
+            return image_cv, False
+
+        # تنعيم حواف القناع لدمج احترافي
+        mask_blurred = cv2.GaussianBlur(mask, blur_radius, 0)
+        alpha = np.expand_dims(mask_blurred / 255.0, axis=-1) * opacity
+
+        # إنشاء طبقة اللون المطلوبة
         color_layer = np.zeros_like(image_cv)
-        color_layer[:] = color_rgb[::-1]
-        alpha = np.expand_dims(mask / 255.0, axis=-1)
+        color_layer[:] = color_rgb[::-1] 
 
-        blended_layer = cv2.addWeighted(image_cv, 1.0 - opacity, color_layer, opacity, 0)
-        final_image = (1.0 - alpha) * image_cv + alpha * blended_layer
+        # تحويل الألوان إلى Float لعملية الدمج
+        img_float = image_cv.astype(np.float32) / 255.0
+        color_float = color_layer.astype(np.float32) / 255.0
 
-        return final_image.astype(np.uint8), True
+        # محرك الدمج الاحترافي
+        if blend_mode == "overlay":
+            # Overlay Blend Mode: يعكس مسام البشرة والإضاءة الطبيعية من تحت اللون!
+            blended = np.where(img_float < 0.5, 
+                               2 * img_float * color_float, 
+                               1 - 2 * (1 - img_float) * (1 - color_float))
+        elif blend_mode == "multiply":
+            blended = img_float * color_float
+        else:
+            blended = color_float
+            
+        blended = blended * 255.0
+        img_float = img_float * 255.0
+        
+        # الدمج النهائي بناءً على نسبة القناع والشفافية
+        final_image = (1.0 - alpha) * img_float + alpha * blended
+        final_image = np.clip(final_image, 0, 255).astype(np.uint8)
+
+        return final_image, True
     except Exception as e:
+        print(f"Makeup Error: {e}")
         return image_cv, False
 
 def sanitize_value(val, default_text="---"):
